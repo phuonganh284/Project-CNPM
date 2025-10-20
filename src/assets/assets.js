@@ -8,6 +8,11 @@ import polygon_icon from './polygon_icon.svg'
 import user_icon from './user_icon.svg'
 import myborrows_icon from './myborrows_icon.svg'
 import myrequest_icon from './myrequest_icon.svg'
+import borrowrecords_icon from './borrowrecords_icon.svg'
+import managebooks_icon from './managebooks_icon.svg'
+import approvedreq_icon from './approvedreq_icon.svg'
+import returnreq_icon from './returnreq_icon.svg'
+import manageusers_icon from './manageusers_icon.svg'
 
 import book_img_1 from './book_img_1.png'
 import book_img_2 from './book_img_2.png'
@@ -23,6 +28,11 @@ export const assets = {
     user_icon,
     myborrows_icon,
     myrequest_icon,
+    borrowrecords_icon,
+    managebooks_icon,
+    approvedreq_icon,
+    returnreq_icon,
+    manageusers_icon,
     book_img_1,
     book_img_2,
 }
