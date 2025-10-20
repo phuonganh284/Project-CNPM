@@ -9,8 +9,8 @@ const LibrarianLinks = () => {
 
     return (
         <>
-            <nav className="mb-auto mt-2 ml-4">
-                <ul className="flex flex-col space-y-5">
+            <nav className="mb-auto mt-4   ml-4">
+                <ul className="flex flex-col space-y-5.75">
                     <li>
                         <NavLink
                             to="/home"
@@ -86,7 +86,7 @@ const LibrarianLinks = () => {
                             to="/borrowrecords"
                             className={({ isActive }) => `${linkBase} ${isActive ? activeColor : inactiveColor}`}
                         >
-                            <img src={assets.returnreq_icon} alt="BorrowRecords Icon" className="w-5 h-5" />
+                            <img src={assets.borrowrecords_icon} alt="BorrowRecords Icon" className="w-5 h-5" />
                             <span>Borrow Records</span>
                         </NavLink>
                     </li>

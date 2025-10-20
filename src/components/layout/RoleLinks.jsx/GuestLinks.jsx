@@ -9,8 +9,8 @@ const GuestLinks = () => {
 
     return (
         <>
-            <nav className="mb-auto mt-2 ml-4">
-                <ul className="flex flex-col space-y-5">
+            <nav className="mb-auto mt-4   ml-4">
+                <ul className="flex flex-col space-y-5.75">
                     <li>
                         <NavLink
                             to="/home"
