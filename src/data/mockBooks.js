@@ -45,7 +45,7 @@ export const mockBooks = [
         category: "Business",
         language: "English",
         description: "From three design partners at Google Ventures, a unique five-day process for solving tough problems using design, prototyping, and testing ideas with customers.",
-        cover_url: "https://m.media-amazon.com/images/I/71z3RnYkRKL._SY466_.jpg",
+        cover_url: "https://m.media-amazon.com/images/I/71y2wZgkJ6L._SL1500_.jpg",
         price: 42.00,
         total_copies: 8,
         available_copies: 6,
@@ -62,7 +62,7 @@ export const mockBooks = [
         category: "Computer Science",
         language: "English",
         description: "The Lean UX approach to interaction design is tailor-made for today's web-driven reality.",
-        cover_url: "https://m.media-amazon.com/images/I/51CWBX9wg4L._SY466_.jpg",
+        cover_url: "https://m.media-amazon.com/images/I/81qJb1LmkBL._SL1500_.jpg",
         price: 48.00,
         total_copies: 7,
         available_copies: 5,
@@ -79,7 +79,7 @@ export const mockBooks = [
         category: "Computer Science",
         language: "English",
         description: "The Road to React teaches you the fundamentals of React. You will build a real-world application along the way in plain React without complicated tooling.",
-        cover_url: "https://m.media-amazon.com/images/I/71c5fTWEQIL._SY466_.jpg",
+        cover_url: "https://m.media-amazon.com/images/I/613i1dMgs1L._SL1500_.jpg",
         price: 39.00,
         total_copies: 12,
         available_copies: 8,
@@ -130,7 +130,7 @@ export const mockBooks = [
         category: "Computer Science",
         language: "English",
         description: "No matter how much experience you have with JavaScript, odds are you don't fully understand the language.",
-        cover_url: "https://m.media-amazon.com/images/I/71VbP7Y5fBL._SY466_.jpg",
+        cover_url: "https://m.media-amazon.com/images/I/91-PASfiUVL._SL1500_.jpg",
         price: 32.00,
         total_copies: 9,
         available_copies: 7,
@@ -215,7 +215,7 @@ export const mockBooks = [
         category: "Psychology",
         language: "English",
         description: "A groundbreaking tour of the mind and explains the two systems that drive the way we think.",
-        cover_url: "https://m.media-amazon.com/images/I/71-E-LlxGsL._SY466_.jpg",
+        cover_url: "https://m.media-amazon.com/images/I/61fdrEuPJwL._SL1500_.jpg",
         price: 30.00,
         total_copies: 12,
         available_copies: 8,
@@ -276,7 +276,7 @@ export const getBookById = (id) => {
 
 export const searchBooks = (query) => {
     const lowerQuery = query.toLowerCase();
-    return mockBooks.filter(book => 
+    return mockBooks.filter(book =>
         book.title.toLowerCase().includes(lowerQuery) ||
         book.author.toLowerCase().includes(lowerQuery) ||
         book.category.toLowerCase().includes(lowerQuery)

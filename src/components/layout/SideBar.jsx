@@ -14,7 +14,7 @@ const SideBar = () => {
             { icon: assets.browse_icon, label: 'Browse', path: '/browse' },
             { icon: assets.rules_icon, label: 'Rules', path: '/rules' },
         ],
-        
+
         reader: [
             { icon: assets.home_icon, label: 'Home', path: '/home' },
             { icon: assets.browse_icon, label: 'Browse', path: '/browse' },
@@ -22,12 +22,12 @@ const SideBar = () => {
             { icon: assets.myrequest_icon, label: 'My Requests', path: '/my-requests' },
             { icon: assets.rules_icon, label: 'Rules', path: '/rules' },
         ],
-        
+
         librarian: [
             { icon: assets.home_icon, label: 'Home', path: '/home' },
             { icon: assets.browse_icon, label: 'Browse', path: '/browse' },
-            { icon: assets.books, label: 'Books', path: '/books' },
-            { icon: assets.users_icon, label: 'Users', path: '/users' },
+            { icon: assets.books, label: 'Manage Books', path: '/books' },
+            { icon: assets.users_icon, label: 'Manage Users', path: '/users' },
             { icon: assets.borrow_admin_icon, label: 'Borrow Requests', path: '/borrow-requests' },
             { icon: assets.approved_icon, label: 'Approved Request', path: '/approved-requests' },
             { icon: assets.return_icon, label: 'Return Request', path: '/return-requests' },
@@ -75,17 +75,17 @@ const SideBar = () => {
                                     <div className={`
                                         flex items-center space-x-3 cursor-pointer text-lg
                                         transition-all duration-200
-                                        ${isActive 
-                                            ? 'text-[#4D4D4D] font-medium' 
+                                        ${isActive
+                                            ? 'text-[#4D4D4D] font-medium'
                                             : 'text-[#8A8A8A] group-hover:text-[#4D4D4D]'
                                         }
                                     `}>
-                                        <img 
-                                            src={item.icon} 
+                                        <img
+                                            src={item.icon}
                                             alt={item.label}
                                             className={`
                                                 w-5 h-5 transition-all duration-200
-                                                ${isActive 
+                                                ${isActive
                                                     ? '[filter:brightness(0)_saturate(100%)_invert(27%)_sepia(6%)_saturate(268%)_hue-rotate(202deg)_brightness(95%)_contrast(92%)]'
                                                     : '[filter:brightness(0)_saturate(100%)_invert(64%)_sepia(0%)_saturate(415%)_hue-rotate(202deg)_brightness(88%)_contrast(81%)] group-hover:[filter:brightness(0)_saturate(100%)_invert(27%)_sepia(6%)_saturate(268%)_hue-rotate(202deg)_brightness(95%)_contrast(92%)]'
                                                 }
@@ -104,8 +104,8 @@ const SideBar = () => {
             <nav className="mb-5 mt-2 ml-9">
                 <ul className="flex flex-col space-y-3 text-sm">
                     <li>
-                        <NavLink 
-                            to="/about" 
+                        <NavLink
+                            to="/about"
                             className={({ isActive }) => `
                                 transition-colors cursor-pointer
                                 ${isActive ? 'text-[#4D4D4D]' : 'text-[#8A8A8A] hover:text-[#4D4D4D]'}
@@ -115,8 +115,8 @@ const SideBar = () => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink 
-                            to="/support" 
+                        <NavLink
+                            to="/support"
                             className={({ isActive }) => `
                                 transition-colors cursor-pointer
                                 ${isActive ? 'text-[#4D4D4D]' : 'text-[#8A8A8A] hover:text-[#4D4D4D]'}
@@ -126,8 +126,8 @@ const SideBar = () => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink 
-                            to="/terms" 
+                        <NavLink
+                            to="/terms"
                             className={({ isActive }) => `
                                 transition-colors cursor-pointer
                                 ${isActive ? 'text-[#4D4D4D]' : 'text-[#8A8A8A] hover:text-[#4D4D4D]'}

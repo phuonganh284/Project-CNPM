@@ -31,7 +31,7 @@ const NotificationDropdown = () => {
 
     // Load notifications theo role
     const userRole = user?.role || 'guest';
-    
+
     useEffect(() => {
         // TODO: KHI CÓ BE - Thay bằng API call
         // const fetchNotifications = async () => {
@@ -40,7 +40,7 @@ const NotificationDropdown = () => {
         //     setNotifications(data);
         // };
         // fetchNotifications();
-        
+
         const data = getNotificationsByRole(userRole);
         setNotifications(data);
     }, [userRole]);
@@ -53,7 +53,7 @@ const NotificationDropdown = () => {
         setSelectedNotification(notification);
         setIsModalOpen(true);
         setIsOpen(false);
-        
+
         // Tự động đánh dấu đã đọc khi mở modal
         if (!notification.isRead) {
             handleMarkAsRead(notification.id);
@@ -62,7 +62,7 @@ const NotificationDropdown = () => {
 
     // Hàm đánh dấu notification đã đọc
     const handleMarkAsRead = (notificationId) => {
-        setNotifications(prev => 
+        setNotifications(prev =>
             prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
         );
         // TODO: KHI CÓ BE - Gọi API đánh dấu đã đọc
@@ -98,17 +98,18 @@ const NotificationDropdown = () => {
                     transition-all
                     duration-200
                     relative
+                    cursor-pointer
                 "
             >
-                <img 
-                    src={assets.bell} 
-                    alt="Notification" 
-                    className="w-5 h-5"
+                <img
+                    src={assets.bell}
+                    alt="Notification"
+                    className="w-7 h-7  ml-2"
                 />
                 <span className="text-[#4D4D4D] font-inter text-[15px] font-medium">
                     Notification
                 </span>
-                
+
                 {/* Badge số lượng notification chưa đọc */}
                 {unreadCount > 0 && (
                     <span className="absolute -top-1 left-8 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
@@ -184,7 +185,7 @@ const NotificationDropdown = () => {
                                         <span className="text-gray-400 font-inter text-xs">
                                             •{notif.time}
                                         </span>
-                                        <button 
+                                        <button
                                             onClick={() => handleViewNotification(notif)}
                                             className="text-[#4A90E2] font-inter text-xs font-medium hover:underline"
                                         >
@@ -198,7 +199,7 @@ const NotificationDropdown = () => {
 
                     {/* Footer */}
                     <div className="px-5 py-3 border-t border-gray-200 text-center">
-                        <button 
+                        <button
                             onClick={handleViewAll}
                             className="text-[#4A90E2] font-inter text-sm font-medium hover:underline"
                         >

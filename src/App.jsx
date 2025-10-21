@@ -6,7 +6,7 @@ import Welcome from "./pages/public/Welcome";
 import SelectRole from "./pages/public/SelectRole";
 import HomePage from "./pages/public/HomePage";
 import BrowsePage from "./pages/public/BrowsePage";
-import About from "./components/About";
+import About from "./pages/public/About";
 
 // Librarian pages
 import BooksPage from "./pages/librarian/BooksPage";
@@ -38,23 +38,23 @@ const App = () => {
         {/*Routes------------------------------------*/}
         {/* Welcome page - không có Layout */}
         <Route path="/" element={<Welcome />} />
-        
+
         {/* Select Role page - không có Layout */}
         <Route path="/select-role" element={<SelectRole />} />
-        
+
         {/* Login pages - không có Layout */}
         <Route path="/login-reader" element={<LoginReader />} />
         <Route path="/login-librarian" element={<LoginLibrarian />} />
-        
+
         {/* Register page - không có Layout */}
         <Route path="/register" element={<Register />} />
-        
+
         {/* Reset Password pages - không có Layout */}
         <Route path="/send-mail-to-reset-pass" element={<SendMailToResetPass />} />
         <Route path="/open-mail-to-reset-pass" element={<OpenMailToResetPass />} />
         <Route path="/reset-pass" element={<ResetPass />} />
         <Route path="/reset-success" element={<ResetSuccess />} />
-        
+
         <Route element={<Layout />}>
           {/* Public routes */}
           <Route path="/home" element={<HomePage />} />

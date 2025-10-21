@@ -3,7 +3,7 @@ export const mockReturnRequests = [
   {
     id: 'RET001',
     userId: 'R98765',
-    userName: 'abc',
+    userName: 'anna_reader',
     userEmail: 'jack97@example.com',
     loanId: 'L123',
     bookId: 'B001',
@@ -19,7 +19,7 @@ export const mockReturnRequests = [
   {
     id: 'RET002',
     userId: 'R55555',
-    userName: 'xyz',
+    userName: 'emily_reads',
     userEmail: 'sarah.lee@example.com',
     loanId: 'L999',
     bookId: 'B010',
@@ -35,7 +35,7 @@ export const mockReturnRequests = [
   {
     id: 'RET003',
     userId: 'R22222',
-    userName: 'clmclm',
+    userName: 'michael_reader',
     userEmail: 'mary.tran@example.com',
     loanId: 'L321',
     bookId: 'B020',
@@ -51,7 +51,7 @@ export const mockReturnRequests = [
   {
     id: 'RET004',
     userId: 'R33333',
-    userName: 'dasd',
+    userName: 'john_books',
     userEmail: 'dasd@example.com',
     loanId: 'L444',
     bookId: 'B030',
@@ -67,7 +67,7 @@ export const mockReturnRequests = [
   {
     id: 'RET005',
     userId: 'R44444',
-    userName: 'dasdasd',
+    userName: 'olivia_page',
     userEmail: 'dasdasd@example.com',
     loanId: 'L555',
     bookId: 'B040',

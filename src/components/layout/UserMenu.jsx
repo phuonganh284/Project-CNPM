@@ -58,30 +58,31 @@ const UserMenu = () => {
                     transition-all
                     duration-200
                     px-3
+                    cursor-pointer
                 "
             >
                 {/* Avatar */}
-                <img 
-                    src={assets.user_icon} 
-                    alt="User Avatar" 
+                <img
+                    src={assets.user_icon}
+                    alt="User Avatar"
                     className="w-9 h-9 rounded-full object-cover border-2 border-gray-300"
                 />
-                
+
                 {/* User Name */}
                 <span className="text-[#4D4D4D] font-inter text-[15px] font-medium flex-1 text-left">
                     {userName}
                 </span>
 
                 {/* Dropdown Arrow */}
-                <svg 
-                    width="12" 
-                    height="8" 
-                    viewBox="0 0 12 8" 
-                    fill="none" 
+                <svg
+                    width="12"
+                    height="8"
+                    viewBox="0 0 12 8"
+                    fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                     className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 >
-                    <path d="M1.41 0.589996L6 5.17L10.59 0.589996L12 2L6 8L0 2L1.41 0.589996Z" fill="#4D4D4D"/>
+                    <path d="M1.41 0.589996L6 5.17L10.59 0.589996L12 2L6 8L0 2L1.41 0.589996Z" fill="#4D4D4D" />
                 </svg>
             </button>
 
@@ -99,6 +100,7 @@ const UserMenu = () => {
                     overflow-hidden
                     z-50
                     animate-in fade-in slide-in-from-top-2 duration-200
+
                 ">
                     {/* User Info Header */}
                     <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
@@ -128,11 +130,12 @@ const UserMenu = () => {
                                 hover:bg-gray-50
                                 transition-colors
                                 text-left
+                                cursor-pointer
                             "
                         >
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" fill="#4D4D4D"/>
-                                <path d="M10 12.5C5.58172 12.5 2 14.5817 2 17.5V20H18V17.5C18 14.5817 14.4183 12.5 10 12.5Z" fill="#4D4D4D"/>
+                                <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" fill="#4D4D4D" />
+                                <path d="M10 12.5C5.58172 12.5 2 14.5817 2 17.5V20H18V17.5C18 14.5817 14.4183 12.5 10 12.5Z" fill="#4D4D4D" />
                             </svg>
                             <span className="font-inter text-sm">Profile</span>
                         </button>
@@ -151,11 +154,12 @@ const UserMenu = () => {
                                 hover:bg-red-50
                                 transition-colors
                                 text-left
+                                cursor-pointer
                             "
                         >
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13 0H2C0.9 0 0 0.9 0 2V18C0 19.1 0.9 20 2 20H13C14.1 20 15 19.1 15 18V16H13V18H2V2H13V4H15V2C15 0.9 14.1 0 13 0Z" fill="#DC2626"/>
-                                <path d="M17.5 9H6.5V11H17.5L14.5 14L15.91 15.41L21.32 10L15.91 4.59L14.5 6L17.5 9Z" fill="#DC2626"/>
+                                <path d="M13 0H2C0.9 0 0 0.9 0 2V18C0 19.1 0.9 20 2 20H13C14.1 20 15 19.1 15 18V16H13V18H2V2H13V4H15V2C15 0.9 14.1 0 13 0Z" fill="#DC2626" />
+                                <path d="M17.5 9H6.5V11H17.5L14.5 14L15.91 15.41L21.32 10L15.91 4.59L14.5 6L17.5 9Z" fill="#DC2626" />
                             </svg>
                             <span className="font-inter text-sm font-medium">Sign Out</span>
                         </button>
