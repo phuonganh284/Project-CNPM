@@ -1,0 +1,89 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import IntroBox from '../../components/IntroBox';
+import AvailableNow from '../../components/AvailableNow';
+import BookCard from '../../components/BookCard';
+import { getAvailableBooks, getRecommendedBooks } from '../../data/mockBooks';
+
+const HomePage = () => {
+    const navigate = useNavigate();
+    const availableBooks = getAvailableBooks();
+    const recommendedBooks = getRecommendedBooks();
+
+    // Calculate how many books fit in one row (card width 160px + gap 20px)
+    // Approximate available width: container width - padding
+    // Show max 7 books (safe number for most screens)
+    const booksToShow = recommendedBooks.slice(0, 7);
+
+    // Dynamic greeting based on time of day
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'Good Morning';
+        if (hour >= 12 && hour < 17) return 'Good Afternoon';
+        if (hour >= 17 && hour < 21) return 'Good Evening';
+        return 'Good Night';
+    };
+
+    const handleBookClick = (book) => {
+        console.log('Book clicked:', book);
+        // TODO: Navigate to book detail page or open modal
+    };
+
+    const handleShowAll = () => {
+        navigate('/browse');
+    };
+
+    return (
+        <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4">
+            {/* Hero Section với IntroBox và Available Now */}
+            <div className="flex flex-row gap-4 pt-4 px-4">
+                {/* IntroBox */}
+                <div className="flex-shrink-0">
+                    <IntroBox />
+                </div>
+
+                {/* Available Now Carousel */}
+                <AvailableNow 
+                    books={availableBooks}
+                    onBookClick={handleBookClick}
+                />
+            </div>
+
+            {/* Good Morning Section */}
+            <div className="px-4 mt-8">
+                <h1 className="text-gray-800 font-inter text-3xl font-bold mb-2">
+                    {getGreeting()}
+                </h1>
+            </div>
+
+            {/* Recommended for You */}
+            <div className="px-4 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-gray-700 font-inter text-xl font-semibold">
+                        Recommended for You
+                    </h2>
+                    <button 
+                        onClick={handleShowAll}
+                        className="text-[#4A90E2] font-inter text-sm font-medium hover:underline"
+                    >
+                        Show All
+                    </button>
+                </div>
+
+                {/* Single Row - Exact number of books to fit, no scroll */}
+                <div className="flex gap-5">
+                    {booksToShow.map(book => (
+                        <BookCard
+                            key={book.id}
+                            book={book}
+                            onClick={handleBookClick}
+                            variant="grid"
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default HomePage;
