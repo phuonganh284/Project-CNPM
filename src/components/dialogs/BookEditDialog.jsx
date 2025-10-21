@@ -4,15 +4,33 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     if (!isOpen) return null;
 
     const [editedBook, setEditedBook] = useState(book);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const [preview, setPreview] = useState(book?.bookCover || "");
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setEditedBook((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSave = () => {
-        onSave(editedBook);
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setPreview(reader.result);
+            setEditedBook((prev) => ({ ...prev, bookCover: reader.result }));
+        };
+        reader.readAsDataURL(file);
     };
+
+    const handleSave = () => {
+        const updatedBook = { ...editedBook, bookCover: preview };
+        onSave(updatedBook);
+    };
+
 
     return (
         <div
@@ -23,10 +41,11 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                    Edit Book Details
+                    Book Details
                 </h2>
 
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-3 gap-4 mb-6">
                     <div>
                         <label className="text-sm text-gray-700">Title</label>
                         <input
@@ -81,8 +100,8 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             type="text"
                             name="isbn"
                             value={editedBook.isbn}
-                            readOnly
-                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
+                            onChange={handleChange}
+                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                         />
                     </div>
 
@@ -150,22 +169,49 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             <option value="Chinese">Chinese</option>
                         </select>
                     </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+
                     <div className="col-span-2">
                         <label className="text-sm text-gray-700">Description</label>
                         <textarea
                             name="description"
                             value={editedBook.description || ""}
                             onChange={handleChange}
-                            rows={6}
+                            rows={8}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm resize-y"
                             placeholder="Enter book description"
                         />
                     </div>
 
+                    <div className="flex flex-col mb-1 items-center gap-2">
+                        <label className="text-sm text-gray-700">Book Cover</label>
+                        <img
+                            src={preview || "https://via.placeholder.com/120x160?text=No+Cover"}
+                            alt="No cover"
+                            className="w-32 h-40 object-cover rounded-lg border border-gray-300"
+                        />
+                        <label
+                            htmlFor="coverUpload"
+                            className="text-sm text-[#4A90E2] cursor-pointer hover:underline"
+                        >
+                            Upload picture
+                        </label>
+                        <input
+                            id="coverUpload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                        />
+
+                    </div>
+
                 </div>
 
                 {/* Buttons */}
-                <div className="flex justify-end mt-6 gap-3">
+                <div className="flex justify-center mt-6 gap-3">
                     <button
                         onClick={handleSave}
                         className="px-12 py-2 rounded-lg font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"

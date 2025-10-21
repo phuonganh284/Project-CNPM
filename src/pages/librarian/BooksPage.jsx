@@ -1,9 +1,29 @@
 import React, { useState } from "react";
 import { mockBooks } from "../../data/mockBooks";
 import BookCatalogCard from "../../components/BookCatalogCard";
+import BookEditDialog from "../../components/dialogs/BookEditDialog";
+import ImportCSVDialog from "../../components/dialogs/ImportCSVDialog";
 
 const BookCatalogPage = () => {
   const [books, setBooks] = useState(mockBooks);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const [newBook, setNewBook] = useState({
+    bookTitle: "",
+    bookAuthor: "",
+    publisher: "",
+    bookYear: "",
+    isbn: "",
+    page_count: "",
+    total_copies: "",
+    available_copies: "",
+    category: "",
+    language: "",
+    description: "",
+  });
+
 
   const handleEdit = (book) => {
     console.log("Edit clicked for:", book.title);
@@ -15,11 +35,63 @@ const BookCatalogPage = () => {
   };
 
 
+  const handleAddBookSave = (book) => {
+    const missingFields = Object.entries(book)
+      .filter(([key, value]) => value === "")
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      alert("Please fill in the missing fields.");
+      return;
+    }
+    //Generate fake ID
+    const newBookEntry = { ...book, id: Date.now().toString() };
+
+    setBooks((prev) => [...prev, newBookEntry]);
+    setIsAddDialogOpen(false);
+  };
+
+  const handleUpload = (data) => { // use for import csv file
+    console.log("Uploaded data:", data);
+    setBooks((prev) => [...prev, ...data]);
+    setIsImportOpen(false);
+    setSuccessMessage("File imported successfully!");
+
+    // message time out after 6 sec
+    setTimeout(() => setSuccessMessage(""), 6000);
+  };
+
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-        Manage Book Catalog
-      </h2>
+      <div className="flex flex-col justify-between mb-2">
+
+        <h2 className="text-2xl font-semibold text-gray-800 mb-8">
+          Manage Book Catalog
+        </h2>
+
+        <div className="flex flex-row gap-3 mr-4">
+          <button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="px-7 py-2 bg-[#6476A6] text-white rounded-lg hover:bg-[#A5B6CE] cursor-pointer "
+          >
+            Add Book +
+          </button>
+
+          <button
+            onClick={() => setIsImportOpen(true)}
+            className="px-7 py-2 bg-white text-gray-600 rounded-lg border border-gray-500 hover:bg-gray-100 shadow-sm cursor-pointer"
+          >
+            Import File
+          </button>
+          {successMessage && (
+            <div className="mt-3 text-green-600 font-medium transition-opacity duration-500">
+              {successMessage}
+            </div>
+          )}
+        </div>
+
+
+      </div>
 
       {/* Table Header - Sticky */}
       <div className="sticky top-0 z-10 bg-[#F3F3F7] py-3 mb-4">
@@ -40,10 +112,9 @@ const BookCatalogPage = () => {
 
       {/* Book Cards */}
       <div className="flex flex-col gap-4">
-
-        {books.map((book) => (
+        {books.map((book, idx) => (
           <BookCatalogCard
-            key={book.id}
+            key={idx}
             bookCover={book.cover_url}
             bookTitle={book.title}
             bookAuthor={book.author}
@@ -56,15 +127,31 @@ const BookCatalogPage = () => {
             available_copies={book.available_copies}
             language={book.language}
             description={book.description}
-            status={book.available_copies > 0 ? 'Available' : 'Out of Stock'}
+            status={book.available_copies > 0 ? "Available" : "Out of Stock"}
             onEdit={() => handleEdit(book)}
             onDelete={() => handleDelete(book)}
             onClick={() => console.log("Clicked on", book.title)}
           />
         ))}
       </div>
+
+      {/* Add Book Dialog */}
+      <BookEditDialog
+        isOpen={isAddDialogOpen}
+        book={newBook}
+        onSave={handleAddBookSave}
+        onCancel={() => setIsAddDialogOpen(false)}
+      />
+
+      {/* Import CSV Dialog */}
+      <ImportCSVDialog
+        isOpen={isImportOpen}
+        onUpload={handleUpload}
+        onCancel={() => setIsImportOpen(false)}
+      />
     </div>
   );
+
 };
 
 export default BookCatalogPage;

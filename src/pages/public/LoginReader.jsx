@@ -22,7 +22,7 @@ function LoginReader() {
   const onSubmit = (data) => {
     console.log("Login data:", data);
     // TODO: Implement actual login API call
-    navigate("/home-user");
+    navigate("/home");
   };
 
   return (
@@ -162,19 +162,19 @@ function LoginReader() {
               )}
             />
 
-        {/* Remember me + Forgot password */}
-        <div className="flex justify-between items-center w-[422px] mb-8">
-          <label className="flex items-center gap-2 text-[#4D4D4D] text-[16px]">
-            <input type="checkbox" className="w-4 h-4 accent-[#0A385F]" />
-            Remember me
-          </label>
-          <span 
-            onClick={() => navigate("/send-mail-to-reset-pass")}
-            className="text-[#4D4D4D] underline text-[16px] cursor-pointer hover:text-[#3273AF] transition-colors"
-          >
-            Forgot password?
-          </span>
-        </div>
+            {/* Remember me + Forgot password */}
+            <div className="flex justify-between items-center w-[422px] mb-8">
+              <label className="flex items-center gap-2 text-[#4D4D4D] text-[16px]">
+                <input type="checkbox" className="w-4 h-4 accent-[#0A385F]" />
+                Remember me
+              </label>
+              <span
+                onClick={() => navigate("/send-mail-to-reset-pass")}
+                className="text-[#4D4D4D] underline text-[16px] cursor-pointer hover:text-[#3273AF] transition-colors"
+              >
+                Forgot password?
+              </span>
+            </div>
 
             {/* Nút Login */}
             <Button
@@ -189,7 +189,7 @@ function LoginReader() {
         {/* Link đăng ký */}
         <p className="text-[#4D4D4D] text-[16px]">
           New User?{" "}
-          <span 
+          <span
             onClick={() => navigate("/register")}
             className="underline cursor-pointer hover:text-[#3273AF] transition-colors"
           >

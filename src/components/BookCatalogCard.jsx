@@ -171,6 +171,7 @@ const BookCatalogCard = ({
                     onEdit?.(edited);
                 }}
                 onCancel={() => setShowEditDialog(false)}
+
             />
         </>
 

@@ -46,7 +46,7 @@ export default function LoginLibrarian() {
 
     if (Object.keys(validationErrors).length === 0) {
       // All fields filled - navigate to HomeAdmin
-      navigate("/home-admin");
+      navigate("/home");
     } else {
       // Some fields empty - show errors
       setErrors(validationErrors);
@@ -96,9 +96,8 @@ export default function LoginLibrarian() {
             value={formData.email}
             onChange={handleInputChange}
             placeholder="username@collegename.ac.in"
-            className={`w-full h-[56px] border rounded-lg px-4 text-[#4D4D4D] placeholder:text-gray-400 ${
-              errors.email ? 'border-red-500' : 'border-[#DCD9D9]'
-            }`}
+            className={`w-full h-[56px] border rounded-lg px-4 text-[#4D4D4D] placeholder:text-gray-400 ${errors.email ? 'border-red-500' : 'border-[#DCD9D9]'
+              }`}
           />
         </div>
 
@@ -117,9 +116,8 @@ export default function LoginLibrarian() {
               value={formData.password}
               onChange={handleInputChange}
               placeholder="********"
-              className={`w-full h-[56px] border rounded-lg px-4 text-[#4D4D4D] pr-10 placeholder:text-gray-400 ${
-                errors.password ? 'border-red-500' : 'border-[#DCD9D9]'
-              }`}
+              className={`w-full h-[56px] border rounded-lg px-4 text-[#4D4D4D] pr-10 placeholder:text-gray-400 ${errors.password ? 'border-red-500' : 'border-[#DCD9D9]'
+                }`}
             />
             <button
               type="button"
@@ -171,7 +169,7 @@ export default function LoginLibrarian() {
             <input type="checkbox" className="w-4 h-4" />
             Remember me
           </label>
-          <span 
+          <span
             onClick={() => navigate("/send-mail-to-reset-pass")}
             className="text-[#4D4D4D] underline cursor-pointer hover:text-[#3273AF] transition-colors"
           >
@@ -180,7 +178,7 @@ export default function LoginLibrarian() {
         </div>
 
         {/* Button */}
-        <button 
+        <button
           onClick={handleLogin}
           className="w-full max-w-[420px] h-[48px] bg-[#3273AF] rounded-lg text-white font-semibold text-[16px] hover:bg-[#275b8c] transition-colors cursor-pointer"
         >
