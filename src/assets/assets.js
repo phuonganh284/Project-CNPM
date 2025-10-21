@@ -16,6 +16,7 @@ import return_icon from './icons/return_icon.svg'
 import borrow_admin from './icons/borrow_admin.svg'
 import books from './icons/Vector.svg'
 import bell from './icons/bell.svg'
+import plus_icon from './icons/plus_icon.svg' //icon cho button add
 
 import book_img_1 from './book_img_1.png'
 import book_img_2 from './book_img_2.png'
@@ -32,13 +33,14 @@ export const assets = {
     users_icon,       // Dùng cho menu Users (admin)
     books,
     bell,             // Dùng cho notification
+    plus_icon,
     // Icon aliases với tên mới
     myborrows_icon: mybor,
     myrequest_icon: myreq,
     approved_icon: approved,
     return_icon,
     borrow_admin_icon: borrow_admin,
-    
+
     book_img_1,
     book_img_2,
 }

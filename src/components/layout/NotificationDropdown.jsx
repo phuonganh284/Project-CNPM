@@ -150,7 +150,7 @@ const NotificationDropdown = () => {
                                     px-5 py-4 
                                     border-b border-gray-100
                                     hover:bg-gray-50
-                                    cursor-pointer
+
                                     transition-colors
                                     flex
                                     gap-3
@@ -187,7 +187,7 @@ const NotificationDropdown = () => {
                                         </span>
                                         <button
                                             onClick={() => handleViewNotification(notif)}
-                                            className="text-[#4A90E2] font-inter text-xs font-medium hover:underline"
+                                            className="text-[#4A90E2] font-inter text-xs font-medium hover:underline cursor-pointer"
                                         >
                                             View
                                         </button>
@@ -201,7 +201,7 @@ const NotificationDropdown = () => {
                     <div className="px-5 py-3 border-t border-gray-200 text-center">
                         <button
                             onClick={handleViewAll}
-                            className="text-[#4A90E2] font-inter text-sm font-medium hover:underline"
+                            className="text-[#4A90E2] font-inter text-sm font-medium hover:underline cursor-pointer"
                         >
                             View all notifications
                         </button>

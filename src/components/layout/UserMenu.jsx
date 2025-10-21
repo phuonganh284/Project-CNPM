@@ -49,7 +49,7 @@ const UserMenu = () => {
                     items-center 
                     justify-center
                     gap-3
-                    w-[203px] 
+                    w-[190px] 
                     h-[50px]
                     bg-white 
                     rounded-full
@@ -69,7 +69,7 @@ const UserMenu = () => {
                 />
 
                 {/* User Name */}
-                <span className="text-[#4D4D4D] font-inter text-[15px] font-medium flex-1 text-left">
+                <span className="text-[#4D4D4D] font-inter text-[15px]  font-medium flex-1 text-left">
                     {userName}
                 </span>
 

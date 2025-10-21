@@ -60,7 +60,7 @@ const TopMain = () => {
                     </span>
                 </button>
             ) : (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 ml-6">
                     <NotificationDropdown />
                     <UserMenu />
                 </div>
