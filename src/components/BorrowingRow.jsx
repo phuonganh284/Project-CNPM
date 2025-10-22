@@ -2,7 +2,6 @@ import React from 'react';
 
 const BorrowingRow = ({ borrow }) => {
     
-    // Logic để xác định màu sắc dựa trên status
     const getStatusClasses = (status) => {
         switch (status) {
             case 'Overdue':

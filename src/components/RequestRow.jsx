@@ -10,7 +10,7 @@ const RequestRow = ({ request, onConfirmDelivery }) => {
                     src={request.cover}
                     alt={request.title}
                     className="w-10 h-14 object-cover rounded mr-3 flex-shrink-0 shadow-sm"
-                    // Placeholder if image fails to load
+ 
                     onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/40x56/EEE/313131?text=No+Cover'; }}
                 />
                 <div>

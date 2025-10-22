@@ -5,7 +5,7 @@ import { mockBorrowing } from '../../data/mockBorrowing.js';
 const BorrowingPage = () => {
     const [borrowedBooks, setBorrowedBooks] = useState(mockBorrowing);
     return (
-        <div className="p-4 sm:p-6 bg-gray-50 min-h-screen font-sans">
+        <div className="p-4 sm:p-6 min-h-screen font-sans">
             
             {/* Header */}
             <div className="flex justify-between items-center mb-6 border-b pb-4">
@@ -13,8 +13,7 @@ const BorrowingPage = () => {
             </div>
 
             {/* Column Headers */}
-            <div className="hidden sm:flex items-center text-xs font-semibold uppercase text-gray-600 bg-gray-200 py-3 px-4 rounded-lg mb-3 shadow-inner">
-
+            <div className="hidden sm:flex items-center text-xs font-semibold uppercase text-gray-600 bg-gray-200 py-3 px-4 rounded-lg mb-3 shadow-inner sticky top-0 z-10">
                 <div className="w-[40%]">Title</div>
                 <div className="w-[20%]">User</div>
                 <div className="w-[20%]">Return Date</div>

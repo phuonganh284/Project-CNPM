@@ -20,11 +20,11 @@ const ApprovedRequestPage = () => {
     };
 
     return (
-        <div className="p-4 sm:p-6 bg-gray-50 min-h-screen font-sans">
+        <div className="p-4 sm:p-6 min-h-screen font-sans">
             
             {/* Header and Search Bar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Approved Borrow Requests</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Approved Delivery Requests</h2>
             </div>
 
             {/* Success Message */}
@@ -35,8 +35,8 @@ const ApprovedRequestPage = () => {
                 </div>
             )}
 
-            {/* Column Headers (Hidden on small screens) */}
-            <div className="hidden sm:flex items-center text-xs font-semibold uppercase text-gray-600 bg-gray-200 py-3 px-4 rounded-lg mb-3 shadow-inner">
+            {/* Column Headers (Sticky) */}
+            <div className="hidden sm:flex items-center text-xs font-semibold uppercase text-gray-600 bg-gray-200 py-3 px-4 rounded-lg mb-3 shadow-inner sticky top-0 z-10">
                 <div className="w-[35%]">Title</div>
                 <div className="w-[15%]">User</div>
                 <div className="w-[20%]">Pick-up Date</div>

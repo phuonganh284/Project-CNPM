@@ -111,7 +111,7 @@ const MyBorrowsPage = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen relative">
+        <div className="p-6 min-h-screen relative">
             <h2 className="text-2xl font-semibold mb-6 text-gray-800">Your Borrows</h2>
 
         <div className="fixed bottom-6 right-8 flex flex-col items-end space-y-2 z-50 pr-10">
