@@ -61,7 +61,7 @@ const SideBar = () => {
             {/* Logo */}
             <div className="mb-8 mt-[-20px] ml-9">
                 <NavLink to="/home" className="flex items-center">
-                    <img src={assets.logo} alt="Library Logo" className="w-[160px] h-auto cursor-pointer" />
+                    <img src="/logo.svg" alt="Library Logo" className="w-[160px] h-auto cursor-pointer" />
                 </NavLink>
             </div>
 
