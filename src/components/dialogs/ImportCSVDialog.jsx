@@ -42,7 +42,7 @@ const ImportCSVDialog = ({ isOpen, onUpload, onCancel }) => {
                 </h2>
 
                 <p className="text-sm text-gray-600 mb-6">
-                    Upload a <span className="font-medium text-gray-800">CSV file</span>{" "}
+                    Please upload a <span className="font-medium text-gray-800">CSV file</span>{" "}
                     with the specified format.
                 </p>
 

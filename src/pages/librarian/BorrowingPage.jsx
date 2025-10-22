@@ -6,10 +6,10 @@ const BorrowingPage = () => {
     const [borrowedBooks, setBorrowedBooks] = useState(mockBorrowing);
     return (
         <div className="p-4 sm:p-6 min-h-screen font-sans">
-            
+
             {/* Header */}
             <div className="flex justify-between items-center mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Current Borrowing</h2>
+                <h2 className="text-2xl font-semibold text-gray-800">Current Borrowing</h2>
             </div>
 
             {/* Column Headers */}

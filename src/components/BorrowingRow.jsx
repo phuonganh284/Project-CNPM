@@ -1,7 +1,7 @@
 import React from 'react';
 
 const BorrowingRow = ({ borrow }) => {
-    
+
     const getStatusClasses = (status) => {
         switch (status) {
             case 'Overdue':
@@ -15,7 +15,7 @@ const BorrowingRow = ({ borrow }) => {
 
     return (
         <div className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 mb-3 hover:shadow-md transition-shadow duration-200">
-            
+
             {/* Column 1: Title (Book Info) - Width 40% */}
             <div className="w-[40%] flex items-center pr-4 min-w-[200px]">
                 <img
