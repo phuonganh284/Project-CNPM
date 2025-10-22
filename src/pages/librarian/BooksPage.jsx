@@ -24,7 +24,7 @@ const BookCatalogPage = () => {
     description: "",
   });
 
-
+  // 4 chức năng: edit, delete, add, import
   const handleEdit = (book) => {
     console.log("Edit clicked for:", book.title);
   };
@@ -33,7 +33,6 @@ const BookCatalogPage = () => {
     console.log("Delete clicked for:", book.title);
     setBooks((prev) => prev.filter((b) => b.id !== book.id));
   };
-
 
   const handleAddBookSave = (book) => {
     const missingFields = Object.entries(book)
@@ -44,8 +43,21 @@ const BookCatalogPage = () => {
       alert("Please fill in the missing fields.");
       return;
     }
-    //Generate fake ID
-    const newBookEntry = { ...book, id: Date.now().toString() };
+    const newBookEntry = {
+      id: Date.now().toString(),
+      title: book.bookTitle,
+      author: book.bookAuthor,
+      publisher: book.publisher,
+      publish_year: book.bookYear,
+      isbn: book.isbn,
+      page_count: book.page_count,
+      total_copies: book.total_copies,
+      available_copies: book.available_copies,
+      category: book.category,
+      language: book.language,
+      description: book.description,
+      cover_url: book.cover_url,
+    };
 
     setBooks((prev) => [...prev, newBookEntry]);
     setIsAddDialogOpen(false);
