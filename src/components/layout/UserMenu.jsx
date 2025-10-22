@@ -118,9 +118,12 @@ const UserMenu = () => {
                         <button
                             onClick={() => {
                                 setIsOpen(false);
-                                // TODO: KHI CÓ BE - Navigate to profile page
-                                // navigate('/profile');
-                                console.log('Navigate to profile');
+                                // Navigate based on user role
+                                if (userRole === 'librarian') {
+                                    window.location.href = '/librarian-profile';
+                                } else {
+                                    window.location.href = '/profile';
+                                }
                             }}
                             className="
                                 w-full

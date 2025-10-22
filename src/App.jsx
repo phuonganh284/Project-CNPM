@@ -19,6 +19,10 @@ import BorrowingPage from "./pages/librarian/BorrowingPage";
 // Reader pages
 import MyBorrowsPage from "./pages/reader/MyBorrowsPage";
 import MyRequestsPage from "./pages/reader/MyRequestsPage";
+import ProfilePage from "./pages/reader/ProfilePage";
+
+// Librarian Profile page
+import LibrarianProfilePage from "./pages/librarian/ProfilePage";
 
 // Public pages (Login/Register)
 import LoginReader from "./pages/public/LoginReader";
@@ -68,10 +72,12 @@ const App = () => {
           <Route path="/approved-requests" element={<ApprovedRequestPage />} />
           <Route path="/return-requests" element={<ReturnRequestPage />} />
           <Route path="/borrowing" element={<BorrowingPage />} />
+          <Route path="/librarian-profile" element={<LibrarianProfilePage />} />
 
           {/* Reader routes */}
           <Route path="/my-borrows" element={<MyBorrowsPage />} />
           <Route path="/my-requests" element={<MyRequestsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </Router>
