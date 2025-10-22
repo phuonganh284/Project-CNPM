@@ -14,7 +14,7 @@ export const mockReaders = [
         email: 'john.books@example.com',
         password: 'johnPass2025',
         name: 'John Miller',
-        status: 'active',
+        status: 'borrowing',
     },
     {
         userId: 'R003',
@@ -38,7 +38,7 @@ export const mockReaders = [
         email: 'sarah.library@example.com',
         password: 'sarah789',
         name: 'Sarah Brown',
-        status: 'banned',
+        status: 'borrowing',
     },
     {
         userId: 'R006',
@@ -54,6 +54,6 @@ export const mockReaders = [
         email: 'olivia.page@example.com',
         password: 'oliviaSecure!',
         name: 'Olivia Taylor',
-        status: 'active',
+        status: 'borrowing',
     },
 ];

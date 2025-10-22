@@ -1,29 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     if (!isOpen) return null;
 
-    const [editedBook, setEditedBook] = useState(book);
+    const [editedBook, setEditedBook] = useState(book); // edit book
     const [errorMessage, setErrorMessage] = useState("");
 
-    const [preview, setPreview] = useState(book?.bookCover || "");
+    const [preview, setPreview] = useState(book?.bookCover || ""); // set data tạm thời
+    const [bookData, setBookData] = useState(book);
 
+
+    useEffect(() => {
+        setEditedBook(book);
+        setPreview(book?.bookCover || "");
+    }, [book]);
+
+    useEffect(() => {
+
+        return () => {
+            if (preview && preview.startsWith?.("blob:")) {
+                try {
+                    URL.revokeObjectURL(preview);
+                } catch (e) {
+
+                }
+            }
+        };
+
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setEditedBook((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = (e) => {
+    const handleImageChange = (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setPreview(reader.result);
-            setEditedBook((prev) => ({ ...prev, bookCover: reader.result }));
-        };
-        reader.readAsDataURL(file);
+        if (file) {
+            const imageURL = URL.createObjectURL(file);
+            setPreview(imageURL);
+            setEditedBook((prev) => ({
+                ...prev,
+                cover_url: imageURL,
+                coverFile: file, // keep actual file if needed for upload (TODO BE)
+            }));
+        }
     };
 
     const handleSave = () => {
@@ -202,7 +223,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             id="coverUpload"
                             type="file"
                             accept="image/*"
-                            onChange={handleImageUpload}
+                            onChange={handleImageChange}
                             className="hidden"
                         />
 

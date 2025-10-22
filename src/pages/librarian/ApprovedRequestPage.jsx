@@ -8,7 +8,7 @@ const ApprovedRequestPage = () => {
 
     const handleConfirmDelivery = (requestId) => {
         const deliveredRequest = requests.find(req => req.id === requestId);
-        
+
         const updatedRequests = requests.filter(req => req.id !== requestId);
         setRequests(updatedRequests);
 
@@ -21,10 +21,10 @@ const ApprovedRequestPage = () => {
 
     return (
         <div className="p-4 sm:p-6 min-h-screen font-sans">
-            
+
             {/* Header and Search Bar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b pb-4">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Approved Delivery Requests</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">Approved Delivery Requests</h2>
             </div>
 
             {/* Success Message */}
