@@ -663,13 +663,16 @@ const ProfilePage = () => {
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState('/man%201.svg'); // State để lưu avatar hiện tại
   
-  // Lấy dữ liệu từ mockReaders (lấy phần tử đầu tiên)
-  const [profileData, setProfileData] = useState(mockReaders?.[0] || {
-    name: 'Anna Smith',
-    email: 'anna.reader@example.com',
-    username: 'anna_reader',
-    phone: '123456789',
-    bio: "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature."
+  // Lấy dữ liệu trực tiếp từ mockReaders (lấy phần tử đầu tiên)
+  const [profileData, setProfileData] = useState(() => {
+    const reader = mockReaders?.[0];
+    return {
+      name: reader?.name || 'Anna Smith',
+      email: reader?.email || 'anna.reader@example.com',
+      username: reader?.username || 'anna_reader',
+      phone: '123456789', // Không có trong mockReaders nên để default
+      bio: "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature." // Không có trong mockReaders nên để default
+    };
   });
 
   const handleSaveProfile = (newData) => {
