@@ -48,15 +48,15 @@ export const AuthProvider = ({ children }) => {
     // ========================================================================
     // LOGIN - SỬA KHI CÓ BE
     // ========================================================================
-    const login = async (email, password) => {
+    const login = async (email, password, role = 'reader') => {
         // TODO: KHI CÓ BE - Xóa phần fake user, uncomment phần API call phía dưới
         
         // TRƯỚC KHI CÓ BE (GIẢ):
         const fakeUser = {
             id: 1,
-            name: 'Test User',
+            name: `Test ${role}`,
             email: email,
-            role: 'reader' // Giả lập login thành công
+            role: role // Sử dụng role được truyền vào
         };
         setUser(fakeUser);
         localStorage.setItem('user', JSON.stringify(fakeUser));

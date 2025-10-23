@@ -6,10 +6,12 @@ import { loginSchema } from "../../data/validations";
 import { Button } from "../../components/button";
 import { Input } from "../../components/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../components/form";
+import { useAuth } from "../../context/AuthContext";
 
 function LoginReader() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -19,10 +21,13 @@ function LoginReader() {
     }
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log("Login data:", data);
-    // TODO: Implement actual login API call
-    navigate("/home");
+    // Gọi hàm login với role 'reader'
+    const result = await login(data.email, data.password, 'reader');
+    if (result.success) {
+      navigate("/home");
+    }
   };
 
   return (
