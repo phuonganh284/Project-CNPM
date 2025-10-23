@@ -91,7 +91,7 @@ const BookCatalogPage = () => {
 
           <button
             onClick={() => setIsImportOpen(true)}
-            className="px-7 py-2 bg-white text-gray-600 rounded-lg border border-gray-500 hover:bg-gray-100 shadow-sm cursor-pointer"
+            className="px-7 py-2 bg-white text-gray-600 rounded-lg border border-gray-400 hover:bg-gray-100 shadow-sm cursor-pointer"
           >
             Import File
           </button>

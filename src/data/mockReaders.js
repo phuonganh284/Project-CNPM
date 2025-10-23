@@ -54,6 +54,6 @@ export const mockReaders = [
         email: 'olivia.page@example.com',
         password: 'oliviaSecure!',
         name: 'Olivia Taylor',
-        status: 'borrowing',
+        status: 'overdue',
     },
 ];
