@@ -95,12 +95,12 @@ const PasswordField = ({ label, id, name, placeholder, value, onChange, error })
 // Edit Media Modal Component
 const EditMediaModal = ({ isOpen, onClose, currentAvatar, onAvatarChange }) => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(currentAvatar || '/man 1.svg');
+  const [previewUrl, setPreviewUrl] = useState(currentAvatar || '/man%201.svg');
 
   // Reset preview khi modal mở
   React.useEffect(() => {
     if (isOpen) {
-      setPreviewUrl(currentAvatar || '/man 1.svg');
+      setPreviewUrl(currentAvatar || '/man%201.svg');
       setSelectedImage(null);
     }
   }, [isOpen, currentAvatar]);
@@ -131,7 +131,7 @@ const EditMediaModal = ({ isOpen, onClose, currentAvatar, onAvatarChange }) => {
 
   const handleCancel = () => {
     setSelectedImage(null);
-    setPreviewUrl(currentAvatar || '/man 1.svg');
+    setPreviewUrl(currentAvatar || '/man%201.svg');
     onClose();
   };
 
@@ -383,7 +383,7 @@ function AccountSettingsForm({ onShowEditMedia, currentAvatar }) {
   const displayUser = user || { role: 'guest' };
   
   // Avatar URL - sử dụng ảnh hiện tại hoặc man 1.svg mặc định
-  const avatarUrl = currentAvatar || "/man 1.svg";
+  const avatarUrl = currentAvatar || "/man%201.svg";
 
   return (
     <div className="flex flex-col gap-8">
@@ -539,7 +539,7 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('account');
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showEditMediaModal, setShowEditMediaModal] = useState(false);
-  const [currentAvatar, setCurrentAvatar] = useState('/man 1.svg'); // State để lưu avatar hiện tại
+  const [currentAvatar, setCurrentAvatar] = useState('/man%201.svg'); // State để lưu avatar hiện tại
 
   return (
     <div className="p-6 min-h-screen relative">
