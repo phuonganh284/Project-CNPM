@@ -666,9 +666,9 @@ const ProfilePage = () => {
   
   // Lấy dữ liệu của user đang đăng nhập từ mockReaders
   const [profileData, setProfileData] = useState(() => {
-    // Tìm user trong mockReaders dựa trên email hoặc name từ AuthContext
+    // Tìm user trong mockReaders dựa trên email từ AuthContext
     const currentUser = mockReaders.find(reader => 
-      reader.email === user?.email || reader.name === user?.name
+      reader.email === user?.email
     ) || mockReaders[0]; // Fallback về Anna nếu không tìm thấy
     
     return {
@@ -679,6 +679,23 @@ const ProfilePage = () => {
       bio: "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature." // Không có trong mockReaders nên để default
     };
   });
+
+  // Cập nhật profileData khi user thay đổi
+  React.useEffect(() => {
+    if (user?.email) {
+      const currentUser = mockReaders.find(reader => 
+        reader.email === user.email
+      ) || mockReaders[0];
+      
+      setProfileData({
+        name: currentUser?.name || 'Anna Smith',
+        email: currentUser?.email || 'anna.reader@example.com',
+        username: currentUser?.username || 'anna_reader',
+        phone: '123456789',
+        bio: "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature."
+      });
+    }
+  }, [user?.email]);
 
   const handleSaveProfile = (newData) => {
     setProfileData(newData);
