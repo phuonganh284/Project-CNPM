@@ -123,6 +123,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             value={editedBook.isbn}
                             onChange={handleChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Enter book's ISBN"
                         />
                     </div>
 
