@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { mockReaders } from '../../data/mockReaders';
 
 // Input Field Component
@@ -590,13 +591,12 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
 }
 
 // Login & Security Form Component
-function LoginSecurityForm({ onShowModal }) {
-  // Lấy dữ liệu tạm từ mockReaders (lấy phần tử đầu tiên)
-  // Trong sản phẩm thật sẽ lấy từ API/user context
-  const reader = mockReaders?.[0] || {
-    username: 'reader_user',
-    email: 'reader@example.com',
-    password: 'password123'
+function LoginSecurityForm({ onShowModal, profileData }) {
+  // Sử dụng dữ liệu từ profileData (đã được lấy từ user đang đăng nhập)
+  const reader = {
+    username: profileData?.username || 'reader_user',
+    email: profileData?.email || 'reader@example.com',
+    password: 'password123' // Không hiển thị password thật vì lý do bảo mật
   };
 
   return (
@@ -657,19 +657,24 @@ function LoginSecurityForm({ onShowModal }) {
 }
 
 const ProfilePage = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showEditMediaModal, setShowEditMediaModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState('/man%201.svg'); // State để lưu avatar hiện tại
   
-  // Lấy dữ liệu trực tiếp từ mockReaders (lấy phần tử đầu tiên)
+  // Lấy dữ liệu của user đang đăng nhập từ mockReaders
   const [profileData, setProfileData] = useState(() => {
-    const reader = mockReaders?.[0];
+    // Tìm user trong mockReaders dựa trên email hoặc name từ AuthContext
+    const currentUser = mockReaders.find(reader => 
+      reader.email === user?.email || reader.name === user?.name
+    ) || mockReaders[0]; // Fallback về Anna nếu không tìm thấy
+    
     return {
-      name: reader?.name || 'Anna Smith',
-      email: reader?.email || 'anna.reader@example.com',
-      username: reader?.username || 'anna_reader',
+      name: currentUser?.name || 'Anna Smith',
+      email: currentUser?.email || 'anna.reader@example.com',
+      username: currentUser?.username || 'anna_reader',
       phone: '123456789', // Không có trong mockReaders nên để default
       bio: "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature." // Không có trong mockReaders nên để default
     };
@@ -729,7 +734,10 @@ const ProfilePage = () => {
             profileData={profileData}
           />
         ) : (
-          <LoginSecurityForm onShowModal={() => setShowChangePasswordModal(true)} />
+          <LoginSecurityForm 
+            onShowModal={() => setShowChangePasswordModal(true)} 
+            profileData={profileData}
+          />
         )}
       </div>
 
