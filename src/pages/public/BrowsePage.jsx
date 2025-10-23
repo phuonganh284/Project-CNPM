@@ -3,11 +3,6 @@ import BookCard from '../../components/BookCard';
 import { mockBooks } from '../../data/mockBooks';
 
 const BrowsePage = () => {
-    const handleBookClick = (book) => {
-        console.log('Book clicked:', book);
-        // TODO: Navigate to book detail page or open modal
-    };
-
     return (
         <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4 p-4 mt-2">
             <div className="mb-6 ml-6">
@@ -25,7 +20,6 @@ const BrowsePage = () => {
                     <BookCard
                         key={book.id}
                         book={book}
-                        onClick={handleBookClick}
                         variant="grid"
                     />
                 ))}

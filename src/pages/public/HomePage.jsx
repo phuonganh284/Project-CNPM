@@ -24,11 +24,6 @@ const HomePage = () => {
         return 'Good Night';
     };
 
-    const handleBookClick = (book) => {
-        console.log('Book clicked:', book);
-        // TODO: Navigate to book detail page or open modal
-    };
-
     const handleShowAll = () => {
         navigate('/browse');
     };
@@ -46,7 +41,6 @@ const HomePage = () => {
                 <div className=" mt-4">
                     <AvailableNow
                         books={availableBooks}
-                        onBookClick={handleBookClick}
                     />
                 </div>
             </div>
@@ -78,7 +72,6 @@ const HomePage = () => {
                         <BookCard
                             key={book.id}
                             book={book}
-                            onClick={handleBookClick}
                             variant="grid"
                         />
                     ))}
