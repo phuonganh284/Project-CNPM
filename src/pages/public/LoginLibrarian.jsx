@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function LoginLibrarian() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -41,12 +43,15 @@ export default function LoginLibrarian() {
   };
 
   // Handle login button click
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const validationErrors = validateForm();
 
     if (Object.keys(validationErrors).length === 0) {
-      // All fields filled - navigate to HomeAdmin
-      navigate("/home");
+      // All fields filled - call login with role 'librarian'
+      const result = await login(formData.email, formData.password, 'librarian');
+      if (result.success) {
+        navigate("/home");
+      }
     } else {
       // Some fields empty - show errors
       setErrors(validationErrors);

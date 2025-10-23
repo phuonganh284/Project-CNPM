@@ -95,12 +95,12 @@ const PasswordField = ({ label, id, name, placeholder, value, onChange, error })
 // Edit Media Modal Component
 const EditMediaModal = ({ isOpen, onClose, currentAvatar, onAvatarChange }) => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(currentAvatar || '/man 1.svg');
+  const [previewUrl, setPreviewUrl] = useState(currentAvatar || '/man%201.svg');
 
   // Reset preview khi modal mở
   React.useEffect(() => {
     if (isOpen) {
-      setPreviewUrl(currentAvatar || '/man 1.svg');
+      setPreviewUrl(currentAvatar || '/man%201.svg');
       setSelectedImage(null);
     }
   }, [isOpen, currentAvatar]);
@@ -131,7 +131,7 @@ const EditMediaModal = ({ isOpen, onClose, currentAvatar, onAvatarChange }) => {
 
   const handleCancel = () => {
     setSelectedImage(null);
-    setPreviewUrl(currentAvatar || '/man 1.svg');
+    setPreviewUrl(currentAvatar || '/man%201.svg');
     onClose();
   };
 
@@ -377,13 +377,142 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   );
 };
 
+// Edit Profile Modal Component
+const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
+  const [formData, setFormData] = useState(currentProfile || {});
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData(currentProfile || {});
+    }
+  }, [isOpen, currentProfile]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSave = () => {
+    onSave(formData);
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setFormData(currentProfile || {});
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed top-[108px] left-[304px] right-[26px] bottom-0 z-50 flex items-center justify-center"
+      style={{backgroundColor: 'rgba(0, 0, 0, 0.1)'}}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-semibold text-gray-800 mb-6">Edit Profile</h2>
+        
+        <div className="flex flex-col gap-6">
+          {/* Hàng 1: Tên, Email */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-base font-medium text-[#4C535F]">Full name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name || ''}
+                onChange={handleChange}
+                className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF]"
+                placeholder="Enter full name"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-base font-medium text-[#4C535F]">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email || ''}
+                onChange={handleChange}
+                className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF]"
+                placeholder="Enter email"
+              />
+            </div>
+          </div>
+
+          {/* Hàng 2: Username, Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-base font-medium text-[#4C535F]">Username</label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username || ''}
+                onChange={handleChange}
+                className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF]"
+                placeholder="Enter username"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-base font-medium text-[#4C535F]">Phone number</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#8D98AA]">+84</span>
+                <div className="absolute left-12 top-1/2 -translate-y-1/2 h-5 w-px bg-[#E0E4EC]"></div>
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone || ''}
+                  onChange={handleChange}
+                  className="w-full h-12 pl-16 pr-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF]"
+                  placeholder="Enter phone number"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Bio */}
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-medium text-[#4C535F]">Bio</label>
+            <textarea
+              name="bio"
+              value={formData.bio || ''}
+              onChange={handleChange}
+              rows={4}
+              className="w-full p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF] resize-none"
+              placeholder="Tell us about yourself"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-center gap-4 mt-4">
+            <button
+              onClick={handleSave}
+              className="w-24 h-10 bg-[#3273AF] text-white text-sm font-medium rounded-lg hover:bg-opacity-90 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="w-24 h-10 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-opacity-90 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Account Settings Form Component
-function AccountSettingsForm({ onShowEditMedia, currentAvatar }) {
-  const { user } = useAuth();
-  const displayUser = user || { role: 'guest' };
-  
+function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar, profileData }) {
   // Avatar URL - sử dụng ảnh hiện tại hoặc man 1.svg mặc định
-  const avatarUrl = currentAvatar || "/man 1.svg";
+  const avatarUrl = currentAvatar || "/man%201.svg";
 
   return (
     <div className="flex flex-col gap-8">
@@ -401,81 +530,73 @@ function AccountSettingsForm({ onShowEditMedia, currentAvatar }) {
                </div>
       </div>
 
-      {/* Form Fields */}
-      <form className="flex flex-col gap-8">
+      {/* Form Fields - Read Only */}
+      <div className="flex flex-col gap-8">
         {/* Hàng 1: Tên, Email */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-          <InputField 
-            label="Full name" 
-            id="fullname" 
-            placeholder={displayUser?.name || "Reinhard Kenson"} 
-          />
-          <InputField 
-            label="Email" 
-            id="email" 
-            type="email" 
-            placeholder={displayUser?.email || "Kensoncs.official@college.com"} 
-          />
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-medium text-[#4C535F]">Full name</label>
+            <div className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
+              {profileData?.name || "Anna Smith"}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-medium text-[#4C535F]">Email</label>
+            <div className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
+              {profileData?.email || "anna.reader@example.com"}
+            </div>
+          </div>
         </div>
 
         {/* Hàng 2: Username, Số điện thoại */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-          <InputField 
-            label="Username" 
-            id="username" 
-            placeholder={displayUser?.name || "Reinhard Kenson"} 
-          />
           <div className="flex flex-col gap-2">
-            <label htmlFor="phone" className="text-base font-medium text-[#4C535F]">
-              Phone number
-            </label>
+            <label className="text-base font-medium text-[#4C535F]">Username</label>
+            <div className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
+              {profileData?.username || "anna_reader"}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-medium text-[#4C535F]">Phone number</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#8D98AA]">+91</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#8D98AA]">+84</span>
               <div className="absolute left-12 top-1/2 -translate-y-1/2 h-5 w-px bg-[#E0E4EC]"></div>
-              <input
-                type="tel"
-                id="phone"
-                placeholder="9952508995"
-                className="w-full h-12 pl-16 pr-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF]"
-              />
+              <div className="w-full h-12 pl-16 pr-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] flex items-center">
+                {profileData?.phone || "123456789"}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Hàng 3: Bio */}
         <div>
-          <label htmlFor="bio" className="text-base font-medium text-[#4C535F] mb-2 block">
-            Bio
-          </label>
-          <textarea
-            id="bio"
-            placeholder="I'm a Student"
-            className="w-full h-24 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF] resize-none"
-          ></textarea>
+          <label className="text-base font-medium text-[#4C535F] mb-2 block">Bio</label>
+          <div className="w-full h-24 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
+            {profileData?.bio || "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature."}
+          </div>
         </div>
 
-        {/* Nút Submit */}
+        {/* Nút Edit Profile */}
         <div>
           <button 
-            type="submit" 
+            onClick={onShowEditProfile}
             className="w-48 h-12 bg-[#3273AF] text-white text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors"
           >
             Edit Profile
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
 
 // Login & Security Form Component
-function LoginSecurityForm({ onShowModal }) {
-  // Lấy dữ liệu tạm từ mockReaders (lấy phần tử đầu tiên)
-  // Trong sản phẩm thật sẽ lấy từ API/user context
-  const reader = mockReaders?.[0] || {
-    username: 'reader_user',
-    email: 'reader@example.com',
-    password: 'password123'
+function LoginSecurityForm({ onShowModal, profileData }) {
+  // Sử dụng dữ liệu từ profileData (đã được lấy từ user đang đăng nhập)
+  const reader = {
+    username: profileData?.username || 'reader_user',
+    email: profileData?.email || 'reader@example.com',
+    password: 'password123' // Không hiển thị password thật vì lý do bảo mật
   };
 
   return (
@@ -536,10 +657,49 @@ function LoginSecurityForm({ onShowModal }) {
 }
 
 const ProfilePage = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showEditMediaModal, setShowEditMediaModal] = useState(false);
-  const [currentAvatar, setCurrentAvatar] = useState('/man 1.svg'); // State để lưu avatar hiện tại
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState('/man%201.svg'); // State để lưu avatar hiện tại
+  
+  // Lấy dữ liệu của user đang đăng nhập từ mockReaders
+  const [profileData, setProfileData] = useState(() => {
+    // Tìm user trong mockReaders dựa trên email từ AuthContext
+    const currentUser = mockReaders.find(reader => 
+      reader.email === user?.email
+    ) || mockReaders[0]; // Fallback về Anna nếu không tìm thấy
+    
+    return {
+      name: currentUser?.name || 'Anna Smith',
+      email: currentUser?.email || 'anna.reader@example.com',
+      username: currentUser?.username || 'anna_reader',
+      phone: '123456789', // Không có trong mockReaders nên để default
+      bio: "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature." // Không có trong mockReaders nên để default
+    };
+  });
+
+  // Cập nhật profileData khi user thay đổi
+  React.useEffect(() => {
+    if (user?.email) {
+      const currentUser = mockReaders.find(reader => 
+        reader.email === user.email
+      ) || mockReaders[0];
+      
+      setProfileData({
+        name: currentUser?.name || 'Anna Smith',
+        email: currentUser?.email || 'anna.reader@example.com',
+        username: currentUser?.username || 'anna_reader',
+        phone: '123456789',
+        bio: "I'm a book lover and avid reader. I enjoy exploring different genres and sharing my thoughts on literature."
+      });
+    }
+  }, [user?.email]);
+
+  const handleSaveProfile = (newData) => {
+    setProfileData(newData);
+  };
 
   return (
     <div className="p-6 min-h-screen relative">
@@ -583,7 +743,19 @@ const ProfilePage = () => {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'account' ? <AccountSettingsForm onShowEditMedia={() => setShowEditMediaModal(true)} currentAvatar={currentAvatar} /> : <LoginSecurityForm onShowModal={() => setShowChangePasswordModal(true)} />}
+        {activeTab === 'account' ? (
+          <AccountSettingsForm 
+            onShowEditMedia={() => setShowEditMediaModal(true)} 
+            onShowEditProfile={() => setShowEditProfileModal(true)}
+            currentAvatar={currentAvatar}
+            profileData={profileData}
+          />
+        ) : (
+          <LoginSecurityForm 
+            onShowModal={() => setShowChangePasswordModal(true)} 
+            profileData={profileData}
+          />
+        )}
       </div>
 
       {/* Change Password Modal - Outside the main content */}
@@ -598,6 +770,14 @@ const ProfilePage = () => {
         onClose={() => setShowEditMediaModal(false)}
         currentAvatar={currentAvatar}
         onAvatarChange={setCurrentAvatar}
+      />
+
+      {/* Edit Profile Modal - Outside the main content */}
+      <EditProfileModal 
+        isOpen={showEditProfileModal}
+        onClose={() => setShowEditProfileModal(false)}
+        onSave={handleSaveProfile}
+        currentProfile={profileData}
       />
     </div>
   );
