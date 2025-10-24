@@ -6,10 +6,10 @@ import ConfirmDialog from "./dialogs/ConfirmDialog";
 import BookEditDialog from "./dialogs/BookEditDialog";
 
 const BookCatalogCard = ({
-    bookCover,
-    bookTitle,
-    bookAuthor,
-    bookYear,
+    cover_url,
+    title,
+    author,
+    publish_year,
     category,
     available_copies,
     total_copies,
@@ -41,10 +41,10 @@ const BookCatalogCard = ({
         setShowEditDialog(true);
     };
     const bookData = {
-        bookCover,
-        bookTitle,
-        bookAuthor,
-        bookYear,
+        cover_url,
+        title,
+        author,
+        publish_year,
         category,
         available_copies,
         total_copies,
@@ -72,18 +72,18 @@ const BookCatalogCard = ({
             >
                 {/* Book Cover */}
                 <img
-                    src={bookCover}
-                    alt={bookTitle}
+                    src={cover_url}
+                    alt={title}
                     className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 mr-6"
                 />
 
                 {/* Book Info */}
                 <div className="flex-1 min-w-0 max-w-[290px] mr-6">
-                    <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate cursor-pointer">
-                        {bookTitle}
+                    <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate">
+                        {title}
                     </h3>
                     <p className="font-inter text-sm text-gray-600 truncate">
-                        {bookAuthor}, {bookYear}
+                        {author}, {publish_year}
                     </p>
                 </div>
 
@@ -141,7 +141,7 @@ const BookCatalogCard = ({
                         className={` px-6 py-2 rounded-lg border text-sm font-medium transition-all
                             ${isBorrowed
                                 ? "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed"
-                                : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                : "border-gray-500 text-gray-700 hover:bg-gray-50 cursor-pointer"
                             }
                         `}
                     >

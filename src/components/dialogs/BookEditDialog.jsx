@@ -6,7 +6,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     const [editedBook, setEditedBook] = useState(book); // edit book
     const [errorMessage, setErrorMessage] = useState("");
 
-    const [preview, setPreview] = useState(book?.bookCover || ""); // set data tạm thời
+    const [preview, setPreview] = useState(book?.cover_url || ""); // set data tạm thời
     const [bookData, setBookData] = useState(book);
 
 
@@ -71,8 +71,8 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                         <label className="text-sm text-gray-700">Title</label>
                         <input
                             type="text"
-                            name="bookTitle"
-                            value={editedBook.bookTitle}
+                            name="title"
+                            value={editedBook.title}
                             onChange={handleChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter book title"
@@ -83,8 +83,8 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                         <label className="text-sm text-gray-700">Author</label>
                         <input
                             type="text"
-                            name="bookAuthor"
-                            value={editedBook.bookAuthor}
+                            name="author"
+                            value={editedBook.author}
                             onChange={handleChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter author"
@@ -107,8 +107,8 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                         <label className="text-sm text-gray-700">Publish Year</label>
                         <input
                             type="number"
-                            name="bookYear"
-                            value={editedBook.bookYear}
+                            name="publish_year"
+                            value={editedBook.publish_year}
                             onChange={handleChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter publish year"
@@ -123,6 +123,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             value={editedBook.isbn}
                             onChange={handleChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Enter book's ISBN"
                         />
                     </div>
 
@@ -210,7 +211,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                         <label className="text-sm text-gray-700">Book Cover</label>
                         <img
                             src={preview || "https://via.placeholder.com/120x160?text=No+Cover"}
-                            alt="No cover"
+                            alt="Error loading"
                             className="w-32 h-40 object-cover rounded-lg border border-gray-300"
                         />
                         <label

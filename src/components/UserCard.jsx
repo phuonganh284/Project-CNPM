@@ -18,7 +18,7 @@ const UserCard = ({
 
     const handleViewClick = (e) => {
         e.stopPropagation();
-        navigate(`/users/${userId}`); // navigate to user profile (later)
+        navigate(`/users/${userId}`); // navigate to user profile
     };
 
     const handleBanClick = (e) => {
@@ -77,7 +77,12 @@ const UserCard = ({
                         </span>
                     )}
                     {status === "borrowing" && (
-                        <span className="inline-block px-3 py-1 bg-[#CDDCF2] text-[#2B5579] rounded-full text-xs font-medium">
+                        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                            {displayStatus}
+                        </span>
+                    )}
+                    {status === "overdue" && (
+                        <span className="inline-block px-3 py-1 bg-yellow-100 text-orange-700 rounded-full text-xs font-medium">
                             {displayStatus}
                         </span>
                     )}
@@ -89,10 +94,10 @@ const UserCard = ({
                 </div>
 
                 {/* buttons --------------------------- */}
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                     <button
                         onClick={handleViewClick}
-                        className="px-6 py-2 rounded-lg bg-[#4A90E2] text-white font-inter text-sm font-medium hover:bg-[#3A7BC8] cursor-pointer"
+                        className="px-5 py-2 rounded-lg bg-[#4A90E2] text-white font-inter text-sm font-medium hover:bg-[#3A7BC8] cursor-pointer"
                     >
                         View
                     </button>
@@ -100,7 +105,7 @@ const UserCard = ({
                         (
                             <button
                                 onClick={handleUnBanClick}
-                                className="w-[90px] py-2 rounded-lg text-sm font-medium transition-all border border-red-500 text-red-700 hover:bg-red-50 cursor-pointer  "
+                                className="w-[80px] py-2 rounded-lg text-sm font-medium transition-all border border-red-500 text-red-700 hover:bg-red-50 cursor-pointer  "
                             >
                                 Unban
                             </button>
@@ -109,7 +114,7 @@ const UserCard = ({
                             <button
                                 onClick={handleBanClick}
                                 disabled={status === "borrowing"}
-                                className={`w-[90px] py-2 rounded-lg border text-sm font-medium transition-all ${status === "borrowing"
+                                className={`w-[80px] py-2 rounded-lg border text-sm font-medium transition-all ${status === "borrowing" || status === "overdue"
                                     ? "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed"
                                     : "text-white bg-red-700 hover:bg-red-500 cursor-pointer"
                                     }`}
