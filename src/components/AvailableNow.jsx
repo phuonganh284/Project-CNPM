@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import BookCard from './BookCard';
 
-const AvailableNow = ({ books, onBookClick }) => {
+const AvailableNow = ({ books }) => {
     const scrollRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -79,6 +79,7 @@ const AvailableNow = ({ books, onBookClick }) => {
             <div
                 ref={scrollRef}
                 className="
+                    available-now-scroll
                     flex-1
                     bg-white
                     overflow-x-auto
@@ -94,8 +95,8 @@ const AvailableNow = ({ books, onBookClick }) => {
                     msOverflowStyle: 'none'
                 }}
             >
-                <style jsx>{`
-                    div::-webkit-scrollbar {
+                <style>{`
+                    .available-now-scroll::-webkit-scrollbar {
                         display: none;
                     }
                 `}</style>
@@ -103,7 +104,6 @@ const AvailableNow = ({ books, onBookClick }) => {
                     <BookCard
                         key={book.id}
                         book={book}
-                        onClick={onBookClick}
                         variant="carousel"
                     />
                 ))}
@@ -112,7 +112,6 @@ const AvailableNow = ({ books, onBookClick }) => {
                     <BookCard
                         key={`duplicate-${book.id}-${index}`}
                         book={book}
-                        onClick={onBookClick}
                         variant="carousel"
                     />
                 ))}

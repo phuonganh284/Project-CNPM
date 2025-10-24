@@ -6,7 +6,9 @@ import Welcome from "./pages/public/Welcome";
 import SelectRole from "./pages/public/SelectRole";
 import HomePage from "./pages/public/HomePage";
 import BrowsePage from "./pages/public/BrowsePage";
+import BookDetailPage from "./pages/public/BookDetailPage";
 import About from "./pages/public/About";
+import RulesPage from "./pages/public/RulesPage";
 
 // Librarian pages
 import BooksPage from "./pages/librarian/BooksPage";
@@ -64,7 +66,9 @@ const App = () => {
           {/* Public routes */}
           <Route path="/home" element={<HomePage />} />
           <Route path="/browse" element={<BrowsePage />} />
+          <Route path="/book/:id" element={<BookDetailPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/rules" element={<RulesPage />} />
 
           {/* Librarian routes */}
           <Route path="/books" element={<BooksPage />} />
