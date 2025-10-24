@@ -11,8 +11,8 @@ const BookCatalogPage = () => {
   const [successMessage, setSuccessMessage] = useState("");
 
   const [newBook, setNewBook] = useState({
-    bookTitle: "",
-    bookAuthor: "",
+    title: "",
+    author: "",
     publisher: "",
     bookYear: "",
     isbn: "",
@@ -45,10 +45,10 @@ const BookCatalogPage = () => {
     }
     const newBookEntry = {
       id: Date.now().toString(),
-      title: book.bookTitle,
-      author: book.bookAuthor,
+      title: book.title,
+      author: book.author,
       publisher: book.publisher,
-      publish_year: book.bookYear,
+      publish_year: book.publish_year,
       isbn: book.isbn,
       page_count: book.page_count,
       total_copies: book.total_copies,
@@ -127,10 +127,10 @@ const BookCatalogPage = () => {
         {books.map((book, idx) => (
           <BookCatalogCard
             key={idx}
-            bookCover={book.cover_url}
-            bookTitle={book.title}
-            bookAuthor={book.author}
-            bookYear={book.publish_year}
+            cover_url={book.cover_url}
+            title={book.title}
+            author={book.author}
+            publish_year={book.publish_year}
             publisher={book.publisher}
             category={book.category}
             isbn={book.isbn}

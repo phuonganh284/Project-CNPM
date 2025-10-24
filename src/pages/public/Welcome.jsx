@@ -9,13 +9,13 @@ function Welcome() {
   };
 
   return (
-    <div 
+    <div
       onClick={handleClick}
       className="w-screen h-screen flex flex-col items-center justify-center bg-white cursor-pointer hover:bg-gray-50 transition-colors duration-300"
     >
       <div className="text-center">
         <img
-          src="/logo.svg"
+          src="/logo_notext.svg"
           alt="Book Logo"
           className="w-[423px] h-[293px] object-contain hover:scale-105 transition-transform duration-300 mx-auto"
           onError={(e) => {

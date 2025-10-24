@@ -53,8 +53,8 @@ const HomePage = () => {
             </div>
 
             {/* Recommended for You */}
-            <div className="px-4 mt-6 ml-6">
-                <div className="flex items-center justify-between mb-8 w-[1190px]">
+            <div className="px-4 mt-6 ml-6 w-[1190px]">
+                <div className="flex items-center justify-between mb-8 ">
                     <h2 className="text-gray-700 font-inter text-xl font-semibold">
                         Recommended for You
                     </h2>
@@ -67,7 +67,7 @@ const HomePage = () => {
                 </div>
 
                 {/* Single Row - Exact number of books to fit, no scroll */}
-                <div className="flex gap-5 w-[1200px]">
+                <div className="flex gap-4 w-[1150px]">
                     {booksToShow.map(book => (
                         <BookCard
                             key={book.id}

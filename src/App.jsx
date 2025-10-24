@@ -9,6 +9,8 @@ import BrowsePage from "./pages/public/BrowsePage";
 import BookDetailPage from "./pages/public/BookDetailPage";
 import About from "./pages/public/About";
 import RulesPage from "./pages/public/RulesPage";
+import SupportPage from "./pages/public/SupportPage";
+import TermsPage from "./pages/public/TermsPage";
 
 // Librarian pages
 import BooksPage from "./pages/librarian/BooksPage";
@@ -69,6 +71,8 @@ const App = () => {
           <Route path="/book/:id" element={<BookDetailPage />} />
           <Route path="/about" element={<About />} />
           <Route path="/rules" element={<RulesPage />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/terms" element={<TermsPage />} />
 
           {/* Librarian routes */}
           <Route path="/books" element={<BooksPage />} />
