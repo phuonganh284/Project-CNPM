@@ -15,7 +15,7 @@ function Welcome() {
     >
       <div className="text-center">
         <img
-          src="/logo_notext.svg"
+          src="/logo.svg"
           alt="Book Logo"
           className="w-[423px] h-[293px] object-contain hover:scale-105 transition-transform duration-300 mx-auto"
           onError={(e) => {
