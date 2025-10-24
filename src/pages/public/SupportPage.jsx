@@ -2,7 +2,7 @@ import React from "react";
 
 const Support = () => {
     return (
-        <div className="w-full min-h-screen bg-gray-50 text-[#4D4D4D] font-inter flex items-center justify-center p-10">
+        <div className="w-full min-h-screen text-[#4D4D4D] font-inter flex items-center justify-center p-10">
             <div className="bg-white shadow-md rounded-2xl p-10 max-w-4xl w-full">
                 <h1 className="text-3xl font-bold text-center mb-8 text-[#333]">
                     Support

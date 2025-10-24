@@ -18,8 +18,8 @@ const SideBar = () => {
         reader: [
             { icon: assets.home_icon, label: 'Home', path: '/home' },
             { icon: assets.browse_icon, label: 'Browse', path: '/browse' },
-            { icon: assets.myborrows_icon, label: 'My Borrows', path: '/my-borrows' },
             { icon: assets.myrequest_icon, label: 'My Requests', path: '/my-requests' },
+            { icon: assets.myborrows_icon, label: 'My Borrows', path: '/my-borrows' },
             { icon: assets.rules_icon, label: 'Rules', path: '/rules' },
         ],
 

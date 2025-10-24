@@ -14,32 +14,7 @@ const RulesPage = () => {
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-8 ml-6">
-                    {/* General Rules */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">General Rules</h2>
-                        <ul className="space-y-3 text-gray-700">
-                            <li className="flex items-start">
-                                <span className="text-blue-600 mr-3">•</span>
-                                <span>All library users must register and obtain a library card</span>
-                            </li>
-                            <li className="flex items-start">
-                                <span className="text-blue-600 mr-3">•</span>
-                                <span>Maintain silence and avoid disturbing other users</span>
-                            </li>
-                            <li className="flex items-start">
-                                <span className="text-blue-600 mr-3">•</span>
-                                <span>No food or drinks are allowed in the library premises</span>
-                            </li>
-                            <li className="flex items-start">
-                                <span className="text-blue-600 mr-3">•</span>
-                                <span>Mobile phones must be kept on silent mode</span>
-                            </li>
-                            <li className="flex items-start">
-                                <span className="text-blue-600 mr-3">•</span>
-                                <span>Handle all books and materials with care</span>
-                            </li>
-                        </ul>
-                    </section>
+
 
                     {/* Borrowing Rules */}
                     <section className="mb-8">
@@ -51,7 +26,7 @@ const RulesPage = () => {
                             </li>
                             <li className="flex items-start">
                                 <span className="text-blue-600 mr-3">•</span>
-                                <span>Standard borrowing period is 14 days</span>
+                                <span>Standard borrowing period is 30 days</span>
                             </li>
                             <li className="flex items-start">
                                 <span className="text-blue-600 mr-3">•</span>
