@@ -198,7 +198,6 @@ const BookDetailPage = () => {
               </div>
             ) : (
               <>
-                {/* Status Badge - For non-borrowed books */}
                 <div className="mb-4">
                   <span
                     className={`inline-block px-6 py-2 rounded-full text-sm font-semibold ${statusConfig.className}`}
@@ -207,143 +206,143 @@ const BookDetailPage = () => {
                   </span>
                 </div>
 
-            {/* Borrow/Action Button */}
-            {user?.role === "reader" ? (
-              // Reader → Borrow button
-              <Button
-                onClick={handleBorrowClick}
-                disabled={statusConfig.buttonDisabled}
-                className="w-full max-w-[200px]"
-              >
-                {statusConfig.buttonText}
-              </Button>
-            ) : user?.role === "librarian" ? (
-              // Librarian → Edit + Delete buttons
-              <div className="flex flex-col gap-3 w-full max-w-[150px] ">
-                <button
-                  onClick={handleEditClick}
-                  className="px-4 py-2 rounded-lg  text-sm font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] transition cursor-pointer"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDeleteClick}
-                  className="px-4 py-2 rounded-lg border border-gray-500 text-gray-700 text-sm font-medium hover:bg-gray-50 transition cursor-pointer"
-                >
-                  Delete
-                </button>
+                {user?.role === "reader" ? (
+                  <Button
+                    onClick={handleButtonClick}
+                    disabled={statusConfig.buttonDisabled}
+                    className="w-full max-w-[200px]"
+                  >
+                    {statusConfig.buttonText}
+                  </Button>
+                ) : user?.role === "librarian" ? (
+                  <div className="flex flex-col gap-3 w-full max-w-[150px] ">
+                    <button
+                      onClick={handleEditClick}
+                      className="px-4 py-2 rounded-lg  text-sm font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] transition cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDeleteClick}
+                      className="px-4 py-2 rounded-lg border border-gray-500 text-gray-700 text-sm font-medium hover:bg-gray-50 transition cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            )}
+
+            {/* Book Details Section */}
+            <div className="flex flex-col">
+              {/* Title and Author */}
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {book.title}
+                </h1>
+                <p className="text-lg text-gray-600">by {book.author}</p>
               </div>
-            ) : null}
-          </div>
 
-          {/* Book Details Section */}
-          <div className="flex flex-col">
-            {/* Title and Author */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {book.title}
-              </h1>
-              <p className="text-lg text-gray-600">by {book.author}</p>
-            </div>
+              {/* Overview Section */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Overview
+                </h2>
+                <p className="text-gray-700 leading-relaxed mb-6">
+                  {book.description ||
+                    "Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit."}
+                </p>
 
-            {/* Overview Section */}
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Overview
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-6">
-                {book.description ||
-                  "Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit."}
-              </p>
-
-              {/* Book Metadata Grid */}
-              <div className="grid grid-cols-3 gap-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-1">Pages</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {book.page_count || "240"}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-1">Language</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {book.language || "English"}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-1">Publisher</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {book.publisher || "Unknown"}
-                  </p>
+                {/* Book Metadata Grid */}
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-1">Pages</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {book.page_count || "240"}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-1">Language</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {book.language || "English"}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-1">Publisher</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {book.publisher || "Unknown"}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Additional Details */}
-            <div className="border-t pt-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">ISBN</p>
-                  <p className="text-base font-medium text-gray-900">
-                    {book.isbn || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Category</p>
-                  <p className="text-base font-medium text-gray-900">
-                    {book.category || "General"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Publication Year</p>
-                  <p className="text-base font-medium text-gray-900">
-                    {book.publish_year || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Available Copies</p>
-                  <p className="text-base font-medium text-gray-900">
-                    {book.available_copies || 0} / {book.total_copies || 0}
-                  </p>
+              {/* Additional Details */}
+              <div className="border-t pt-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">ISBN</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {book.isbn || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Category</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {book.category || "General"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Publication Year</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {book.publish_year || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Available Copies</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {book.available_copies || 0} / {book.total_copies || 0}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Borrow Request Dialog */}
+        <BorrowRequestDialog
+          isOpen={showBorrowDialog}
+          onClose={() => setShowBorrowDialog(false)}
+          onConfirm={handleBorrowConfirm}
+          book={book}
+        />
+
+        {/* Confirmation Modal */}
+        <BorrowConfirmationModal
+          isOpen={showConfirmation}
+          onClose={handleConfirmationClose}
+        />
+
+        <ConfirmDialog
+          isOpen={showConfirmDelete}
+          title="Confirm Delete"
+          message="Are you sure you want to delete this book?"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setShowConfirmDelete(false)}
+        />
+        <BookEditDialog
+          isOpen={showEditDialog}
+          book={book}
+          onSave={(edited) => {
+            console.log("Book edited:", edited);
+            setShowEditDialog(false);
+          }}
+          onCancel={() => setShowEditDialog(false)}
+        />
       </div>
-
-      {/* Borrow Request Dialog */}
-      <BorrowRequestDialog
-        isOpen={showBorrowDialog}
-        onClose={() => setShowBorrowDialog(false)}
-        onConfirm={handleBorrowConfirm}
-        book={book}
-      />
-
-      {/* Confirmation Modal */}
-      <BorrowConfirmationModal
-        isOpen={showConfirmation}
-        onClose={handleConfirmationClose}
-      />
-
-      <ConfirmDialog
-        isOpen={showConfirmDelete}
-        title="Confirm Delete"
-        message="Are you sure you want to delete this book?"
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setShowConfirmDelete(false)}
-      />
-      <BookEditDialog
-        isOpen={showEditDialog}
-        book={book}
-        onSave={(edited) => {
-          console.log("Book edited:", edited);
-          setShowEditDialog(false);
-        }}
-        onCancel={() => setShowEditDialog(false)}
-      />
     </div>
   );
 };
+
 
 export default BookDetailPage;
