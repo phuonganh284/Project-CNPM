@@ -7,6 +7,8 @@ import { Button } from "../../components/button";
 import { useAuth } from "../../context/AuthContext";
 import BorrowRequestDialog from "../../components/dialogs/BorrowRequestDialog";
 import BorrowConfirmationModal from "../../components/dialogs/BorrowConfirmationModal";
+import ConfirmDialog from "../../components/dialogs/ConfirmDialog";
+import BookEditDialog from "../../components/dialogs/BookEditDialog";
 
 const BookDetailPage = () => {
   const { id } = useParams();
@@ -15,6 +17,8 @@ const BookDetailPage = () => {
   const [book] = useState(() => mockBooks.find((b) => b.id === parseInt(id)));
   const [showBorrowDialog, setShowBorrowDialog] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   // Check if current user has borrowed this book
   const userBorrow = mockBorrows.find((borrow) => borrow.id === parseInt(id));
@@ -42,7 +46,7 @@ const BookDetailPage = () => {
         borrowInfo: userBorrow,
       };
     }
-    
+
     // Book status for other users
     if (book.status === "available") {
       return {
@@ -94,6 +98,22 @@ const BookDetailPage = () => {
     // Optionally navigate to My Requests page
     // navigate("/my-requests");
   };
+
+  const handleEditClick = () => {
+    setShowEditDialog(true);
+  };
+
+  const handleDeleteClick = () => {
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = () => {
+    console.log("Book deleted:", book.title);
+    setShowConfirmDelete(false);
+    // TODO: remove from backend
+    navigate(-1);
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -160,13 +180,32 @@ const BookDetailPage = () => {
             )}
 
             {/* Borrow/Action Button */}
-            <Button
-              onClick={handleButtonClick}
-              disabled={statusConfig.buttonDisabled}
-              className="w-full max-w-[200px]"
-            >
-              {statusConfig.buttonText}
-            </Button>
+            {user?.role === "reader" ? (
+              // Reader → Borrow button
+              <Button
+                onClick={handleBorrowClick}
+                disabled={statusConfig.buttonDisabled}
+                className="w-full max-w-[200px]"
+              >
+                {statusConfig.buttonText}
+              </Button>
+            ) : user?.role === "librarian" ? (
+              // Librarian → Edit + Delete buttons
+              <div className="flex flex-col gap-3 w-full max-w-[150px] ">
+                <button
+                  onClick={handleEditClick}
+                  className="px-4 py-2 rounded-lg  text-sm font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] transition cursor-pointer"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDeleteClick}
+                  className="px-4 py-2 rounded-lg border border-gray-500 text-gray-700 text-sm font-medium hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null}
           </div>
 
           {/* Book Details Section */}
@@ -257,6 +296,23 @@ const BookDetailPage = () => {
       <BorrowConfirmationModal
         isOpen={showConfirmation}
         onClose={handleConfirmationClose}
+      />
+
+      <ConfirmDialog
+        isOpen={showConfirmDelete}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this book?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowConfirmDelete(false)}
+      />
+      <BookEditDialog
+        isOpen={showEditDialog}
+        book={book}
+        onSave={(edited) => {
+          console.log("Book edited:", edited);
+          setShowEditDialog(false);
+        }}
+        onCancel={() => setShowEditDialog(false)}
       />
     </div>
   );

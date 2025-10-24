@@ -18,8 +18,8 @@ const SideBar = () => {
         reader: [
             { icon: assets.home_icon, label: 'Home', path: '/home' },
             { icon: assets.browse_icon, label: 'Browse', path: '/browse' },
-            { icon: assets.myborrows_icon, label: 'My Borrows', path: '/my-borrows' },
             { icon: assets.myrequest_icon, label: 'My Requests', path: '/my-requests' },
+            { icon: assets.myborrows_icon, label: 'My Borrows', path: '/my-borrows' },
             { icon: assets.rules_icon, label: 'Rules', path: '/rules' },
         ],
 
@@ -30,8 +30,8 @@ const SideBar = () => {
             { icon: assets.users_icon, label: 'Manage Readers', path: '/users' },
             { icon: assets.borrow_admin_icon, label: 'Borrow Requests', path: '/borrow-requests' },
             { icon: assets.approved_icon, label: 'Approved Requests', path: '/approved-requests' },
-            { icon: assets.return_icon, label: 'Return Requests', path: '/return-requests' },
             { icon: assets.myborrows_icon, label: 'Borrowing records', path: '/borrowing' },
+            { icon: assets.return_icon, label: 'Return Requests', path: '/return-requests' },
             { icon: assets.rules_icon, label: 'Rules', path: '/rules' },
         ],
     };

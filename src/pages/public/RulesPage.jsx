@@ -14,6 +14,11 @@ const RulesPage = () => {
                 </div>
 
                 <div className="bg-white rounded-lg shadow-sm p-8 ml-6">
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 21f127ffec3d1c30283d9bc7b23d4b9389621e89
                     {/* Borrowing Rules */}
                     <section className="mb-8">
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Borrowing Rules</h2>
@@ -24,7 +29,11 @@ const RulesPage = () => {
                             </li>
                             <li className="flex items-start">
                                 <span className="text-blue-600 mr-3">•</span>
+<<<<<<< HEAD
                                 <span><strong>Standard borrowing period is 1 month (30 days)</strong></span>
+=======
+                                <span>Standard borrowing period is 30 days</span>
+>>>>>>> 21f127ffec3d1c30283d9bc7b23d4b9389621e89
                             </li>
                             <li className="flex items-start">
                                 <span className="text-blue-600 mr-3">•</span>
