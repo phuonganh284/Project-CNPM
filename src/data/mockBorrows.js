@@ -39,9 +39,20 @@ export const mockBorrows = [
         title: "Sprint",
         author: "Jake Knapp, 2016",
         cover: "https://m.media-amazon.com/images/I/71y2wZgkJ6L._SL1500_.jpg",
-        borrowedOn: "11 Mar 2023 08:00 AM",
-        returnDue: "14 Mar 2023",
+        borrowedOn: "09 Mar 2023 09:00 AM",
+        returnDue: "2025-10-25",
         isOverdue: false,
+        renewed: false,
+        isPendingReturn: false 
+    },
+    {
+        id: 5,
+        title: "The Pragmatic Programmer",
+        author: "Andrew Hunt, 2019",
+        cover: "https://m.media-amazon.com/images/I/71f1jieYHNL._SY466_.jpg",
+        borrowedOn: "11 Mar 2023 09:00 AM",
+        returnDue: "2025-10-1",
+        isOverdue: true,
         renewed: false,
         isPendingReturn: false 
     },

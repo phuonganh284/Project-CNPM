@@ -33,9 +33,8 @@ const BorrowConfirmationModal = ({ isOpen, onClose }) => {
 
         {/* Message */}
         <p className="text-gray-600 mb-8">
-          Your borrow request have been to catalog you'll have finish given for
-          you to pick-up the book properly, atleast, it's one of the best
-          mind-blowing book about UI/UX design.
+          Your borrow request has been submitted successfully! You will be notified once it's approved. 
+          Please check your notifications for the pickup schedule.
         </p>
 
         {/* Back Button */}

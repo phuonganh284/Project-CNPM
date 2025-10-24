@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "../button";
 
-const BorrowRequestDialog = ({ isOpen, onClose, onConfirm, bookTitle }) => {
+const BorrowRequestDialog = ({ isOpen, onClose, book, onConfirm }) => {
   const [requestDate, setRequestDate] = useState(() => {
     const today = new Date();
     return {
@@ -27,19 +27,34 @@ const BorrowRequestDialog = ({ isOpen, onClose, onConfirm, bookTitle }) => {
 
   const handleSubmit = () => {
     const requestData = {
+      bookId: book?.id,
+      bookTitle: book?.title,
       requestedOn: `${requestDate.day}-${requestDate.month}-${requestDate.year}`,
       pickupDate: `${pickupDate.day}-${pickupDate.month}-${pickupDate.year}`,
       bookSerialNo: bookSerialNo,
     };
-    onConfirm(requestData);
+    console.log('Borrow request submitted:', requestData);
+    // Call the parent's onConfirm callback
+    if (onConfirm) {
+      onConfirm(requestData);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-[450px] p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-6">
-          Borrow Request Details
-        </h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-6">
+            Borrow Request Details
+          </h2>
+          
+          {/* Book Title */}
+          {book && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">Requesting:</p>
+              <p className="font-semibold text-gray-800">{book.title}</p>
+              <p className="text-sm text-gray-500">{book.author}</p>
+            </div>
+          )}
 
         {/* Requested on Date */}
         <div className="mb-4">

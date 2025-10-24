@@ -30,9 +30,13 @@ const ReturnRequestPage = () => {
   };
 
   const handleReceiveBook = (id) => {
-    setRequests(prev => prev.map(r =>
-      r.id === id ? { ...r, status: 'COMPLETED' } : r
-    ));
+    // Remove request from list after receiving book
+    setRequests(prev => prev.filter(r => r.id !== id));
+    // Close drawer if it's open for this request
+    if (selectedRequest?.id === id) {
+      setIsDrawerOpen(false);
+      setSelectedRequest(null);
+    }
   };
 
   // Helper: get book cover from mockBooks
