@@ -23,9 +23,6 @@ function Welcome() {
             e.target.style.display = 'none';
           }}
         />
-        <h1 className="font-[Josefin_Sans] text-[64px] leading-[64px] mt-6 transition-colors duration-300 text-gray-800">
-          Smart Library
-        </h1>
         <p className="text-gray-500 text-lg mt-4 opacity-70">
           Click anywhere to continue
         </p>
