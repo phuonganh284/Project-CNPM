@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RequestBookCard } from '../../components/MyRequestCard.jsx';
 import { mockRequestBooks } from '../../data/mockRequestBooks.js';
 
@@ -9,13 +10,13 @@ const CancelConfirmModal = ({ isOpen, onClose, onConfirm }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
-      <div className="bg-white rounded-xl shadow p-8 min-w-[300px] flex flex-col items-center">
+      <div className="bg-white rounded-xl shadow p-8 min-w-[400px] min-h-[300px] flex flex-col justify-center items-center">
         {/* Tiêu đề của modal */}
-        <div className="text-lg font-semibold mb-6">Cancel request confirmation</div>
+        <div className="text-lg font-semibold mb-6 p-5">Cancel request confirmation</div>
 
         {/* Nút xác nhận hủy */}
         <button
-          className="w-full bg-[#3273AF] text-white py-2 rounded mb-3 font-medium text-lg"
+          className="w-40 bg-[#3273AF] text-white py-2 rounded mb-3 font-medium text-lg"
           onClick={onConfirm}
         >
           Confirm
@@ -23,7 +24,7 @@ const CancelConfirmModal = ({ isOpen, onClose, onConfirm }) => {
 
         {/* Nút đóng modal */}
         <button
-          className="w-full bg-gray-700 text-white py-2 rounded font-medium text-lg"
+          className="w-40 bg-[#4D4D4D] text-white py-2 rounded font-medium text-lg"
           onClick={onClose}
         >
           Cancel
@@ -40,6 +41,8 @@ const MyRequestsPage = () => {
 
   // Lưu trữ thông tin về sách được chọn để hủy
   const [selectedBook, setSelectedBook] = useState(null);
+
+  const navigate = useNavigate();
 
   // Xử lý khi người dùng nhấn nút "Cancel request" của từng sách
   const handleCancelClick = (book) => {
@@ -59,6 +62,10 @@ const MyRequestsPage = () => {
     setIsModalOpen(false);
   };
 
+  // Handle Preview button click - navigate to book detail
+  const handlePreview = (bookId) => {
+    navigate(`/book/${bookId}`); // Navigate to book detail page
+  };
   return (
     <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4 p-4 mt-4">
       <div className="mb-6">
@@ -80,6 +87,7 @@ const MyRequestsPage = () => {
             requestedAt={book.requestedAt}     // Ngày yêu cầu
             status={book.status}               // Trạng thái (Pending / Approved)
             onCancel={() => handleCancelClick(book)}  // Gọi hàm khi nhấn nút hủy
+            onPreview={() => handlePreview(book.id)}
           />
         ))}
       </div>
