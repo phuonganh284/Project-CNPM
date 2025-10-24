@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import BookCard from './BookCard';
 
-const AvailableNow = ({ books, onBookClick }) => {
+const AvailableNow = ({ books }) => {
     const scrollRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -14,23 +14,23 @@ const AvailableNow = ({ books, onBookClick }) => {
         if (!scrollContainer) return;
 
         const scrollAmount = 350; // Scroll by ~2 books (167px * 2 + gaps)
-        
+
         if (direction === 'left') {
-            scrollContainer.scrollTo({ 
-                left: scrollContainer.scrollLeft - scrollAmount, 
-                behavior: 'smooth' 
+            scrollContainer.scrollTo({
+                left: scrollContainer.scrollLeft - scrollAmount,
+                behavior: 'smooth'
             });
         } else {
             const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
             const newScroll = scrollContainer.scrollLeft + scrollAmount;
-            
+
             if (newScroll >= maxScroll) {
                 // Reset to start if reaching end
                 scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
-                scrollContainer.scrollTo({ 
-                    left: newScroll, 
-                    behavior: 'smooth' 
+                scrollContainer.scrollTo({
+                    left: newScroll,
+                    behavior: 'smooth'
                 });
             }
         }
@@ -48,14 +48,14 @@ const AvailableNow = ({ books, onBookClick }) => {
     }, [isHovered]);
 
     return (
-        <div 
-            className="w-[861px] h-[233px] flex rounded-2xl overflow-hidden shadow-md flex-shrink-0 relative group z-0"
+        <div
+            className="w-[705px] h-[200px] flex rounded-2xl overflow-hidden shadow-md flex-shrink-0 relative group z-0"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Vertical "Available now" Tab */}
             <div className="
-                bg-[#7E9FBF]
+                bg-gradient-to-r from-[#A5B6CE] to-[#576D91]
                 w-[60px]
                 flex
                 items-center
@@ -64,13 +64,12 @@ const AvailableNow = ({ books, onBookClick }) => {
             ">
                 <p className="
                     text-white
-                    font-inter
-                    text-sm
-                    font-medium
                     tracking-wide
                     transform
                     -rotate-90
                     whitespace-nowrap
+                    text-xl
+                    font-inter
                 ">
                     Available now
                 </p>
@@ -80,6 +79,7 @@ const AvailableNow = ({ books, onBookClick }) => {
             <div
                 ref={scrollRef}
                 className="
+                    available-now-scroll
                     flex-1
                     bg-white
                     overflow-x-auto
@@ -95,8 +95,8 @@ const AvailableNow = ({ books, onBookClick }) => {
                     msOverflowStyle: 'none'
                 }}
             >
-                <style jsx>{`
-                    div::-webkit-scrollbar {
+                <style>{`
+                    .available-now-scroll::-webkit-scrollbar {
                         display: none;
                     }
                 `}</style>
@@ -104,7 +104,6 @@ const AvailableNow = ({ books, onBookClick }) => {
                     <BookCard
                         key={book.id}
                         book={book}
-                        onClick={onBookClick}
                         variant="carousel"
                     />
                 ))}
@@ -113,7 +112,6 @@ const AvailableNow = ({ books, onBookClick }) => {
                     <BookCard
                         key={`duplicate-${book.id}-${index}`}
                         book={book}
-                        onClick={onBookClick}
                         variant="carousel"
                     />
                 ))}
@@ -151,11 +149,12 @@ const AvailableNow = ({ books, onBookClick }) => {
                         transition-all
                         duration-200
                         hover:scale-110
+                        cursor-pointer
                     "
                     aria-label="Previous"
                 >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M12.5 15L7.5 10L12.5 5" stroke="#4D4D4D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12.5 15L7.5 10L12.5 5" stroke="#4D4D4D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </button>
 
@@ -176,11 +175,12 @@ const AvailableNow = ({ books, onBookClick }) => {
                         transition-all
                         duration-200
                         hover:scale-110
+                        cursor-pointer
                     "
                     aria-label="Next"
                 >
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M7.5 15L12.5 10L7.5 5" stroke="#4D4D4D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M7.5 15L12.5 10L7.5 5" stroke="#4D4D4D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </button>
             </div>

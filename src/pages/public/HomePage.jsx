@@ -24,11 +24,6 @@ const HomePage = () => {
         return 'Good Night';
     };
 
-    const handleBookClick = (book) => {
-        console.log('Book clicked:', book);
-        // TODO: Navigate to book detail page or open modal
-    };
-
     const handleShowAll = () => {
         navigate('/browse');
     };
@@ -36,47 +31,47 @@ const HomePage = () => {
     return (
         <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4">
             {/* Hero Section với IntroBox và Available Now */}
-            <div className="flex flex-row gap-4 pt-4 px-4">
+            <div className="flex flex-row gap-8 pt-4 px-4">
                 {/* IntroBox */}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 ml-6">
                     <IntroBox />
                 </div>
 
                 {/* Available Now Carousel */}
-                <AvailableNow 
-                    books={availableBooks}
-                    onBookClick={handleBookClick}
-                />
+                <div className=" mt-4">
+                    <AvailableNow
+                        books={availableBooks}
+                    />
+                </div>
             </div>
 
             {/* Good Morning Section */}
-            <div className="px-4 mt-8">
+            <div className="w-[300px] px-4 mt-12 ml-6">
                 <h1 className="text-gray-800 font-inter text-3xl font-bold mb-2">
                     {getGreeting()}
                 </h1>
             </div>
 
             {/* Recommended for You */}
-            <div className="px-4 mt-6">
-                <div className="flex items-center justify-between mb-4">
+            <div className="px-4 mt-6 ml-6">
+                <div className="flex items-center justify-between mb-8 w-[1190px]">
                     <h2 className="text-gray-700 font-inter text-xl font-semibold">
                         Recommended for You
                     </h2>
-                    <button 
+                    <button
                         onClick={handleShowAll}
-                        className="text-[#4A90E2] font-inter text-sm font-medium hover:underline"
+                        className="text-[#4A90E2] font-inter text-sm font-medium hover:underline cursor-pointer"
                     >
                         Show All
                     </button>
                 </div>
 
                 {/* Single Row - Exact number of books to fit, no scroll */}
-                <div className="flex gap-5">
+                <div className="flex gap-5 w-[1200px]">
                     {booksToShow.map(book => (
                         <BookCard
                             key={book.id}
                             book={book}
-                            onClick={handleBookClick}
                             variant="grid"
                         />
                     ))}

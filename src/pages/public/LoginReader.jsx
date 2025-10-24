@@ -6,10 +6,12 @@ import { loginSchema } from "../../data/validations";
 import { Button } from "../../components/button";
 import { Input } from "../../components/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../components/form";
+import { useAuth } from "../../context/AuthContext";
 
 function LoginReader() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -19,10 +21,13 @@ function LoginReader() {
     }
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log("Login data:", data);
-    // TODO: Implement actual login API call
-    navigate("/home-user");
+    // Gọi hàm login với role 'reader'
+    const result = await login(data.email, data.password, 'reader');
+    if (result.success) {
+      navigate("/home");
+    }
   };
 
   return (
@@ -162,19 +167,19 @@ function LoginReader() {
               )}
             />
 
-        {/* Remember me + Forgot password */}
-        <div className="flex justify-between items-center w-[422px] mb-8">
-          <label className="flex items-center gap-2 text-[#4D4D4D] text-[16px]">
-            <input type="checkbox" className="w-4 h-4 accent-[#0A385F]" />
-            Remember me
-          </label>
-          <span 
-            onClick={() => navigate("/send-mail-to-reset-pass")}
-            className="text-[#4D4D4D] underline text-[16px] cursor-pointer hover:text-[#3273AF] transition-colors"
-          >
-            Forgot password?
-          </span>
-        </div>
+            {/* Remember me + Forgot password */}
+            <div className="flex justify-between items-center w-[422px] mb-8">
+              <label className="flex items-center gap-2 text-[#4D4D4D] text-[16px]">
+                <input type="checkbox" className="w-4 h-4 accent-[#0A385F]" />
+                Remember me
+              </label>
+              <span
+                onClick={() => navigate("/send-mail-to-reset-pass")}
+                className="text-[#4D4D4D] underline text-[16px] cursor-pointer hover:text-[#3273AF] transition-colors"
+              >
+                Forgot password?
+              </span>
+            </div>
 
             {/* Nút Login */}
             <Button
@@ -189,7 +194,7 @@ function LoginReader() {
         {/* Link đăng ký */}
         <p className="text-[#4D4D4D] text-[16px]">
           New User?{" "}
-          <span 
+          <span
             onClick={() => navigate("/register")}
             className="underline cursor-pointer hover:text-[#3273AF] transition-colors"
           >

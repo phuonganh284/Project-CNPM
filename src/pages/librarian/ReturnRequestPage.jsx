@@ -15,11 +15,11 @@ const ReturnRequestPage = () => {
   };
 
   const handleSaveAssessment = (requestId, assessmentData) => {
-    setRequests(prev => prev.map(r => 
-      r.id === requestId ? { 
-        ...r, 
+    setRequests(prev => prev.map(r =>
+      r.id === requestId ? {
+        ...r,
         status: assessmentData.charge_total > 0 ? 'ASSESSED_MODERATE' : 'ASSESSED',
-        charge_total: assessmentData.charge_total 
+        charge_total: assessmentData.charge_total
       } : r
     ));
   };
@@ -30,7 +30,7 @@ const ReturnRequestPage = () => {
   };
 
   const handleReceiveBook = (id) => {
-    setRequests(prev => prev.map(r => 
+    setRequests(prev => prev.map(r =>
       r.id === id ? { ...r, status: 'COMPLETED' } : r
     ));
   };
@@ -49,18 +49,18 @@ const ReturnRequestPage = () => {
       <div className="sticky top-0 z-10 bg-[#F3F3F7] py-3 mb-4">
         <div className="flex items-center px-6 gap-4 text-gray-600 font-inter text-sm font-medium max-w-[1200px]">
           {/* Book Cover Space */}
-          <div className="w-[70px] flex-shrink-0"></div>
-          
+          <div className="w-[70px] flex-shrink-0 mr-2"></div>
+
           {/* Title */}
-          <div className="flex-1 min-w-0 max-w-[300px]">Title</div>
-          
+          <div className="flex-1 min-w-0 max-w-[290px]">Title</div>
+
           {/* User */}
-          <div className="w-[100px] flex-shrink-0">User</div>
-          
+          <div className="w-[100px] flex-shrink-0 mr-7">Username</div>
+
           {/* Status + Charge Total + Action (rightContent area) */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-[150px] flex-shrink-0">Status</div>
-            <div className="w-[120px] flex-shrink-0">Charge Total</div>
+            <div className="w-[150px] flex-shrink-0 mr-7">Status</div>
+            <div className="w-[120px] flex-shrink-0 mr-11">Charge Total</div>
             <div className="w-[200px] flex-shrink-0">Action</div>
           </div>
         </div>
@@ -69,7 +69,7 @@ const ReturnRequestPage = () => {
       <div className="flex flex-col gap-4">
         {requests.map(req => {
           const book = mockBooks.find(b => b.title === req.bookTitle);
-          
+
           return (
             <ReturnRequestCard
               key={req.id}
@@ -81,7 +81,7 @@ const ReturnRequestPage = () => {
               rightContent={
                 <>
                   {/* Status */}
-                  <div className="w-[150px] flex-shrink-0">
+                  <div className="w-[150px] flex-shrink-0 mr-8">
                     {req.status === 'PENDING' && (
                       <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                         PENDING
@@ -105,7 +105,7 @@ const ReturnRequestPage = () => {
                   </div>
 
                   {/* Charge Total */}
-                  <div className="w-[120px] flex-shrink-0">
+                  <div className="w-[120px] flex-shrink-0 mr-10">
                     {req.charge_total !== undefined ? (
                       <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
                         Charge: ${req.charge_total}
@@ -124,7 +124,7 @@ const ReturnRequestPage = () => {
                         e.stopPropagation();
                         handleAssess(req);
                       }}
-                      className="px-4 py-2 rounded-lg font-inter text-sm font-medium transition-all whitespace-nowrap bg-[#4A90E2] text-white hover:bg-[#3A7BC8]"
+                      className="px-4 py-2 rounded-lg font-inter text-sm font-medium transition-all whitespace-nowrap bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"
                     >
                       Assess
                     </button>
@@ -138,7 +138,7 @@ const ReturnRequestPage = () => {
                         px-4 py-2 rounded-lg font-inter text-sm font-medium
                         transition-all whitespace-nowrap
                         ${req.charge_total !== undefined
-                          ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50' 
+                          ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 cursor-pointer'
                           : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }
                       `}

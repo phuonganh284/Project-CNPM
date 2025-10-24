@@ -70,7 +70,7 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                                 Please pay at the library counter before picking up your next book.
                             </p>
                         </div>
-                        
+
                         <div className="space-y-2">
                             <p className="text-gray-600 font-inter text-sm"><strong>Book:</strong> {payload.bookTitle}</p>
                             <p className="text-gray-600 font-inter text-sm"><strong>Charge ID:</strong> {payload.chargeId}</p>
@@ -103,7 +103,7 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                                 Please pick up the book by <strong>{payload.pickup_date}</strong> before 20:00, or it will expire.
                             </p>
                         </div>
-                        
+
                         <div className="space-y-2">
                             <p className="text-gray-600 font-inter text-sm"><strong>Book:</strong> {payload.bookTitle}</p>
                             <p className="text-gray-600 font-inter text-sm"><strong>Author:</strong> {payload.bookAuthor}</p>
@@ -123,7 +123,7 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                                 Your borrow request for "{payload.bookTitle}" was rejected.
                             </p>
                         </div>
-                        
+
                         <div className="space-y-2">
                             <p className="text-gray-700 font-inter text-sm font-semibold">Reason:</p>
                             <p className="text-gray-600 font-inter text-sm bg-gray-50 p-3 rounded-lg">
@@ -144,7 +144,7 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                                 Please return or renew "{payload.bookTitle}" before {payload.due_date}.
                             </p>
                         </div>
-                        
+
                         <div className="space-y-2">
                             <p className="text-gray-600 font-inter text-sm"><strong>Due Date:</strong> {payload.due_date}</p>
                             {payload.canRenew && (
@@ -167,7 +167,7 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                                 "{payload.bookTitle}" is {payload.days_overdue} days overdue. Late fees apply.
                             </p>
                         </div>
-                        
+
                         <div className="space-y-2">
                             <p className="text-gray-600 font-inter text-sm"><strong>Due Date:</strong> {payload.due_date}</p>
                             <p className="text-gray-600 font-inter text-sm"><strong>Days Overdue:</strong> {payload.days_overdue}</p>
@@ -288,8 +288,8 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                 <div className={`${styles.bg} ${styles.border} border-b px-6 py-4 flex items-start justify-between`}>
                     <div className="flex items-start gap-4 flex-1">
                         {/* Type indicator */}
-                        <div className={`${styles.icon} w-3 h-3 rounded-full mt-2 flex-shrink-0`} />
-                        
+                        <div className={`${styles.icon} w-5 h-5 rounded-full mt-2 flex-shrink-0`} />
+
                         <div className="flex-1">
                             <h2 className={`${styles.text} font-inter text-lg font-semibold mb-1`}>
                                 {notification.title}
@@ -306,7 +306,7 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                         className="flex-shrink-0 w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center transition-colors"
                     >
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M15 5L5 15M5 5L15 15" stroke="#4D4D4D" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M15 5L5 15M5 5L15 15" stroke="#4D4D4D" strokeWidth="2" strokeLinecap="round" />
                         </svg>
                     </button>
                 </div>
@@ -324,15 +324,15 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                     >
                         Close
                     </button>
-                    
+
                     {/* Nút Go to page cho librarian notifications */}
                     {(notification.type === 'NEW_BORROW_REQUEST' || notification.type === 'NEW_RETURN_REQUEST') && (
                         <button
                             onClick={() => {
                                 onMarkAsRead(notification.id);
                                 onClose();
-                                const targetPage = notification.type === 'NEW_BORROW_REQUEST' 
-                                    ? '/borrow-requests' 
+                                const targetPage = notification.type === 'NEW_BORROW_REQUEST'
+                                    ? '/borrow-requests'
                                     : '/return-requests';
                                 navigate(targetPage);
                             }}
@@ -341,7 +341,7 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
                             Go to {notification.type === 'NEW_BORROW_REQUEST' ? 'Borrow Requests' : 'Return Requests'}
                         </button>
                     )}
-                    
+
                     {/* Nút Mark as Read cho các notification khác */}
                     {!notification.isRead && notification.type !== 'NEW_BORROW_REQUEST' && notification.type !== 'NEW_RETURN_REQUEST' && (
                         <button

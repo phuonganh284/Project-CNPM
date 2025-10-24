@@ -22,7 +22,7 @@ const TopMain = () => {
                 flex
                 items-center
                 justify-between
-                px-8
+                px-4
                 gap-4
             "
         >
@@ -50,17 +50,17 @@ const TopMain = () => {
                         overflow-hidden
                     "
                 >
-                    <img 
-                        src={assets.user_icon} 
-                        alt="User" 
-                        className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 sm:mr-3 md:mr-4" 
+                    <img
+                        src={assets.user_icon}
+                        alt="User"
+                        className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 sm:mr-3 md:mr-4"
                     />
                     <span className="text-[#4D4D4D] font-inter text-sm sm:text-[15px] md:text-[16px] whitespace-nowrap">
                         Sign In
                     </span>
                 </button>
             ) : (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 ml-6">
                     <NotificationDropdown />
                     <UserMenu />
                 </div>
