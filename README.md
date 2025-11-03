@@ -1,16 +1,70 @@
-# React + Vite
+# Library Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hệ thống quản lý thư viện với Frontend (React + Vite) và Backend (Node.js + Express + PostgreSQL).
 
-Currently, two official plugins are available:
+## 📁 Cấu trúc project
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```
+Project-CNPM/
+├── FE/                  # Frontend (React + Vite)
+│   ├── src/
+│   └── package.json
+└── BE/                  # Backend (Node.js + Express)
+    ├── src/
+    ├── database/
+    └── package.json
+```
 
-## React Compiler
+## 🚀 Hướng dẫn setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Frontend
 
-## Expanding the ESLint configuration
+```bash
+cd FE
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Frontend chạy tại: `http://localhost:5173`
+
+### Backend
+
+```bash
+cd BE
+npm install
+npm run dev
+```
+
+Backend chạy tại: `http://localhost:5000`
+
+**Xem chi tiết:** `BE/TEAM_SETUP_GUIDE.md`
+
+## 📚 Tài liệu
+
+- **BE/BACKEND_TASK_DIVISION.md** - Phân chia công việc backend
+- **BE/FE_BE_INTEGRATION.md** - Hướng dẫn kết nối FE-BE
+- **BE/TEAM_SETUP_GUIDE.md** - Hướng dẫn setup cho team
+- **BE/database/SUPABASE_GUIDE.md** - Hướng dẫn setup Supabase
+
+## 👥 Team
+
+- 6 thành viên
+- Phân chia theo modules (xem BACKEND_TASK_DIVISION.md)
+
+## 🛠️ Tech Stack
+
+**Frontend:**
+- React
+- Vite
+- TailwindCSS
+- React Router
+
+**Backend:**
+- Node.js
+- Express.js
+- PostgreSQL (Supabase)
+- JWT Authentication
+
+## 📝 License
+
+MIT

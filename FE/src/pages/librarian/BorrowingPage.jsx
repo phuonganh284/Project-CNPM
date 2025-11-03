@@ -1,0 +1,42 @@
+import React, { useState } from 'react';
+import BorrowingRow from '../../components/BorrowingRow.jsx';
+import { mockBorrowing } from '../../data/mockBorrowing.js';
+
+const BorrowingPage = () => {
+  const [borrowedBooks, setBorrowedBooks] = useState(mockBorrowing);
+
+  return (
+    <div className="p-4 sm:p-6 min-h-screen font-sans">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 className="text-2xl font-semibold text-gray-800">Current Borrowing</h2>
+      </div>
+
+      {/* Column Headers */}
+      <div className="hidden sm:flex items-center text-sm font-medium text-gray-600 bg-[#F3F3F7] py-3 px-6 mb-4 sticky top-0 z-10">
+        <div className="w-[30%]">Title</div>
+        <div className="w-[15%]">User</div>
+        <div className="w-[10%]">Copy ID</div>
+        <div className="w-[15%]">Condition</div>
+        <div className="w-[15%]">Return Date</div>
+        <div className="w-[15%]">Status</div>
+      </div>
+
+      <div className="space-y-4">
+        {borrowedBooks.length > 0 ? (
+          borrowedBooks.map((borrow) => (
+            <BorrowingRow key={borrow.id} borrow={borrow} />
+          ))
+        ) : (
+          <div className="text-center p-10 bg-white rounded-lg border border-gray-200 shadow-md">
+            <p className="text-gray-500 text-lg font-medium">
+              No books are currently checked out. The library is quiet! 😌
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default BorrowingPage;
