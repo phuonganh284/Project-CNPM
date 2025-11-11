@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/api";
 
-const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
+const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
     if (!isOpen) return null;
 
     const [editedBook, setEditedBook] = useState(book);
@@ -11,73 +11,42 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     const [categories, setCategories] = useState([]);
     const [creatingCategory, setCreatingCategory] = useState(false);
 
+
     useEffect(() => {
-        if (!book) return;
-
-        const normalized = {
-            ...book,
-            language: book.language || "",
-            category_id: book?.category?.id || null,
-            category_name: book?.category?.name || "",
-
-        };
-
-        setEditedBook(normalized);
+        setEditedBook(book);
         setPreview(book?.cover || "");
         setErrors({});
         setCreatingCategory(false);
     }, [book]);
 
     useEffect(() => {
-        if (!isOpen) return;
+        // load categories for dropdown whenever dialog is opened
         let mounted = true;
-
+        if (!isOpen) return;
         api.get("/categories")
             .then((res) => {
                 const data = Array.isArray(res.data) ? res.data : res.data || res;
-                if (mounted) {
-                    setCategories(data);
-                    if (book?.category_id && !editedBook.category_id) {
-                        const cat = data.find((c) => c.category_id === book.category_id);
-                        if (cat) {
-                            setEditedBook((prev) => ({
-                                ...prev,
-                                category_id: cat.category_id,
-                                category_name: cat.category_name,
-                            }));
-                        }
-                    } else if (book?.category_name && !book.category_id) {
-                        const cat = data.find(
-                            (c) => c.category_name.toLowerCase() === book.category_name.toLowerCase()
-                        );
-                        if (cat) {
-                            setEditedBook((prev) => ({
-                                ...prev,
-                                category_id: cat.category_id,
-                                category_name: cat.category_name,
-                            }));
-                        }
-                    }
-                }
+                if (mounted) setCategories(data);
             })
             .catch((err) => {
                 console.error("Failed to load categories:", err);
             });
-
-        return () => { mounted = false; };
+        return () => { mounted = false };
     }, [isOpen]);
 
     useEffect(() => {
+
         return () => {
-            if (preview && preview.startsWith("blob:")) {
+            if (preview && preview.startsWith?.("blob:")) {
                 try {
                     URL.revokeObjectURL(preview);
                 } catch (e) {
-                    console.warn("Failed to revoke blob:", e);
+
                 }
             }
         };
-    }, [isOpen]);
+
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -112,17 +81,14 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (preview?.startsWith("blob:")) {
-                URL.revokeObjectURL(preview);
-            }
             const imageURL = URL.createObjectURL(file);
             setPreview(imageURL);
-            setEditedBook((prev) => ({ ...prev, coverFile: file }));
+            setEditedBook((prev) => ({ ...prev, cover: imageURL, coverFile: file }));
         }
     };
 
-
     const handleSave = () => {
+        // Per-field validation
         const newErrors = {};
         if (!editedBook.title || String(editedBook.title).trim() === "") {
             newErrors.title = 'Title is required.';
@@ -133,7 +99,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
         if (!editedBook.isbn || String(editedBook.isbn).trim() === "") {
             newErrors.isbn = 'ISBN is required.';
         }
-        // Category required for new books
+        // Category required for new books (book.book_id falsy)
         if (!book?.book_id) {
             if ((!editedBook.category_id || editedBook.category_id === null) && (!editedBook.category_name || String(editedBook.category_name).trim() === "")) {
                 newErrors.category_name = 'Category is required.';
@@ -285,9 +251,8 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             name="total_stock"
                             value={editedBook.total_stock || ""}
                             onChange={handleChange}
-                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
+                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter total stock"
-                            disabled
                         />
                         {errors.total_stock && (
                             <p className="text-red-500 text-sm mt-1">{errors.total_stock}</p>
@@ -301,9 +266,8 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             name="available_stock"
                             value={editedBook.available_stock || ""}
                             onChange={handleChange}
-                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
+                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter available stock"
-                            disabled
                         />
                         {errors.available_stock && (
                             <p className="text-red-500 text-sm mt-1">{errors.available_stock}</p>
@@ -314,16 +278,13 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                         <label className="text-sm text-gray-700">Category</label>
                         <select
                             name="category_id"
-                            value={editedBook.category_id ? String(editedBook.category_id) : ""}
+                            value={editedBook.category_id ?? ""}
                             onChange={handleCategoryChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                         >
                             <option value="">Select category</option>
                             {categories.map((c) => (
-                                <option key={c.category_id} value={String(c.category_id)}>
-                                    {c.category_name}
-                                </option>
-
+                                <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
                             ))}
                             <option value="__new">Create new category...</option>
                         </select>
@@ -421,4 +382,4 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     );
 };
 
-export default BookEditDialog;
+export default BookAddDialog;

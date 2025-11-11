@@ -6,19 +6,21 @@ import ConfirmDialog from "./dialogs/ConfirmDialog";
 import BookEditDialog from "./dialogs/BookEditDialog";
 
 const BookCatalogCard = ({
-    cover_url,
+    book_id,
+    isbn,
+    cover,
     title,
     author,
-    publish_year,
-    category,
-    available_copies,
-    total_copies,
-    isbn,
-    publisher,
-    page_count,
     language,
+    publisher,
+    publish_year,
     description,
+    price,
+    total_stock,
+    available_stock,
+    category_name,
     status,
+
     onEdit,
     onDelete,
     onClick,
@@ -41,19 +43,20 @@ const BookCatalogCard = ({
         setShowEditDialog(true);
     };
     const bookData = {
-        cover_url,
+        book_id,
+        isbn,
+        cover,
         title,
         author,
-        publish_year,
-        category,
-        available_copies,
-        total_copies,
-        isbn,
-        publisher,
-        page_count,
         language,
+        publisher,
+        publish_year,
         description,
-        status,
+        price,
+        total_stock,
+        available_stock,
+        category_name,
+        status
     };
     return (
         <>
@@ -72,13 +75,13 @@ const BookCatalogCard = ({
             >
                 {/* Book Cover */}
                 <img
-                    src={cover_url}
+                    src={cover}
                     alt={title}
                     className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 mr-6"
                 />
 
                 {/* Book Info */}
-                <div className="flex-1 min-w-0 max-w-[290px] mr-6">
+                <div className="flex-1 min-w-0 max-w-[290px] mr-20">
                     <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate">
                         {title}
                     </h3>
@@ -88,20 +91,20 @@ const BookCatalogCard = ({
                 </div>
 
                 {/* Category */}
-                <div className="w-[200px] flex-shrink-0 mr-12">
+                <div className="w-[200px] flex-shrink-0 ">
                     <p className="font-inter text-base text-gray-800 mb-1 truncate">
-                        {category}
+                        {category_name}
                     </p>
                 </div>
 
                 {/* Stock */}
                 <div className="w-[100px] flex-shrink-0 mr-6">
                     <p className="font-inter text-base text-gray-800 mb-1 truncate">
-                        {available_copies}
+                        {available_stock}
                     </p>
                 </div>
 
-                {/* Status */}
+                {/* status */}
                 <div className="w-[130px] flex-shrink-0 mr-6">
                     {status === 'Available' &&
                         (
