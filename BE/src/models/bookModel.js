@@ -120,7 +120,7 @@ async function getBookById(bookId) {
 
 async function getBookCopies(bookId) {
     const result = await pool.query(
-        `SELECT copy_id, condition, status, copy_price, availability
+        `SELECT copy_id, condition, status, copy_price, availability, borrowed
          FROM book_copies
          WHERE book_id = $1 AND availability = TRUE
          ORDER BY copy_id ASC`,
