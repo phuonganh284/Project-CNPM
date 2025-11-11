@@ -17,18 +17,18 @@ export const AuthProvider = ({ children }) => {
     React.useEffect(() => {
         // TODO: KHI CÓ BE - XÓA phần đọc role từ URL param (chỉ dùng để test)
         // Chỉ giữ lại phần load từ localStorage hoặc verify token với BE
-        
+
         // Đọc role từ URL parameter để test (ví dụ: ?role=reader)
         const urlParams = new URLSearchParams(window.location.search);
         const roleFromUrl = urlParams.get('role');
-        
+
         if (roleFromUrl && ['guest', 'reader', 'librarian'].includes(roleFromUrl)) {
             // Nếu có role trong URL, dùng nó để test
-            const testUser = { 
-                id: 1, 
-                name: `Test ${roleFromUrl}`, 
+            const testUser = {
+                id: 1,
+                name: `Test ${roleFromUrl}`,
                 email: `${roleFromUrl}@test.com`,
-                role: roleFromUrl 
+                role: roleFromUrl
             };
             setUser(testUser);
             localStorage.setItem('user', JSON.stringify(testUser));
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     // ========================================================================
     const login = async (email, password, role = 'reader') => {
         // TODO: KHI CÓ BE - Xóa phần fake user, uncomment phần API call phía dưới
-        
+
         // TRƯỚC KHI CÓ BE (GIẢ):
         const fakeUser = {
             id: 1,
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     // ========================================================================
     const logout = () => {
         // TODO: KHI CÓ BE - Uncomment phần API call phía dưới
-        
+
         // TRƯỚC KHI CÓ BE:
         setUser({ role: 'guest' });
         localStorage.removeItem('user');
