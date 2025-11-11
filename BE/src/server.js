@@ -21,6 +21,8 @@ const bookRoutes = require('./routes/bookRoutes');
 app.use('/books', bookRoutes);
 const categoryRoutes = require('./routes/categoryRoutes');
 app.use('/categories', categoryRoutes);
+const copyRoutes = require('./routes/copyRoutes');
+app.use('/copies', copyRoutes);
 
 
 
