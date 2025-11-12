@@ -4,8 +4,9 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function LoginLibrarian() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loginLibrarian } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -47,10 +48,21 @@ export default function LoginLibrarian() {
     const validationErrors = validateForm();
 
     if (Object.keys(validationErrors).length === 0) {
-      // All fields filled - call login with role 'librarian'
-      const result = await login(formData.email, formData.password, 'librarian');
-      if (result.success) {
-        navigate("/home");
+      setIsLoading(true);
+      try {
+        // All fields filled - call loginLibrarian
+        const result = await loginLibrarian(formData.email, formData.password);
+        
+        if (result.success) {
+          navigate("/home");
+        } else {
+          // Show error message
+          setErrors({ 
+            general: result.error || 'Login failed' 
+          });
+        }
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // Some fields empty - show errors
@@ -168,6 +180,13 @@ export default function LoginLibrarian() {
           </div>
         </div>
 
+        {/* Display login error */}
+        {errors.general && (
+          <div className="w-full max-w-[420px] bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm font-medium mb-6">
+            {errors.general}
+          </div>
+        )}
+
         {/* Extra options */}
         <div className="flex justify-between items-center w-full max-w-[420px] text-[16px] mb-8">
           <label className="flex items-center gap-2 text-[#4D4D4D]">
@@ -185,9 +204,10 @@ export default function LoginLibrarian() {
         {/* Button */}
         <button
           onClick={handleLogin}
-          className="w-full max-w-[420px] h-[48px] bg-[#3273AF] rounded-lg text-white font-semibold text-[16px] hover:bg-[#275b8c] transition-colors cursor-pointer"
+          disabled={isLoading}
+          className="w-full max-w-[420px] h-[48px] bg-[#3273AF] rounded-lg text-white font-semibold text-[16px] hover:bg-[#275b8c] transition-colors cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          Login
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
 
       </div>

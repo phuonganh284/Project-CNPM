@@ -7,7 +7,7 @@ const BookCard = ({ book, onClick, variant = 'carousel' }) => {
     if (variant === 'carousel') {
         // Available Now / New Arrivals card - 167x203px
         return (
-            <Link to={`/book/${book.id}`}>
+            <Link to={`/book/${book.book_id}`}>
                 <div
                     className="
                         flex-shrink-0
@@ -26,7 +26,7 @@ const BookCard = ({ book, onClick, variant = 'carousel' }) => {
                     "
                 >
                     <img
-                        src={book.cover_url}
+                        src={book.cover || 'https://via.placeholder.com/123x170?text=No+Cover'}
                         alt={book.title}
                         className="w-[123px] h-[170px] object-cover rounded-md"
                         onError={(e) => {
@@ -40,7 +40,7 @@ const BookCard = ({ book, onClick, variant = 'carousel' }) => {
 
     // Grid variant - 160x260px with title, author, year INSIDE white card
     return (
-        <Link to={`/book/${book.id}`}>
+        <Link to={`/book/${book.book_id}`}>
             <div
                 className="
                     w-[160px]
@@ -65,7 +65,7 @@ const BookCard = ({ book, onClick, variant = 'carousel' }) => {
                     bg-gray-50
                 ">
                     <img
-                        src={book.cover_url}
+                        src={book.cover || 'https://via.placeholder.com/123x170?text=No+Cover'}
                         alt={book.title}
                         className="w-[123px] h-[170px] object-cover"
                         onError={(e) => {

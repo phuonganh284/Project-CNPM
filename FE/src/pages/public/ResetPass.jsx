@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ResetSuccess from './ResetSuccess';
 
-// Giả sử bạn có file logo trong thư mục public
-const logoUrl = '/logo.svg'; 
+const logoUrl = '/logo.svg';
+const API_URL = import.meta.env.VITE_API_URL; 
 
 // Icon con mắt (bạn có thể thay thế bằng icon từ thư viện hoặc file SVG của riêng bạn)
 const EyeIcon = () => (
@@ -23,15 +23,25 @@ const EyeSlashIcon = () => (
 export default function ResetPass() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tokenFromUrl = searchParams.get('token');
   
   // Form state
   const [formData, setFormData] = useState({
-    email: '', // Khởi tạo trống
+    email: '',
     password: '',
     confirmPassword: ''
   });
-
-  // Debug: Log email khi component mount và auto-fill
+  
+  // Error state
+  const [errors, setErrors] = useState({});
+  
+  // Success overlay state
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Loading state
+  const [loading, setLoading] = useState(false);
+  
   React.useEffect(() => {
     const savedEmail = localStorage.getItem('resetEmail');
     console.log('ResetPass mounted - Email from localStorage:', savedEmail);
@@ -45,12 +55,6 @@ export default function ResetPass() {
       console.log('Email auto-filled:', savedEmail);
     }
   }, []);
-  
-  // Error state
-  const [errors, setErrors] = useState({});
-  
-  // Success overlay state
-  const [showSuccess, setShowSuccess] = useState(false);
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -85,6 +89,7 @@ export default function ResetPass() {
 
     if (!formData.email.trim()) newErrors.email = 'Required field';
     if (!formData.password.trim()) newErrors.password = 'Required field';
+    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (!formData.confirmPassword.trim()) newErrors.confirmPassword = 'Required field';
 
     // Check if password and confirm password match
@@ -97,18 +102,43 @@ export default function ResetPass() {
   };
 
   // Handle form submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validateForm();
 
     if (Object.keys(validationErrors).length === 0) {
-      // All fields filled and passwords match - success
-      console.log("Reset password data:", formData);
-      // TODO: Implement actual password reset API call
-      // Clear localStorage after successful reset
-      localStorage.removeItem('resetEmail');
-      // Show success overlay
-      setShowSuccess(true);
+      setLoading(true);
+      setErrors({});
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/reset-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: tokenFromUrl,
+            new_password: formData.password
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          console.log("Reset password successful:", data);
+          // Clear localStorage after successful reset
+          localStorage.removeItem('resetEmail');
+          // Show success overlay
+          setShowSuccess(true);
+        } else {
+          setErrors({ email: data.message || 'Failed to reset password. Please try again.' });
+        }
+      } catch (error) {
+        console.error('Reset password error:', error);
+        setErrors({ email: 'Network error. Please try again.' });
+      } finally {
+        setLoading(false);
+      }
     } else {
       // Some fields empty or passwords don't match - show errors
       setErrors(validationErrors);
@@ -252,8 +282,12 @@ export default function ResetPass() {
               </div>
             </div>
             
-            <button type="submit" className="w-full bg-[#3273AF] text-white font-semibold py-3 rounded-lg hover:bg-opacity-90 transition-colors mt-4">
-              Reset Password
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-[#3273AF] text-white font-semibold py-3 rounded-lg hover:bg-opacity-90 transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Resetting...' : 'Reset Password'}
             </button>
           </form>
 

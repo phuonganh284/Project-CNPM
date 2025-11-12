@@ -1,128 +1,110 @@
-import React, { createContext, useState, useContext } from 'react';
-// TODO: KHI CÓ BE - Uncomment dòng dưới để import axios
-// import axios from 'axios';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
 
 export const AuthProvider = ({ children }) => {
-    // ========================================================================
-    // STATE - GIỮ NGUYÊN
-    // ========================================================================
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(false);
-
-    // ========================================================================
-    // KHỞI TẠO - Load user từ localStorage nếu có
-    // ========================================================================
-    React.useEffect(() => {
-        // TODO: KHI CÓ BE - XÓA phần đọc role từ URL param (chỉ dùng để test)
-        // Chỉ giữ lại phần load từ localStorage hoặc verify token với BE
-        
-        // Đọc role từ URL parameter để test (ví dụ: ?role=reader)
-        const urlParams = new URLSearchParams(window.location.search);
-        const roleFromUrl = urlParams.get('role');
-        
-        if (roleFromUrl && ['guest', 'reader', 'librarian'].includes(roleFromUrl)) {
-            // Nếu có role trong URL, dùng nó để test
-            const testUser = { 
-                id: 1, 
-                name: `Test ${roleFromUrl}`, 
-                email: `${roleFromUrl}@test.com`,
-                role: roleFromUrl 
-            };
-            setUser(testUser);
-            localStorage.setItem('user', JSON.stringify(testUser));
-            console.log(`✅ Testing as: ${roleFromUrl}`);
-        } else {
-            // Không có URL param, load từ localStorage
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                setUser(JSON.parse(savedUser));
-            } else {
-                // Mặc định là guest nếu chưa login
-                setUser({ role: 'guest' });
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem('user');
+        if (savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
+            try {
+                return JSON.parse(savedUser);
+            } catch (error) {
+                console.error('Error parsing saved user:', error);
+                return { role: 'guest' };
             }
         }
-    }, []);
+        return { role: 'guest' };
+    });
+    const [loading, setLoading] = useState(false);
 
-    // ========================================================================
-    // LOGIN - SỬA KHI CÓ BE
-    // ========================================================================
-    const login = async (email, password, role = 'reader') => {
-        // TODO: KHI CÓ BE - Xóa phần fake user, uncomment phần API call phía dưới
-        
-        // TRƯỚC KHI CÓ BE (GIẢ):
-        const fakeUser = {
-            id: 1,
-            name: `Test ${role}`,
-            email: email,
-            role: role // Sử dụng role được truyền vào
-        };
-        setUser(fakeUser);
-        localStorage.setItem('user', JSON.stringify(fakeUser));
-        return { success: true };
-
-        // SAU KHI CÓ BE (THẬT) - BỎ COMMENT CODE DƯỚI:
-        /*
+    // Register function using real API
+    const register = async (userData) => {
         try {
             setLoading(true);
-            const response = await axios.post('/api/auth/login', { email, password });
-            const { token, user } = response.data;
+            const response = await api.post('/auth/register', userData);
             
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
-            setUser(user);
-            setLoading(false);
-            
-            return { success: true };
+            if (response.data.success) {
+                return { success: true, message: response.data.message };
+            } else {
+                return { success: false, error: response.data.message };
+            }
         } catch (error) {
+            console.error('Registration error:', error);
+            return { 
+                success: false, 
+                error: error.response?.data?.message || 'Registration failed. Please try again.' 
+            };
+        } finally {
             setLoading(false);
-            return { success: false, error: error.response?.data?.message };
         }
-        */
     };
 
-    // ========================================================================
-    // LOGOUT - SỬA KHI CÓ BE
-    // ========================================================================
+    // Login function using real API
+    const login = async (email, password, role) => {
+        try {
+            setLoading(true);
+            
+            // Choose endpoint based on role
+            const endpoint = role === 'librarian' ? '/auth/librarian/login' : '/auth/reader/login';
+            const response = await api.post(endpoint, { email, password });
+
+            if (response.data.success) {
+                const { token, user: userData } = response.data.data;
+                
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(userData));
+                setUser(userData);
+                
+                return { success: true };
+            } else {
+                return { success: false, error: response.data.message || 'Login failed' };
+            }
+        } catch (error) {
+            // Don't log to console for expected authentication errors
+            if (error.response?.status !== 401 && error.response?.status !== 403) {
+                console.error('Login error:', error);
+            }
+            return { 
+                success: false, 
+                error: error.response?.data?.message || 'Invalid email or password' 
+            };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = () => {
-        // TODO: KHI CÓ BE - Uncomment phần API call phía dưới
-        
-        // TRƯỚC KHI CÓ BE:
         setUser({ role: 'guest' });
         localStorage.removeItem('user');
         localStorage.removeItem('token');
-
-        // SAU KHI CÓ BE - THÊM API CALL:
-        /*
-        try {
-            await axios.post('/api/auth/logout');
-            setUser({ role: 'guest' });
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-        */
     };
 
-    // ========================================================================
-    // CHANGE ROLE - CHỈ DÙNG TEST, XÓA KHI CÓ BE
-    // ========================================================================
-    // TODO: KHI CÓ BE - XÓA TOÀN BỘ FUNCTION NÀY
-    const changeRole = (newRole) => {
-        const updatedUser = { ...user, role: newRole };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        console.log(`✅ Role changed to: ${newRole}`);
+    // Wrapper functions for backward compatibility
+    const loginReader = async (email, password) => {
+        return await login(email, password, 'reader');
+    };
+
+    const loginLibrarian = async (email, password) => {
+        return await login(email, password, 'librarian');
     };
 
     const value = {
         user,
         loading,
         login,
+        loginReader,
+        loginLibrarian,
+        register,
         logout,
-        changeRole,  // TODO: KHI CÓ BE - XÓA DÒNG NÀY (chỉ dùng để test)
     };
 
     return (
@@ -130,14 +112,6 @@ export const AuthProvider = ({ children }) => {
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within AuthProvider');
-    }
-    return context;
 };
 
 export default AuthContext;

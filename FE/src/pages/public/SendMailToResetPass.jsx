@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Giả sử bạn có file logo trong thư mục public
+
 const logoUrl = '/logo.svg';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -24,16 +27,55 @@ export default function ResetPassword() {
       setErrors({ email: 'Required field' });
       return false;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrors({ email: 'Invalid email format' });
+      return false;
+    }
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateEmail()) {
-      // Lưu email vào localStorage để ResetPass có thể sử dụng
-      localStorage.setItem('resetEmail', email);
-      console.log('Email saved to localStorage:', email);
-      navigate("/open-mail-to-reset-pass");
+      setLoading(true);
+      setErrors({});
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/forgot-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Save email to localStorage for next step
+          localStorage.setItem('resetEmail', email);
+          setSuccessMessage('Email reset mật khẩu đã được gửi. Vui lòng check email.');
+          console.log('Password reset email sent successfully');
+          
+          // Navigate to next page after 2 seconds
+          setTimeout(() => {
+            navigate("/open-mail-to-reset-pass");
+          }, 2000);
+        } else {
+          // Always show success message for security (even if email doesn't exist)
+          localStorage.setItem('resetEmail', email);
+          setSuccessMessage('Email reset mật khẩu đã được gửi. Vui lòng check email.');
+          setTimeout(() => {
+            navigate("/open-mail-to-reset-pass");
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('Forgot password error:', error);
+        setErrors({ email: 'Network error. Please try again.' });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -79,6 +121,13 @@ export default function ResetPassword() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-y-6">
+            {/* Success message */}
+            {successMessage && (
+              <div className="bg-green-50 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-sm">
+                {successMessage}
+              </div>
+            )}
+            
             <div className="text-left">
               <div className="flex justify-between items-center mb-2">
                 <label htmlFor="email" className="block text-base font-semibold text-[#4D4D4D]">
@@ -103,9 +152,10 @@ export default function ResetPassword() {
             
             <button
               type="submit"
-              className="w-full bg-[#3273AF] text-white font-semibold py-3 rounded-lg hover:bg-opacity-90 transition-colors cursor-pointer"
+              disabled={loading}
+              className="w-full bg-[#3273AF] text-white font-semibold py-3 rounded-lg hover:bg-opacity-90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send
+              {loading ? 'Sending...' : 'Send'}
             </button>
           </form>
 

@@ -11,7 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 function LoginReader() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loginReader } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -22,11 +22,16 @@ function LoginReader() {
   });
 
   const onSubmit = async (data) => {
-    console.log("Login data:", data);
-    // Gọi hàm login với role 'reader'
-    const result = await login(data.email, data.password, 'reader');
+    console.log("Reader login data:", data);
+    const result = await loginReader(data.email, data.password);
+    
     if (result.success) {
       navigate("/home");
+    } else {
+      // Show error message
+      form.setError('root', { 
+        message: result.error || 'Login failed' 
+      });
     }
   };
 
@@ -49,22 +54,22 @@ function LoginReader() {
       {/* Form đăng nhập */}
       <div
         className="absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 
-              w-[565px] h-[780px] bg-white rounded-[10px] 
-              shadow-[0_0_20px_rgba(0,0,0,0.25)] flex flex-col items-center z-20">
+              w-[565px] bg-white rounded-[10px] 
+              shadow-[0_0_20px_rgba(0,0,0,0.25)] flex flex-col items-center z-20 py-8">
 
         {/* Logo + tiêu đề */}
-        <div className="flex flex-col items-center mt-8">
+        <div className="flex flex-col items-center mt-0">
           <img
             src="/logo.svg"
             alt="Logo"
             className="w-[160px] h-[117px] object-contain mb-2"
           />
-          <h2 className="font-[Josefin_Sans] text-[28px] leading-[28px] mb-10">
+          <h2 className="font-[Josefin_Sans] text-[28px] leading-[28px] mb-6">
           </h2>
         </div>
 
         {/* Welcome Back */}
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center mb-6">
           <h3 className="text-[#4D4D4D] font-[Inter] text-[20px] leading-[24px]">
             Welcome Back !
           </h3>
@@ -75,7 +80,7 @@ function LoginReader() {
 
         {/* Form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6 w-[422px] mb-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6 w-[422px] mb-4">
             {/* Email */}
             <FormField
               control={form.control}
@@ -167,8 +172,15 @@ function LoginReader() {
               )}
             />
 
+            {/* Display login error */}
+            {form.formState.errors.root && (
+              <div className="w-full bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
+                {form.formState.errors.root.message}
+              </div>
+            )}
+
             {/* Remember me + Forgot password */}
-            <div className="flex justify-between items-center w-[422px] mb-8">
+            <div className="flex justify-between items-center w-[422px] mb-4">
               <label className="flex items-center gap-2 text-[#4D4D4D] text-[16px]">
                 <input type="checkbox" className="w-4 h-4 accent-[#0A385F]" />
                 Remember me
@@ -184,15 +196,16 @@ function LoginReader() {
             {/* Nút Login */}
             <Button
               type="submit"
-              className="w-[422px] h-[48px] bg-[#3273AF] text-white font-semibold rounded-[8px] text-[16px] mb-6 hover:bg-[#275b8c] transition cursor-pointer"
+              disabled={form.formState.isSubmitting}
+              className="w-[422px] h-[48px] bg-[#3273AF] text-white font-semibold rounded-[8px] text-[16px] mb-4 hover:bg-[#275b8c] transition cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Login
+              {form.formState.isSubmitting ? 'Logging in...' : 'Login'}
             </Button>
           </form>
         </Form>
 
         {/* Link đăng ký */}
-        <p className="text-[#4D4D4D] text-[16px]">
+        <p className="text-[#4D4D4D] text-[16px] mb-4">
           New User?{" "}
           <span
             onClick={() => navigate("/register")}

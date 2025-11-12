@@ -1,14 +1,33 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import IntroBox from '../../components/IntroBox';
 import AvailableNow from '../../components/AvailableNow';
 import BookCard from '../../components/BookCard';
-import { getAvailableBooks, getRecommendedBooks } from '../../data/mockBooks';
+import { getBooks } from '../../services/bookService';
 
 const HomePage = () => {
     const navigate = useNavigate();
-    const availableBooks = getAvailableBooks();
-    const recommendedBooks = getRecommendedBooks();
+    const [books, setBooks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const data = await getBooks();
+                setBooks(data.books);
+                setLoading(false);
+            } catch (err) {
+                setError('Failed to fetch books.');
+                setLoading(false);
+            }
+        };
+
+        fetchBooks();
+    }, []);
+
+    const availableBooks = books.filter(book => book.available_stock > 0);
+    const recommendedBooks = books; // The backend now sends recommended books first
 
     // Calculate how many books fit in one row (card width 160px + gap 20px)
     // Approximate available width: container width - padding
@@ -27,6 +46,14 @@ const HomePage = () => {
     const handleShowAll = () => {
         navigate('/browse');
     };
+
+    if (loading) {
+        return <div className="text-center p-10">Loading...</div>;
+    }
+
+    if (error) {
+        return <div className="text-center p-10 text-red-500">{error}</div>;
+    }
 
     return (
         <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4">
@@ -70,7 +97,7 @@ const HomePage = () => {
                 <div className="flex gap-4 w-[1150px]">
                     {booksToShow.map(book => (
                         <BookCard
-                            key={book.id}
+                            key={book.book_id}
                             book={book}
                             variant="grid"
                         />

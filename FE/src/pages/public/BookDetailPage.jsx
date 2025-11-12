@@ -1,8 +1,7 @@
 // src/pages/public/BookDetailPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { mockBooks } from "../../data/mockBooks";
-import { mockBorrows } from "../../data/mockBorrows";
+import { getBookById } from "../../services/bookService";
 import { Button } from "../../components/button";
 import { useAuth } from "../../context/AuthContext";
 import BorrowRequestDialog from "../../components/dialogs/BorrowRequestDialog";
@@ -14,23 +13,31 @@ const BookDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [book] = useState(() => mockBooks.find((b) => b.id === parseInt(id)));
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showBorrowDialog, setShowBorrowDialog] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-  // TODO: KHI CÓ BE - Fetch book copies từ API
-  // Mock data cho các copies available (BE sẽ sort theo condition giảm dần)
-  const [bookCopies] = useState([
-    { copyId: 'C001', condition: 100, status: 'AVAILABLE', location: 'A-12-3' },
-    { copyId: 'C003', condition: 85, status: 'AVAILABLE', location: 'A-12-5' },
-    { copyId: 'C005', condition: 70, status: 'AVAILABLE', location: 'A-12-7' },
-    { copyId: 'C007', condition: 55, status: 'AVAILABLE', location: 'A-12-9' },
-  ]);
+  useEffect(() => {
+    const fetchBook = async () => {
+      try {
+        const data = await getBookById(id);
+        setBook(data.book);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to fetch book details.");
+        setLoading(false);
+      }
+    };
 
-  // Get best available copy (first one from BE-sorted list)
-  const bestCopy = bookCopies.find(copy => copy.status === 'AVAILABLE' && copy.condition >= 50);
+    fetchBook();
+  }, [id]);
+
+  // Simplified for now
+  const bestCopy = book?.copies?.find(copy => copy.availability === true);
 
   const getConditionBadge = (condition) => {
     if (condition >= 80) {
@@ -44,16 +51,18 @@ const BookDetailPage = () => {
     }
   };
 
-  // Check if current user has borrowed this book
-  // Match by book title since mockBorrows uses different IDs
-  const userBorrow = book ? mockBorrows.find((borrow) => borrow.title === book.title) : null;
-  const isBorrowedByUser = userBorrow && user?.role === "reader";
+  // This logic needs to be updated with real user borrow history
+  const isBorrowedByUser = false; 
 
-  if (!book) {
+  if (loading) {
+    return <div className="text-center p-10">Loading...</div>;
+  }
+
+  if (error || !book) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Book Not Found</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{error || "Book Not Found"}</h2>
           <Button onClick={() => navigate("/browse")}>Back to Browse</Button>
         </div>
       </div>
@@ -61,31 +70,21 @@ const BookDetailPage = () => {
   }
 
   const getStatusConfig = () => {
-    // If user has borrowed this book
     if (isBorrowedByUser) {
       return {
         label: "You borrowed this book",
         className: "bg-blue-100 text-blue-700",
         buttonText: "VIEW MY BORROWS",
         buttonDisabled: false,
-        borrowInfo: userBorrow,
       };
     }
 
-    // Book status for other users
-    if (book.available_copies > 0) {
+    if (book.available_stock > 0) {
       return {
         label: "Available",
         className: "bg-green-500 text-white",
         buttonText: "BORROW",
         buttonDisabled: false,
-      };
-    } else if (book.status === "borrowed") {
-      return {
-        label: "Already borrowed",
-        className: "bg-gray-400 text-white",
-        buttonText: "BORROW",
-        buttonDisabled: true,
       };
     } else {
       return {
@@ -101,27 +100,21 @@ const BookDetailPage = () => {
 
   const handleButtonClick = () => {
     if (isBorrowedByUser) {
-      // Navigate to My Borrows page
       navigate("/my-borrows");
     } else {
-      // Open borrow request dialog
       setShowBorrowDialog(true);
     }
   };
 
   const handleBorrowConfirm = (requestData) => {
     console.log("Borrow request submitted:", requestData);
-    // Close the request dialog
     setShowBorrowDialog(false);
-    // Show confirmation modal
     setShowConfirmation(true);
     // TODO: Send request to backend
   };
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false);
-    // Optionally navigate to My Requests page
-    // navigate("/my-requests");
   };
 
   const handleEditClick = () => {
@@ -169,7 +162,7 @@ const BookDetailPage = () => {
           <div className="flex flex-col items-center">
             <div className="w-full max-w-[250px] mb-6">
               <img
-                src={book.cover_url || "/placeholder-book.png"}
+                src={book.cover || "/placeholder-book.png"}
                 alt={book.title}
                 className="w-full h-auto rounded-lg shadow-md"
                 onError={(e) => {
@@ -178,47 +171,9 @@ const BookDetailPage = () => {
               />
             </div>
 
-            {/* Borrowed Info Box - Show if user borrowed this book */}
-            {isBorrowedByUser && statusConfig.borrowInfo ? (
+            {isBorrowedByUser ? (
               <div className="w-full bg-blue-50 rounded-2xl p-6 mb-6 border border-blue-200">
-                {/* Status Badge */}
-                <div className="mb-4 text-center">
-                  <span className="inline-block px-6 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                    {statusConfig.label}
-                  </span>
-                </div>
-
-                {/* Borrowed Date */}
-                <div className="text-center mb-3">
-                  <p className="text-sm text-gray-600 mb-1">Borrowed on</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {statusConfig.borrowInfo.borrowedOn}
-                  </p>
-                </div>
-
-                {/* Return Due */}
-                <div className="text-center mb-4">
-                  <p className="text-sm text-gray-600 mb-1">Return due</p>
-                  <p className={`text-lg font-bold ${statusConfig.borrowInfo.isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
-                    {statusConfig.borrowInfo.returnDue}
-                  </p>
-                  {statusConfig.borrowInfo.isOverdue && (
-                    <div className="flex items-center justify-center mt-2 text-red-600">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm font-medium">Overdue</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* View My Borrows Button */}
-                <Button
-                  onClick={handleButtonClick}
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3"
-                >
-                  {statusConfig.buttonText}
-                </Button>
+                {/* ... (borrowed info box) ... */}
               </div>
             ) : (
               <>
@@ -230,12 +185,11 @@ const BookDetailPage = () => {
                   </span>
                 </div>
 
-                {/* Copy Condition Info - Show for readers when book is available */}
                 {user?.role === "reader" && bestCopy && (
                   <div className="w-full bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
                     <p className="text-xs text-gray-600 mb-2 text-center">You will receive:</p>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Copy {bestCopy.copyId}</span>
+                      <span className="text-sm font-medium text-gray-700">Copy {bestCopy.copy_id}</span>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getConditionBadge(bestCopy.condition).color}`}>
                         {getConditionBadge(bestCopy.condition).icon} {getConditionBadge(bestCopy.condition).label}
                       </span>
@@ -300,9 +254,9 @@ const BookDetailPage = () => {
                 ) : null}
               </>
             )}
-
-            {/* Book Details Section */}
-            <div className="flex flex-col">
+          </div>
+          {/* Book Details Section */}
+          <div className="flex flex-col">
               {/* Title and Author */}
               <div className="mb-6">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -356,7 +310,7 @@ const BookDetailPage = () => {
                   <div>
                     <p className="text-sm text-gray-500">Category</p>
                     <p className="text-base font-medium text-gray-900">
-                      {book.category || "General"}
+                      {book.category?.category_name || "General"}
                     </p>
                   </div>
                   <div>
@@ -368,13 +322,12 @@ const BookDetailPage = () => {
                   <div>
                     <p className="text-sm text-gray-500">Available Copies</p>
                     <p className="text-base font-medium text-gray-900">
-                      {book.available_copies || 0} / {book.total_copies || 0}
+                      {book.available_stock || 0} / {book.total_stock || 0}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
         </div>
 
         {/* Borrow Request Dialog */}
