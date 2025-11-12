@@ -1,14 +1,24 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom';
 import { assets } from '../../assets/assets'
 import SearchBar from "./SearchBar";
 import NotificationDropdown from './NotificationDropdown';
 import UserMenu from './UserMenu';
 import { useAuth } from '../../context/AuthContext';
 
-const TopMain = () => {
+const TopMain = ({ searchTerm, setSearchTerm, filter, setFilter }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const userRole = user?.role || 'guest';
     const isGuest = userRole === 'guest';
+
+    const handleSignIn = () => {
+        navigate('/login-reader');
+    };
+
+    const handleSearch = () => {
+        navigate(`/browse?q=${searchTerm}&filter=${filter}`);
+    };
 
     return (
         <div
@@ -27,11 +37,18 @@ const TopMain = () => {
             "
         >
             {/* Search Bar - Hiển thị cho tất cả role */}
-            <SearchBar />
+            <SearchBar 
+                searchTerm={searchTerm} 
+                setSearchTerm={setSearchTerm}
+                filter={filter}
+                setFilter={setFilter}
+                handleSearch={handleSearch} 
+            />
 
             {/* Right Section: Guest có Sign In, Reader/Librarian có Notification + User Menu */}
             {isGuest ? (
                 <button
+                    onClick={handleSignIn}
                     className="
                         flex 
                         items-center 

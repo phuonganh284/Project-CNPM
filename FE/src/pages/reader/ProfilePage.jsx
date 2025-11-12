@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { mockReaders } from '../../data/mockReaders';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 // Input Field Component
 const InputField = ({ label, id, type = "text", placeholder, children }) => {
   return (
@@ -195,6 +197,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   });
   const [errors, setErrors] = useState({});
   const [isCompleted, setIsCompleted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -221,6 +224,8 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
     
     if (!formData.newPassword.trim()) {
       newErrors.newPassword = 'Required field';
+    } else if (formData.newPassword.length < 6) {
+      newErrors.newPassword = 'Password must be at least 6 characters';
     }
     
     if (!formData.confirmPassword.trim()) {
@@ -235,21 +240,43 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (validateForm()) {
-      // TODO: Implement actual password change logic
-      setIsCompleted(true);
-    }
-  };
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/auth/change-password`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            currentPassword: formData.currentPassword,
+            new_password: formData.newPassword
+          })
+        });
 
-  const handleBack = () => {
-    setIsCompleted(false);
-    setFormData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-    onClose();
+        const data = await response.json();
+
+        if (data.success) {
+          setIsCompleted(true);
+          // Reset form data
+          setFormData({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          });
+        } else {
+          setErrors({ currentPassword: data.message || 'Failed to change password' });
+        }
+      } catch (error) {
+        console.error('Password change error:', error);
+        setErrors({ currentPassword: 'Network error. Please try again.' });
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleCancel = () => {
@@ -259,6 +286,18 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       confirmPassword: ''
     });
     setErrors({});
+    setIsCompleted(false);
+    onClose();
+  };
+
+  const handleBack = () => {
+    setFormData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setErrors({});
+    setIsCompleted(false);
     onClose();
   };
 
@@ -323,16 +362,18 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors"
+                disabled={loading}
+                className="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSave}
-                className="px-6 py-3 bg-[#3273AF] text-white font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
+                disabled={loading}
+                className="px-6 py-3 bg-[#3273AF] text-white font-semibold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save
+                {loading ? 'Saving...' : 'Save'}
               </button>
             </div>
           </>

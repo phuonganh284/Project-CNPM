@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { assets } from "../../assets/assets";
 
-const SearchBar = () => {
-    const [filter, setFilter] = useState("All");
+const SearchBar = ({ searchTerm, setSearchTerm, filter, setFilter, handleSearch }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [searchText, setSearchText] = useState("");
 
     const filters = ["All", "Title", "Author", "Publisher", "Date"];
     const dropdownRef = useRef(null);
@@ -21,6 +19,12 @@ const SearchBar = () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            handleSearch();
+        }
+    };
 
     return (
         <div
@@ -93,14 +97,15 @@ const SearchBar = () => {
             <input
                 type="text"
                 placeholder="Search"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="flex-1 ml-2 sm:ml-4 md:ml-5 outline-none text-[#4D4D4D] placeholder-[#CCCCCC] font-inter bg-transparent text-xs sm:text-sm"
             />
 
             {/* Search Button -----------------------------------------------------------*/}
             <button
-                onClick={() => alert(`Searching for "${searchText}" in ${filter}`)}
+                onClick={handleSearch}
                 className="
                     flex 
                     items-center 

@@ -10,7 +10,13 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     status VARCHAR(20) CHECK (status IN ('active', 'banned', 'borrowing', 'overdue')) DEFAULT 'active',
     profile_picture TEXT,
-    borrow_count INT DEFAULT 0 CHECK (borrow_count >= 0)
+    borrow_count INT DEFAULT 0 CHECK (borrow_count >= 0),
+    is_verified BOOLEAN DEFAULT FALSE,
+    verification_token VARCHAR(255),
+    verification_expires TIMESTAMP,
+    reset_token VARCHAR(255),
+    reset_token_expires TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Reader

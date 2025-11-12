@@ -35,6 +35,7 @@ import LibrarianProfilePage from "./pages/librarian/ProfilePage";
 import LoginReader from "./pages/public/LoginReader";
 import Register from "./pages/public/Register";
 import LoginLibrarian from "./pages/public/LoginLibrarian";
+import VerifyEmailPage from "./pages/public/VerifyEmailPage";
 
 // Reset Password pages
 import SendMailToResetPass from "./pages/public/SendMailToResetPass";
@@ -59,11 +60,13 @@ const App = () => {
 
         {/* Register page - không có Layout */}
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
 
         {/* Reset Password pages - không có Layout */}
         <Route path="/send-mail-to-reset-pass" element={<SendMailToResetPass />} />
         <Route path="/open-mail-to-reset-pass" element={<OpenMailToResetPass />} />
-        <Route path="/reset-pass" element={<ResetPass />} />
+        <Route path="/reset-password" element={<ResetPass />} />
+        <Route path="/reset-pass" element={<ResetPass />} /> {/* Legacy route for compatibility */}
         <Route path="/reset-success" element={<ResetSuccess />} />
 
         <Route element={<Layout />}>

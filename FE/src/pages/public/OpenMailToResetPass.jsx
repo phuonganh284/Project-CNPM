@@ -50,7 +50,7 @@ export default function OpenMailToResetPass() {
                   className="text-blue-600 hover:text-blue-800 underline break-all"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/reset-pass');
+                    navigate('/reset-password');
                   }}
                 >
                   http://localhost:5173/reset-password
@@ -65,7 +65,7 @@ export default function OpenMailToResetPass() {
                 <button 
                   onClick={() => {
                     console.log('Redirecting to ResetPass page...');
-                    navigate('/reset-pass');
+                    navigate('/reset-password');
                   }}
                   className="bg-[#3273AF] text-white px-6 py-3 rounded-lg hover:bg-[#275b8c] transition-colors cursor-pointer"
                 >
