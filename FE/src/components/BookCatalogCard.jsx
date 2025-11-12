@@ -4,21 +4,24 @@ For Manage Books page
 import React, { useState } from "react";
 import ConfirmDialog from "./dialogs/ConfirmDialog";
 import BookEditDialog from "./dialogs/BookEditDialog";
+import { useNavigate } from "react-router-dom";
 
 const BookCatalogCard = ({
-    cover_url,
+    book_id,
+    isbn,
+    cover,
     title,
     author,
-    publish_year,
-    category,
-    available_copies,
-    total_copies,
-    isbn,
-    publisher,
-    page_count,
     language,
+    publisher,
+    publish_year,
     description,
+    price,
+    total_stock,
+    available_stock,
+    category_name,
     status,
+
     onEdit,
     onDelete,
     onClick,
@@ -26,8 +29,15 @@ const BookCatalogCard = ({
 
     const [showConfirm, setShowConfirm] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const navigate = useNavigate();
 
     const isBorrowed = status === "Borrowed";
+
+    const handleTitleClick = (e) => {
+        e.stopPropagation();
+        navigate(`/books/${book_id}/copies`);
+    }
+
 
     const handleDeleteClick = (e) => {
         e.stopPropagation();
@@ -41,19 +51,20 @@ const BookCatalogCard = ({
         setShowEditDialog(true);
     };
     const bookData = {
-        cover_url,
+        book_id,
+        isbn,
+        cover,
         title,
         author,
-        publish_year,
-        category,
-        available_copies,
-        total_copies,
-        isbn,
-        publisher,
-        page_count,
         language,
+        publisher,
+        publish_year,
         description,
-        status,
+        price,
+        total_stock,
+        available_stock,
+        category_name,
+        status
     };
     return (
         <>
@@ -72,14 +83,15 @@ const BookCatalogCard = ({
             >
                 {/* Book Cover */}
                 <img
-                    src={cover_url}
+                    src={cover}
                     alt={title}
                     className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 mr-6"
                 />
 
                 {/* Book Info */}
-                <div className="flex-1 min-w-0 max-w-[290px] mr-6">
-                    <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate">
+                <div className="flex-1 min-w-0 max-w-[290px] mr-20">
+                    <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate cursor-pointer"
+                        onClick={handleTitleClick}>
                         {title}
                     </h3>
                     <p className="font-inter text-sm text-gray-600 truncate">
@@ -88,20 +100,20 @@ const BookCatalogCard = ({
                 </div>
 
                 {/* Category */}
-                <div className="w-[200px] flex-shrink-0 mr-12">
+                <div className="w-[200px] flex-shrink-0 ">
                     <p className="font-inter text-base text-gray-800 mb-1 truncate">
-                        {category}
+                        {category_name}
                     </p>
                 </div>
 
                 {/* Stock */}
                 <div className="w-[100px] flex-shrink-0 mr-6">
                     <p className="font-inter text-base text-gray-800 mb-1 truncate">
-                        {available_copies}
+                        {available_stock}
                     </p>
                 </div>
 
-                {/* Status */}
+                {/* status */}
                 <div className="w-[130px] flex-shrink-0 mr-6">
                     {status === 'Available' &&
                         (
