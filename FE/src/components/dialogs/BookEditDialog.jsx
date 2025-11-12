@@ -1,177 +1,54 @@
 import React, { useState, useEffect } from "react";
-import api from "../../api/api";
 
 const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     if (!isOpen) return null;
 
-    const [editedBook, setEditedBook] = useState(book);
-    const [preview, setPreview] = useState(book?.cover || "");
+    const [editedBook, setEditedBook] = useState(book); // edit book
     const [errorMessage, setErrorMessage] = useState("");
-    const [errors, setErrors] = useState({});
-    const [categories, setCategories] = useState([]);
-    const [creatingCategory, setCreatingCategory] = useState(false);
+
+    const [preview, setPreview] = useState(book?.cover_url || ""); // set data tạm thời
+    const [bookData, setBookData] = useState(book);
+
 
     useEffect(() => {
-        if (!book) return;
-
-        const normalized = {
-            ...book,
-            language: book.language || "",
-            category_id: book?.category?.id || null,
-            category_name: book?.category?.name || "",
-
-        };
-
-        setEditedBook(normalized);
-        setPreview(book?.cover || "");
-        setErrors({});
-        setCreatingCategory(false);
+        setEditedBook(book);
+        setPreview(book?.bookCover || "");
     }, [book]);
 
     useEffect(() => {
-        if (!isOpen) return;
-        let mounted = true;
 
-        api.get("/categories")
-            .then((res) => {
-                const data = Array.isArray(res.data) ? res.data : res.data || res;
-                if (mounted) {
-                    setCategories(data);
-                    if (book?.category_id && !editedBook.category_id) {
-                        const cat = data.find((c) => c.category_id === book.category_id);
-                        if (cat) {
-                            setEditedBook((prev) => ({
-                                ...prev,
-                                category_id: cat.category_id,
-                                category_name: cat.category_name,
-                            }));
-                        }
-                    } else if (book?.category_name && !book.category_id) {
-                        const cat = data.find(
-                            (c) => c.category_name.toLowerCase() === book.category_name.toLowerCase()
-                        );
-                        if (cat) {
-                            setEditedBook((prev) => ({
-                                ...prev,
-                                category_id: cat.category_id,
-                                category_name: cat.category_name,
-                            }));
-                        }
-                    }
-                }
-            })
-            .catch((err) => {
-                console.error("Failed to load categories:", err);
-            });
-
-        return () => { mounted = false; };
-    }, [isOpen]);
-
-    useEffect(() => {
         return () => {
-            if (preview && preview.startsWith("blob:")) {
+            if (preview && preview.startsWith?.("blob:")) {
                 try {
                     URL.revokeObjectURL(preview);
                 } catch (e) {
-                    console.warn("Failed to revoke blob:", e);
+
                 }
             }
         };
-    }, [isOpen]);
+
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setEditedBook((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => {
-            if (!prev || !prev[name]) return prev;
-            const next = { ...prev };
-            delete next[name];
-            return next;
-        });
-    };
-
-    const handleCategoryChange = (e) => {
-        const val = e.target.value;
-        if (val === "__new") {
-            setCreatingCategory(true);
-            setEditedBook((prev) => ({ ...prev, category_id: null, category_name: "" }));
-        } else {
-            setCreatingCategory(false);
-            const id = val === "" ? null : Number(val);
-            const cat = categories.find((c) => c.category_id === id);
-            setEditedBook((prev) => ({ ...prev, category_id: id, category_name: cat?.category_name || "" }));
-        }
-        setErrors((prev) => {
-            if (!prev || !prev.category_name) return prev;
-            const next = { ...prev };
-            delete next.category_name;
-            return next;
-        });
     };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (preview?.startsWith("blob:")) {
-                URL.revokeObjectURL(preview);
-            }
             const imageURL = URL.createObjectURL(file);
             setPreview(imageURL);
-            setEditedBook((prev) => ({ ...prev, coverFile: file }));
+            setEditedBook((prev) => ({
+                ...prev,
+                cover_url: imageURL,
+                coverFile: file, // keep actual file if needed for upload (TODO BE)
+            }));
         }
     };
 
-
     const handleSave = () => {
-        const newErrors = {};
-        if (!editedBook.title || String(editedBook.title).trim() === "") {
-            newErrors.title = 'Title is required.';
-        }
-        if (!editedBook.author || String(editedBook.author).trim() === "") {
-            newErrors.author = 'Author is required.';
-        }
-        if (!editedBook.isbn || String(editedBook.isbn).trim() === "") {
-            newErrors.isbn = 'ISBN is required.';
-        }
-        // Category required for new books
-        if (!book?.book_id) {
-            if ((!editedBook.category_id || editedBook.category_id === null) && (!editedBook.category_name || String(editedBook.category_name).trim() === "")) {
-                newErrors.category_name = 'Category is required.';
-            }
-        }
-        // price is required and must be a non-negative number
-        if (editedBook.price === undefined || editedBook.price === null || String(editedBook.price).trim() === "") {
-            newErrors.price = 'Price is required.';
-        } else if (Number.isNaN(Number(editedBook.price)) || Number(editedBook.price) < 0) {
-            newErrors.price = 'Price must be a non-negative number.';
-        }
-        // publish_year is required and must be a non-negative integer
-        if (editedBook.publish_year === undefined || editedBook.publish_year === null || String(editedBook.publish_year).trim() === "") {
-            newErrors.publish_year = 'Publish year is required.';
-        } else if (!Number.isInteger(Number(editedBook.publish_year)) || Number(editedBook.publish_year) < 0) {
-            newErrors.publish_year = 'Publish year must be a non-negative integer.';
-        }
-        // available_stock should be provided (allow zero) and be a non-negative number
-        if (editedBook.available_stock === undefined || editedBook.available_stock === null || String(editedBook.available_stock).trim() === "") {
-            newErrors.available_stock = 'Available stock is required.';
-        } else if (Number.isNaN(Number(editedBook.available_stock)) || Number(editedBook.available_stock) < 0) {
-            newErrors.available_stock = 'Available stock must be a non-negative number.';
-        }
-        // total_stock should be >= available_stock
-        if (editedBook.total_stock === undefined || editedBook.total_stock === null || String(editedBook.total_stock).trim() === "") {
-            newErrors.total_stock = 'Total stock is required.';
-        } else if (Number.isNaN(Number(editedBook.total_stock)) || Number(editedBook.total_stock) < Number(editedBook.available_stock)) {
-            newErrors.total_stock = 'Total stock must be a number greater than or equal to available stock.';
-        }
-
-        setErrors(newErrors);
-        if (Object.keys(newErrors).length > 0) {
-            setErrorMessage('Please fix the errors before saving.');
-            return;
-        }
-
-        setErrorMessage("");
-        const updatedBook = { ...editedBook, cover: preview, book_id: book.book_id };
+        const updatedBook = { ...editedBook, bookCover: preview };
         onSave(updatedBook);
     };
 
@@ -200,9 +77,6 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter book title"
                         />
-                        {errors.title && (
-                            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-                        )}
                     </div>
 
                     <div>
@@ -215,9 +89,6 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter author"
                         />
-                        {errors.author && (
-                            <p className="text-red-500 text-sm mt-1">{errors.author}</p>
-                        )}
                     </div>
 
                     <div>
@@ -242,25 +113,6 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter publish year"
                         />
-                        {errors.publish_year && (
-                            <p className="text-red-500 text-sm mt-1">{errors.publish_year}</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="text-sm text-gray-700">Price</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            name="price"
-                            value={editedBook.price || ""}
-                            onChange={handleChange}
-                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
-                            placeholder="Enter price"
-                        />
-                        {errors.price && (
-                            <p className="text-red-500 text-sm mt-1">{errors.price}</p>
-                        )}
                     </div>
 
                     <div>
@@ -273,73 +125,54 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="Enter book's ISBN"
                         />
-                        {errors.isbn && (
-                            <p className="text-red-500 text-sm mt-1">{errors.isbn}</p>
-                        )}
                     </div>
 
                     <div>
-                        <label className="text-sm text-gray-700">Number of Stock</label>
+                        <label className="text-sm text-gray-700">Page Number</label>
                         <input
                             type="number"
-                            name="total_stock"
-                            value={editedBook.total_stock || ""}
+                            name="page_count"
+                            value={editedBook.page_count || ""}
                             onChange={handleChange}
-                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
-                            placeholder="Enter total stock"
-                            disabled
+                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Enter page number"
                         />
-                        {errors.total_stock && (
-                            <p className="text-red-500 text-sm mt-1">{errors.total_stock}</p>
-                        )}
                     </div>
 
                     <div>
-                        <label className="text-sm text-gray-700">Available Stock</label>
+                        <label className="text-sm text-gray-700">Number of Copies</label>
                         <input
                             type="number"
-                            name="available_stock"
-                            value={editedBook.available_stock || ""}
+                            name="total_copies"
+                            value={editedBook.total_copies || ""}
                             onChange={handleChange}
-                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
-                            placeholder="Enter available stock"
-                            disabled
+                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Enter total copies"
                         />
-                        {errors.available_stock && (
-                            <p className="text-red-500 text-sm mt-1">{errors.available_stock}</p>
-                        )}
+                    </div>
+
+                    <div>
+                        <label className="text-sm text-gray-700">Available Copies</label>
+                        <input
+                            type="number"
+                            name="available_copies"
+                            value={editedBook.available_copies || ""}
+                            onChange={handleChange}
+                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Enter available copies"
+                        />
                     </div>
 
                     <div>
                         <label className="text-sm text-gray-700">Category</label>
-                        <select
-                            name="category_id"
-                            value={editedBook.category_id ? String(editedBook.category_id) : ""}
-                            onChange={handleCategoryChange}
+                        <input
+                            type="text"
+                            name="category"
+                            value={editedBook.category || ""}
+                            onChange={handleChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
-                        >
-                            <option value="">Select category</option>
-                            {categories.map((c) => (
-                                <option key={c.category_id} value={String(c.category_id)}>
-                                    {c.category_name}
-                                </option>
-
-                            ))}
-                            <option value="__new">Create new category...</option>
-                        </select>
-                        {creatingCategory && (
-                            <input
-                                type="text"
-                                name="category_name"
-                                value={editedBook.category_name || ""}
-                                onChange={handleChange}
-                                className="w-full mt-2 p-2 border border-gray-300 rounded-lg text-sm"
-                                placeholder="Enter new category name"
-                            />
-                        )}
-                        {errors.category_name && (
-                            <p className="text-red-500 text-sm mt-1">{errors.category_name}</p>
-                        )}
+                            placeholder="Enter category"
+                        />
                     </div>
 
                     <div>
@@ -377,7 +210,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                     <div className="flex flex-col mb-1 items-center gap-2">
                         <label className="text-sm text-gray-700">Book Cover</label>
                         <img
-                            src={preview || "/placeholder.svg"}
+                            src={preview || "https://via.placeholder.com/120x160?text=No+Cover"}
                             alt="Error loading"
                             className="w-32 h-40 object-cover rounded-lg border border-gray-300"
                         />
@@ -402,14 +235,12 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                 {/* Buttons */}
                 <div className="flex justify-center mt-6 gap-3">
                     <button
-                        type="button"
                         onClick={handleSave}
                         className="px-12 py-2 rounded-lg font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"
                     >
                         Save
                     </button>
                     <button
-                        type="button"
                         onClick={onCancel}
                         className="px-12 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 cursor-pointer"
                     >

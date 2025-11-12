@@ -27,8 +27,8 @@ const SideBar = () => {
         librarian: [
             { icon: assets.home_icon, label: 'Home', path: '/home' },
             { icon: assets.browse_icon, label: 'Browse', path: '/browse' },
-            { icon: assets.books, label: 'Inventory', path: '/books' },
-            { icon: assets.users_icon, label: 'Readers', path: '/users' },
+            { icon: assets.books, label: 'Manage Books', path: '/books' },
+            { icon: assets.users_icon, label: 'Manage Readers', path: '/users' },
             { icon: assets.borrow_admin_icon, label: 'Borrow Requests', path: '/borrow-requests' },
             { icon: assets.approved_icon, label: 'Approved Requests', path: '/approved-requests' },
             { icon: assets.myborrows_icon, label: 'Borrowing records', path: '/borrowing' },
