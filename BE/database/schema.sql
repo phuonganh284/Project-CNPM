@@ -66,6 +66,7 @@ CREATE TABLE book_copies (
     status VARCHAR(50) DEFAULT 'normal',
     copy_price NUMERIC(10,2) CHECK (copy_price >= 0),
     availability BOOLEAN DEFAULT TRUE
+    borrowed BOOLEAN DEFAULT FALSE
 );
 
 

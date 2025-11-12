@@ -25,6 +25,17 @@ const bookRoutes = require('./routes/books.routes');
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 
+const booksRoutes = require('./routes/bookRoutes');
+app.use('/api/books-admin', booksRoutes);
+
+const categoryRoutes = require('./routes/categoryRoutes');
+app.use('/api/categories', categoryRoutes);
+const copyRoutes = require('./routes/copyRoutes');
+app.use('/api/copies', copyRoutes);
+// Users admin routes
+const usersRoutes = require('./routes/usersRoutes');
+app.use('/api/users-admin', usersRoutes);
+
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });

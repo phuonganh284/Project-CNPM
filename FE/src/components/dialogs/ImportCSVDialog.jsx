@@ -64,7 +64,7 @@ const ImportCSVDialog = ({ isOpen, onUpload, onCancel }) => {
                     {selectedFile ? (
                         <p className="mt-3 text-sm text-gray-700">{selectedFile.name}</p>
                     ) : (
-                        <p className="mt-3 text-sm text-gray-500">No file chosen yet</p>
+                        <p className="mt-3 text-sm text-gray-500">...</p>
                     )}
                 </div>
 

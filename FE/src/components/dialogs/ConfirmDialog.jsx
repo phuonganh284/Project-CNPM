@@ -15,12 +15,14 @@ const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel }) => {
                 <p className="text-gray-600 text-sm mb-6">{message}</p>
                 <div className="flex justify-center gap-5">
                     <button
+                        type="button"
                         onClick={onConfirm}
                         className="px-10 py-4 rounded-lg text-white  bg-[#4A90E2] text-white hover:bg-[#3A7BC8] font-semibold cursor-pointer "
                     >
                         Confirm
                     </button>
                     <button
+                        type="button"
                         onClick={onCancel}
                         className="px-10 py-4  rounded-lg border border-gray-300 text-gray-700  hover:bg-gray-100 font-semibold cursor-pointer "
                     >

@@ -1,30 +1,63 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { mockReaders } from "../../data/mockReaders";
 import { mockApprovedRequests } from "../../data/mockApprovedRequests";
 import { mockReturnRequests } from "../../data/mockReturnRequests";
 import { mockBorrowing } from "../../data/mockBorrowing";
+import { getUserByIdAdmin } from "../../services/userAdminService";
 
 const ReaderDetailsPage = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
-    const reader = mockReaders.find((r) => r.userId === userId);
 
+    const [reader, setReader] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("borrowRequests");
 
-    if (!reader) {
-        return <div className="p-6">Reader not found.</div>;
-    }
+    useEffect(() => {
+        let mounted = true;
+        const load = async () => {
+            setLoading(true);
+            setError("");
+            try {
+                const u = await getUserByIdAdmin(userId);
+                if (!mounted) return;
+                if (!u) {
+                    setReader(null);
+                } else {
+                    const normalized = {
+                        userId: u.user_id != null ? String(u.user_id) : (u.userId ? String(u.userId) : undefined),
+                        username: u.username,
+                        email: u.email,
+                        name: u.name,
+                        status: u.status || 'active',
+                        profile_picture: u.profile_picture,
+                        role: u.role || 'unknown'
+                    };
+                    setReader(normalized);
+                }
+            } catch (err) {
+                console.error('Failed to load reader:', err);
+                setError('Failed to load reader');
+                setReader(null);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const userApprovedRequests = mockApprovedRequests.filter(
+        load();
+        return () => { mounted = false; };
+    }, [userId]);
+
+    const userApprovedRequests = reader ? mockApprovedRequests.filter(
         (record1) => record1.user === reader.username
-    );
-    const userReturnRequests = mockReturnRequests.filter(
+    ) : [];
+    const userReturnRequests = reader ? mockReturnRequests.filter(
         (record2) => record2.userName === reader.username
-    );
-    const userBorrowingRecords = mockBorrowing.filter(
+    ) : [];
+    const userBorrowingRecords = reader ? mockBorrowing.filter(
         (record) => record.user === reader.username
-    );
+    ) : [];
 
 
     const tabs = [
@@ -34,6 +67,10 @@ const ReaderDetailsPage = () => {
         { id: "borrowingRecord", label: "Borrowing Record" },
         { id: "borrowingHistory", label: "Borrowing History" },
     ];
+
+    if (loading) return <div className="p-6">Loading reader...</div>;
+    if (error) return <div className="p-6 text-red-500">{error}</div>;
+    if (!reader) return <div className="p-6">Reader not found.</div>;
 
     const renderTabContent = () => {
         switch (activeTab) {
@@ -284,7 +321,7 @@ const ReaderDetailsPage = () => {
                             <div className="divide-y divide-gray-200">
                                 {mockHistory.map((record) => {
                                     const totalCharge = (record.lateFee || 0) + (record.damageFee || 0);
-                                    
+
                                     return (
                                         <div
                                             key={record.id}
@@ -331,38 +368,35 @@ const ReaderDetailsPage = () => {
                                             {/* Assessed Condition */}
                                             <div className="col-span-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`font-semibold text-sm ${
-                                                        record.returnedCondition >= 80 ? 'text-green-600' :
+                                                    <span className={`font-semibold text-sm ${record.returnedCondition >= 80 ? 'text-green-600' :
                                                         record.returnedCondition >= 60 ? 'text-blue-600' :
-                                                        record.returnedCondition >= 50 ? 'text-yellow-600' : 'text-red-600'
-                                                    }`}>
+                                                            record.returnedCondition >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                                        }`}>
                                                         {record.returnedCondition}%
                                                     </span>
                                                     <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[80px]">
-                                                        <div 
-                                                            className={`h-1.5 rounded-full ${
-                                                                record.returnedCondition >= 80 ? 'bg-green-500' :
+                                                        <div
+                                                            className={`h-1.5 rounded-full ${record.returnedCondition >= 80 ? 'bg-green-500' :
                                                                 record.returnedCondition >= 60 ? 'bg-blue-500' :
-                                                                record.returnedCondition >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                                                            }`}
+                                                                    record.returnedCondition >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                }`}
                                                             style={{ width: `${record.returnedCondition}%` }}
                                                         ></div>
                                                     </div>
                                                 </div>
                                                 <p className="text-xs text-gray-500 mt-0.5">
                                                     {record.returnedCondition >= 80 ? 'Excellent' :
-                                                     record.returnedCondition >= 60 ? 'Good' :
-                                                     record.returnedCondition >= 50 ? 'Fair' : 'Poor'}
+                                                        record.returnedCondition >= 60 ? 'Good' :
+                                                            record.returnedCondition >= 50 ? 'Fair' : 'Poor'}
                                                 </p>
                                             </div>
 
                                             {/* Status */}
                                             <div className="col-span-1">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap inline-block ${
-                                                    record.status === 'Returned' 
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-red-100 text-red-700'
-                                                }`}>
+                                                <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap inline-block ${record.status === 'Returned'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'
+                                                    }`}>
                                                     {record.status === 'Returned' ? 'On Time' : 'Late'}
                                                 </span>
                                             </div>
