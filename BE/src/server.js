@@ -17,12 +17,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 // Import và mount routes ở đây khi làm xong
-const bookRoutes = require('./routes/bookRoutes');
-app.use('/books', bookRoutes);
-const categoryRoutes = require('./routes/categoryRoutes');
-app.use('/categories', categoryRoutes);
-
-
 
 // Health check
 app.get('/health', (req, res) => {

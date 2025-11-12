@@ -10,6 +10,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     status VARCHAR(20) CHECK (status IN ('active', 'banned', 'borrowing', 'overdue')) DEFAULT 'active',
     profile_picture TEXT,
+    borrow_count INT DEFAULT 0 CHECK (borrow_count >= 0)
 );
 
 -- Reader
@@ -49,7 +50,6 @@ CREATE TABLE book_titles (
     availability_status VARCHAR(20) CHECK (availability_status IN ('out-of-stock', 'available', 'borrowed')) DEFAULT 'available',
     available_stock INT DEFAULT 0 CHECK (available_stock >= 0),
     category_id INT REFERENCES categories(category_id) ON DELETE SET NULL -- FK
-    borrow_count INT DEFAULT 0 CHECK (borrow_count >= 0)
 );
 
 -- Book Copy
@@ -60,7 +60,6 @@ CREATE TABLE book_copies (
     status VARCHAR(50) DEFAULT 'normal',
     copy_price NUMERIC(10,2) CHECK (copy_price >= 0),
     availability BOOLEAN DEFAULT TRUE
-    borrowed BOOLEAN DEFAULT FALSE
 );
 
 
