@@ -63,11 +63,11 @@ const CategoryTab = () => {
                     placeholder="Enter new category"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="border border-gray-200 rounded-lg px-4 py-2 flex-1 bg-white shadow-sm"
+                    className="border rounded-lg px-4 py-2 flex-1"
                 />
                 <button
                     onClick={handleAddCategory}
-                    className="bg-[#6476A6] text-white px-6 py-2 rounded-lg hover:bg-[#A5B6CE] cursor-pointer"
+                    className="bg-[#6476A6] text-white px-6 py-2 rounded-lg hover:bg-[#A5B6CE]"
                 >
                     Add Category
                 </button>
@@ -76,7 +76,7 @@ const CategoryTab = () => {
             {success && <p className="text-green-600 mb-3">{success}</p>}
             {error && <p className="text-red-600 mb-3">{error}</p>}
 
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="bg-white rounded-lg border p-4">
                 {categories.length === 0 ? (
                     <p className="text-gray-500">No categories found.</p>
                 ) : (
