@@ -4,7 +4,6 @@ For Manage Books page
 import React, { useState } from "react";
 import ConfirmDialog from "./dialogs/ConfirmDialog";
 import BookEditDialog from "./dialogs/BookEditDialog";
-import { useNavigate } from "react-router-dom";
 
 const BookCatalogCard = ({
     book_id,
@@ -29,15 +28,8 @@ const BookCatalogCard = ({
 
     const [showConfirm, setShowConfirm] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
-    const navigate = useNavigate();
 
     const isBorrowed = status === "Borrowed";
-
-    const handleTitleClick = (e) => {
-        e.stopPropagation();
-        navigate(`/books/${book_id}/copies`);
-    }
-
 
     const handleDeleteClick = (e) => {
         e.stopPropagation();
@@ -90,8 +82,7 @@ const BookCatalogCard = ({
 
                 {/* Book Info */}
                 <div className="flex-1 min-w-0 max-w-[290px] mr-20">
-                    <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate cursor-pointer"
-                        onClick={handleTitleClick}>
+                    <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate">
                         {title}
                     </h3>
                     <p className="font-inter text-sm text-gray-600 truncate">
