@@ -23,6 +23,10 @@ const borrowRequestRoutes = require('./routes/borrowRequest.routes');
 const borrowingRoutes = require('./routes/borrowing.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const adminBookRoutes = require('./routes/bookRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const copyRoutes = require('./routes/copyRoutes');
+const usersRoutes = require('./routes/usersRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/books', booksRoutes);
@@ -30,6 +34,10 @@ app.use('/api/borrow-requests', borrowRequestRoutes);
 app.use('/api/borrowings', borrowingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/books-admin', adminBookRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/copies', copyRoutes);
+app.use('/api/users-admin', usersRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./SideBar";
 import TopMain from "./TopMain";
 import { Outlet } from "react-router-dom";
+import ErrorBoundary from "../ErrorBoundary";
 import Background from "./Background";
 
 const useDebounce = (value, delay) => {
@@ -30,11 +31,11 @@ const Layout = () => {
             <div className="flex-1 ml-[278px] min-h-screen">
 
                 <div className="fixed bg-transparent z-50">
-                    <TopMain 
-                        searchTerm={searchTerm} 
+                    <TopMain
+                        searchTerm={searchTerm}
                         setSearchTerm={setSearchTerm}
                         filter={filter}
-                        setFilter={setFilter} 
+                        setFilter={setFilter}
                     />
                 </div>
 
@@ -47,7 +48,9 @@ const Layout = () => {
                             p-4
                         "
                     >
-                        <Outlet context={{ debouncedSearchTerm, filter }} />
+                        <ErrorBoundary>
+                            <Outlet context={{ debouncedSearchTerm, filter }} />
+                        </ErrorBoundary>
                     </div>
                 </div>
 
