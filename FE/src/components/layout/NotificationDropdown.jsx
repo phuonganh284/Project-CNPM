@@ -1,16 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { assets } from '../../assets/assets';
 import { useAuth } from '../../context/AuthContext';
-import { getNotificationsByRole } from '../../data/mockNotifications';
+import notificationService from '../../services/notificationService';
 import NotificationModal from './NotificationModal';
 
 const NotificationDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [selectedNotification, setSelectedNotification] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const dropdownRef = useRef(null);
     const { user } = useAuth();
+
+    const fetchNotifications = async () => {
+        if (!user) return;
+        try {
+            setLoading(true);
+            const data = await notificationService.getNotifications();
+            setNotifications(data.data);
+            setError(null);
+        } catch (err) {
+            console.error("API Error:", err);
+            const errorMessage = err.response?.data?.message || 'An unexpected error occurred while fetching notifications. Please try again.';
+            setError(errorMessage);
+            setNotifications([]); // Ensure data is empty on error
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Đóng dropdown khi click bên ngoài
     useEffect(() => {
@@ -29,24 +48,13 @@ const NotificationDropdown = () => {
         };
     }, [isOpen]);
 
-    // Load notifications theo role
-    const userRole = user?.role || 'guest';
-
+    // Load notifications when user is available
     useEffect(() => {
-        // TODO: KHI CÓ BE - Thay bằng API call
-        // const fetchNotifications = async () => {
-        //     const res = await fetch(`/api/notifications?role=${userRole}`);
-        //     const data = await res.json();
-        //     setNotifications(data);
-        // };
-        // fetchNotifications();
-
-        const data = getNotificationsByRole(userRole);
-        setNotifications(data);
-    }, [userRole]);
+        fetchNotifications();
+    }, [user]);
 
     // Đếm số notification chưa đọc
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const unreadCount = notifications.filter(n => !n.is_read).length;
 
     // Hàm xử lý khi bấm "View" một notification
     const handleViewNotification = (notification) => {
@@ -55,28 +63,31 @@ const NotificationDropdown = () => {
         setIsOpen(false);
 
         // Tự động đánh dấu đã đọc khi mở modal
-        if (!notification.isRead) {
+        if (!notification.is_read) {
             handleMarkAsRead(notification.id);
         }
     };
 
     // Hàm đánh dấu notification đã đọc
-    const handleMarkAsRead = (notificationId) => {
-        setNotifications(prev =>
-            prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-        );
-        // TODO: KHI CÓ BE - Gọi API đánh dấu đã đọc
-        // await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+    const handleMarkAsRead = async (notificationId) => {
+        try {
+            await notificationService.markAsRead(notificationId);
+            // Refresh notifications to get the latest state
+            fetchNotifications();
+        } catch (err) {
+            console.error("Failed to mark as read:", err);
+        }
     };
 
     // Hàm xử lý khi bấm "View all notifications"
-    const handleViewAll = () => {
-        // Đánh dấu tất cả là đã đọc
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-        setIsOpen(false);
-        // TODO: KHI CÓ BE - Navigate đến trang /notifications hoặc gọi API mark all read
-        // navigate('/notifications');
-        // hoặc: await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+    const handleViewAll = async () => {
+        try {
+            await notificationService.markAllAsRead();
+            setIsOpen(false);
+            fetchNotifications();
+        } catch (err) {
+            console.error("Failed to mark all as read:", err);
+        }
     };
 
     return (
@@ -143,58 +154,54 @@ const NotificationDropdown = () => {
 
                     {/* Notification List */}
                     <div className="max-h-[400px] overflow-y-auto">
-                        {notifications.map((notif) => (
-                            <div
-                                key={notif.id}
-                                className={`
-                                    px-5 py-4 
-                                    border-b border-gray-100
-                                    hover:bg-gray-50
+                        {loading ? (
+                            <div className="p-4 text-center text-gray-500">Loading...</div>
+                        ) : error ? (
+                            <p className="p-4 text-center text-red-500 text-sm">{error}</p>
+                        ) : notifications.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">No new notifications.</div>
+                        ) : (
+                            notifications.map((notif) => (
+                                <div
+                                    key={notif.id}
+                                    className={`
+                                        px-5 py-4 
+                                        border-b border-gray-100
+                                        hover:bg-gray-50
+                                        transition-colors
+                                        flex
+                                        gap-3
+                                        ${!notif.is_read ? 'bg-blue-50/30' : ''}
+                                    `}
+                                >
+                                    {/* Dot indicator */}
+                                    <div className="flex-shrink-0 mt-1 flex flex-col items-center gap-2">
+                                        {/* Unread indicator */}
+                                        {!notif.is_read && (
+                                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                        )}
+                                    </div>
 
-                                    transition-colors
-                                    flex
-                                    gap-3
-                                    ${!notif.isRead ? 'bg-blue-50/30' : ''}
-                                `}
-                            >
-                                {/* Dot indicator */}
-                                <div className="flex-shrink-0 mt-1 flex flex-col items-center gap-2">
-                                    <div className={`
-                                        w-2 h-2 rounded-full
-                                        ${notif.type === 'urgent' ? 'bg-red-500' : ''}
-                                        ${notif.type === 'warning' ? 'bg-orange-500' : ''}
-                                        ${notif.type === 'info' ? 'bg-blue-500' : ''}
-                                    `} />
-                                    {/* Unread indicator */}
-                                    {!notif.isRead && (
-                                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                                    )}
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1 min-w-0">
-                                    <p className={`font-inter text-sm mb-1 ${!notif.isRead ? 'text-[#4D4D4D] font-semibold' : 'text-gray-600 font-medium'}`}>
-                                        {notif.title}
-                                    </p>
-                                    {notif.description && (
-                                        <p className="text-gray-500 font-inter text-xs mb-2 line-clamp-1">
-                                            {notif.description}
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`font-inter text-sm mb-1 ${!notif.is_read ? 'text-gray-800 font-semibold' : 'text-gray-600'}`}>
+                                            {notif.message}
                                         </p>
-                                    )}
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-gray-400 font-inter text-xs">
-                                            •{notif.time}
-                                        </span>
-                                        <button
-                                            onClick={() => handleViewNotification(notif)}
-                                            className="text-[#4A90E2] font-inter text-xs font-medium hover:underline cursor-pointer"
-                                        >
-                                            View
-                                        </button>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-gray-400 font-inter text-xs">
+                                                {new Date(notif.created_at).toLocaleString()}
+                                            </span>
+                                            <button
+                                                onClick={() => handleViewNotification(notif)}
+                                                className="text-[#4A90E2] font-inter text-xs font-medium hover:underline cursor-pointer"
+                                            >
+                                                View
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
 
                     {/* Footer */}

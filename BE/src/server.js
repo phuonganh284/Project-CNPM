@@ -2,33 +2,41 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { pool } = require('./config/database');
+const pool = require('./config/database');
+const { startScheduler, stopScheduler } = require('./jobs/scheduler');
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  origin: process.env.FRONTEND_URL || 'http://localhost:5174',
+  credentials: true
 }));
-
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Routes
 const authRoutes = require('./routes/authentication');
-const bookRoutes = require('./routes/books.routes');
-app.use('/api/auth', authRoutes);
-app.use('/api/books', bookRoutes);
+const booksRoutes = require('./routes/books.routes');
+const borrowRequestRoutes = require('./routes/borrowRequest.routes');
+const borrowingRoutes = require('./routes/borrowing.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
+app.use('/api/auth', authRoutes);
+app.use('/api/books', booksRoutes);
+app.use('/api/borrow-requests', borrowRequestRoutes);
+app.use('/api/borrowings', borrowingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Test database
 app.get('/api/test-db', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
@@ -38,6 +46,35 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Start server
+if (process.env.NODE_ENV !== 'test') {
+  const server = app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`FRONTEND_URL used for CORS: ${process.env.FRONTEND_URL || 'http://localhost:5174'}`);
+    
+    // Start background jobs (cron scheduler)
+    startScheduler();
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    stopScheduler();
+    server.close(() => {
+      pool.end();
+      process.exit(0);
+    });
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully...');
+    stopScheduler();
+    server.close(() => {
+      pool.end();
+      process.exit(0);
+    });
+  });
+}
+
+// Export for testing
+module.exports = app;

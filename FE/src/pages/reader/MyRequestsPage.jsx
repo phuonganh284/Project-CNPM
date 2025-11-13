@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RequestBookCard } from '../../components/MyRequestCard.jsx';
-import { mockRequestBooks } from '../../data/mockRequestBooks.js';
+import borrowRequestService from '../../services/borrowRequestService.js';
 
 // Component hiển thị hộp thoại xác nhận hủy yêu cầu
 const CancelConfirmModal = ({ isOpen, onClose, onConfirm }) => {
@@ -36,63 +36,97 @@ const CancelConfirmModal = ({ isOpen, onClose, onConfirm }) => {
 
 // Component chính: MyRequestsPage
 const MyRequestsPage = () => {
-  // Biến điều khiển hiển thị modal
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Lưu trữ thông tin về sách được chọn để hủy
-  const [selectedBook, setSelectedBook] = useState(null);
-
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const navigate = useNavigate();
 
-  // Xử lý khi người dùng nhấn nút "Cancel request" của từng sách
-  const handleCancelClick = (book) => {
-    setSelectedBook(book);   // Lưu sách được chọn
-    setIsModalOpen(true);    // Hiển thị modal xác nhận
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const data = await borrowRequestService.getReaderRequests();
+      setRequests(data.data);
+      setError(null);
+    } catch (err) {
+      console.error("API Error:", err);
+      const errorMessage = err.response?.data?.message || 'An unexpected error occurred while fetching your requests. Please try again.';
+      setError(errorMessage);
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Khi người dùng nhấn "Confirm" trong modal
-  const handleConfirmCancel = () => {
-    alert(`You canceled: ${selectedBook.title}`); // Hiển thị thông báo (chỉ để test)
-    setIsModalOpen(false);   // Đóng modal
-    setSelectedBook(null);   // Xóa dữ liệu sách đã chọn
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const handleCancelClick = (request) => {
+    setSelectedRequest(request);
+    setIsModalOpen(true);
   };
 
-  // Khi người dùng nhấn "Cancel" (đóng modal mà không làm gì)
+  const handleConfirmCancel = async () => {
+    if (!selectedRequest) return;
+    try {
+      await borrowRequestService.cancelRequest(selectedRequest.requestId);
+      setIsModalOpen(false);
+      setSelectedRequest(null);
+      fetchRequests(); // Refresh the list
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to cancel the request. Please try again.';
+      setError(errorMessage);
+      setIsModalOpen(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setSelectedRequest(null);
   };
 
-  // Handle Preview button click - navigate to book detail
   const handlePreview = (bookId) => {
-    navigate(`/book/${bookId}`); // Navigate to book detail page
+    navigate(`/book/${bookId}`);
   };
+
+  if (loading) return <div className="p-4 text-center text-gray-500">Loading requests...</div>;
+
   return (
     <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4 p-4 mt-4">
       <div className="mb-6">
-        {/* Phần tiêu đề */}
         <h1 className="text-gray-800 font-inter text-2xl font-bold mb-2">
           Your <span className="font-inter text-2xl font-bold mb-2" style={{ color: '#3273AF' }}>Requests</span>
         </h1>
       </div>
 
-      {/* Lưới hiển thị danh sách các yêu cầu mượn sách */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-10">
-        {mockRequestBooks.map((book) => (
-          <RequestBookCard
-            key={book.id}                      // Mỗi phần tử phải có key riêng
-            coverUrl={book.coverUrl}           // Truyền hình ảnh bìa
-            title={book.title}                 // Truyền tiêu đề sách
-            author={book.author}               // Truyền tác giả
-            year={book.year}                   // Truyền năm xuất bản
-            requestedAt={book.requestedAt}     // Ngày yêu cầu
-            status={book.status}               // Trạng thái (Pending / Approved)
-            onCancel={() => handleCancelClick(book)}  // Gọi hàm khi nhấn nút hủy
-            onPreview={() => handlePreview(book.id)}
-          />
-        ))}
-      </div>
+      {error && (
+        <p className="text-center text-red-500 text-sm mb-4">{error}</p>
+      )}
 
-      {/* Hiển thị modal xác nhận khi biến `isModalOpen` là true */}
+      {requests.length === 0 && !error ? (
+        <p className="text-center text-gray-500 mt-8">You have no pending requests.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-10">
+          {requests.map((request) => (
+            <RequestBookCard
+              key={request.requestId}
+              coverUrl={request.book.coverImageUrl}
+              title={request.book.title}
+              author={request.book.author}
+              year={request.book.publicationYear}
+              requestedAt={new Date(request.requestDate).toLocaleDateString()}
+              status={request.status}
+              copyId={request.copyId}
+              condition={request.condition}
+              onCancel={() => handleCancelClick(request)}
+              onPreview={() => handlePreview(request.book.id)}
+            />
+          ))}
+        </div>
+      )}
+
       <CancelConfirmModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

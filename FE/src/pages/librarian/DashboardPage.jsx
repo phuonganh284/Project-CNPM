@@ -1,63 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import dashboardService from '../../services/dashboardService';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // TODO: KHI CÓ BE - Fetch dashboard data từ API
-  const stats = {
-    totalBooks: 1247,
-    availableBooks: 892,
-    borrowedBooks: 355,
-    totalReaders: 523,
-    activeReaders: 178,
-    pendingRequests: 12,
-    approvedRequests: 8,
-    returnRequests: 15,
-    overdueBooks: 23,
-    totalRevenue: 1240, // Late fees collected
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await dashboardService.getDashboardData();
+        setData(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch dashboard data. Please try again later.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'BORROW_REQUEST',
-      user: 'John Doe',
-      book: 'The Great Gatsby',
-      time: '5 minutes ago',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      type: 'RETURN_REQUEST',
-      user: 'Jane Smith',
-      book: 'To Kill a Mockingbird',
-      time: '15 minutes ago',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      type: 'APPROVED',
-      user: 'Alice Johnson',
-      book: '1984',
-      time: '1 hour ago',
-      status: 'approved'
-    },
-    {
-      id: 4,
-      type: 'OVERDUE',
-      user: 'Bob Wilson',
-      book: 'Pride and Prejudice',
-      time: '2 hours ago',
-      status: 'overdue'
-    },
-  ];
-
-  const popularBooks = [
-    { id: 1, title: 'The Great Gatsby', borrowCount: 45, coverUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1490528560i/4671.jpg' },
-    { id: 2, title: '1984', borrowCount: 38, coverUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1532714506i/40961427.jpg' },
-    { id: 3, title: 'To Kill a Mockingbird', borrowCount: 32, coverUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1553383690i/2657.jpg' },
-  ];
+  const stats = data?.stats || {};
+  const recentActivities = data?.recentActivities || [];
+  const popularBooks = data?.popularBooks || [];
 
   const getActivityIcon = (type) => {
     const icons = {
@@ -74,9 +44,19 @@ const DashboardPage = () => {
       pending: 'bg-yellow-100 text-yellow-700',
       approved: 'bg-green-100 text-green-700',
       overdue: 'bg-red-100 text-red-700',
+      assessed: 'bg-blue-100 text-blue-700',
+      completed: 'bg-gray-100 text-gray-700',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
+
+  if (loading) {
+    return <div className="p-6 text-center text-gray-500">Loading Dashboard...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-center text-red-500">{error}</div>;
+  }
 
   return (
     <div className="p-6 bg-[#F3F3F7] min-h-screen">
@@ -87,31 +67,28 @@ const DashboardPage = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* Total Books */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Total Books</p>
             <span className="text-2xl">📚</span>
           </div>
-          <p className="text-3xl font-bold text-gray-800">{stats.totalBooks}</p>
+          <p className="text-3xl font-bold text-gray-800">{stats.totalBooks || 0}</p>
           <p className="text-xs text-green-600 mt-2">
-            {stats.availableBooks} available
+            {stats.availableBooks || 0} available
           </p>
         </div>
 
-        {/* Active Readers */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Active Readers</p>
             <span className="text-2xl">👥</span>
           </div>
-          <p className="text-3xl font-bold text-gray-800">{stats.activeReaders}</p>
+          <p className="text-3xl font-bold text-gray-800">{stats.activeReaders || 0}</p>
           <p className="text-xs text-gray-500 mt-2">
-            of {stats.totalReaders} total
+            of {stats.totalReaders || 0} total
           </p>
         </div>
 
-        {/* Pending Requests */}
         <div 
           className="bg-white rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => navigate('/borrow-requests')}
@@ -120,13 +97,12 @@ const DashboardPage = () => {
             <p className="text-sm text-gray-600">Pending Requests</p>
             <span className="text-2xl">⏳</span>
           </div>
-          <p className="text-3xl font-bold text-yellow-600">{stats.pendingRequests}</p>
+          <p className="text-3xl font-bold text-yellow-600">{stats.pendingRequests || 0}</p>
           <p className="text-xs text-blue-600 mt-2 hover:underline">
             View all →
           </p>
         </div>
 
-        {/* Overdue Books */}
         <div 
           className="bg-white rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => navigate('/borrowing')}
@@ -135,7 +111,7 @@ const DashboardPage = () => {
             <p className="text-sm text-gray-600">Overdue Books</p>
             <span className="text-2xl">⚠️</span>
           </div>
-          <p className="text-3xl font-bold text-red-600">{stats.overdueBooks}</p>
+          <p className="text-3xl font-bold text-red-600">{stats.overdueBooks || 0}</p>
           <p className="text-xs text-blue-600 mt-2 hover:underline">
             View all →
           </p>
@@ -144,7 +120,6 @@ const DashboardPage = () => {
 
       {/* Second Row Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Approved Requests */}
         <div 
           className="bg-white rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => navigate('/approved-requests')}
@@ -153,11 +128,10 @@ const DashboardPage = () => {
             <p className="text-sm text-gray-600">Approved Requests</p>
             <span className="text-2xl">✅</span>
           </div>
-          <p className="text-3xl font-bold text-green-600">{stats.approvedRequests}</p>
+          <p className="text-3xl font-bold text-green-600">{stats.approvedRequests || 0}</p>
           <p className="text-xs text-gray-500 mt-2">Waiting for pickup</p>
         </div>
 
-        {/* Return Requests */}
         <div 
           className="bg-white rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => navigate('/return-requests')}
@@ -166,30 +140,28 @@ const DashboardPage = () => {
             <p className="text-sm text-gray-600">Return Requests</p>
             <span className="text-2xl">↩️</span>
           </div>
-          <p className="text-3xl font-bold text-blue-600">{stats.returnRequests}</p>
+          <p className="text-3xl font-bold text-blue-600">{stats.returnRequests || 0}</p>
           <p className="text-xs text-gray-500 mt-2">Need assessment</p>
         </div>
 
-        {/* Revenue (Late Fees) */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Late Fees Collected</p>
             <span className="text-2xl">💰</span>
           </div>
-          <p className="text-3xl font-bold text-gray-800">${stats.totalRevenue}</p>
+          <p className="text-3xl font-bold text-gray-800">${stats.totalRevenue || 0}</p>
           <p className="text-xs text-gray-500 mt-2">This month</p>
         </div>
       </div>
 
       {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activities */}
         <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Activities</h2>
           <div className="space-y-3">
-            {recentActivities.map((activity) => (
+            {recentActivities.length > 0 ? recentActivities.map((activity) => (
               <div
-                key={activity.id}
+                key={`${activity.type}-${activity.id}`}
                 className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 <div className="text-2xl">{getActivityIcon(activity.type)}</div>
@@ -208,7 +180,7 @@ const DashboardPage = () => {
                   <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                 </div>
               </div>
-            ))}
+            )) : <p className="text-center text-gray-500 py-8">No recent activities.</p>}
           </div>
           <button
             onClick={() => navigate('/borrowing')}
@@ -218,11 +190,10 @@ const DashboardPage = () => {
           </button>
         </div>
 
-        {/* Popular Books */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Most Borrowed Books</h2>
           <div className="space-y-4">
-            {popularBooks.map((book, index) => (
+            {popularBooks.length > 0 ? popularBooks.map((book, index) => (
               <div key={book.id} className="flex items-center gap-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
                   {index + 1}
@@ -244,7 +215,7 @@ const DashboardPage = () => {
                   </p>
                 </div>
               </div>
-            ))}
+            )) : <p className="text-center text-gray-500 py-8">No borrowed books yet.</p>}
           </div>
           <button
             onClick={() => navigate('/books')}

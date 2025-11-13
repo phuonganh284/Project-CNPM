@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { mockBorrowRequests } from "../../data/mockBorrowRequests";
+import React, { useState, useEffect } from "react";
+import borrowRequestService from "../../services/borrowRequestService";
 
 // Approve Modal Component
 const ApproveModal = ({ isOpen, onClose, request, onConfirm }) => {
@@ -18,11 +18,12 @@ const ApproveModal = ({ isOpen, onClose, request, onConfirm }) => {
   };
 
   const handleConfirm = () => {
-    onConfirm(request.id);
+    onConfirm(request.requestId);
     onClose();
   };
 
-  const badge = getConditionBadge(request.copyCondition || 80);
+  const condition = request.copy?.condition || 0;
+  const badge = getConditionBadge(condition);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
@@ -34,10 +35,10 @@ const ApproveModal = ({ isOpen, onClose, request, onConfirm }) => {
             Are you sure you want to approve this request?
           </p>
           <div className="bg-gray-50 rounded-lg p-4 mt-3">
-            <p className="font-semibold text-gray-800">{request.title}</p>
-            <p className="text-sm text-gray-600">{request.author}, {request.year}</p>
-            <p className="text-sm text-gray-600 mt-2">Requested by: <span className="font-medium">{request.user}</span></p>
-            <p className="text-sm text-gray-600">Pickup: {request.pickupDate}</p>
+            <p className="font-semibold text-gray-800">{request.book?.title}</p>
+            <p className="text-sm text-gray-600">{request.book?.author}, {request.book?.publicationYear}</p>
+            <p className="text-sm text-gray-600 mt-2">Requested by: <span className="font-medium">{request.user?.username}</span></p>
+            <p className="text-sm text-gray-600">Pickup: {new Date(request.pickupDate).toLocaleDateString()}</p>
             
             {/* Copy Info */}
             <div className="mt-3 pt-3 border-t border-gray-200">
@@ -51,14 +52,14 @@ const ApproveModal = ({ isOpen, onClose, request, onConfirm }) => {
               <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
                 <div
                   className={`h-1.5 rounded-full ${
-                    request.copyCondition >= 80 ? 'bg-green-500' :
-                    request.copyCondition >= 60 ? 'bg-blue-500' :
-                    request.copyCondition >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                    condition >= 80 ? 'bg-green-500' :
+                    condition >= 60 ? 'bg-blue-500' :
+                    condition >= 50 ? 'bg-yellow-500' : 'bg-red-500'
                   }`}
-                  style={{ width: `${request.copyCondition}%` }}
+                  style={{ width: `${condition}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-gray-600 mt-1">Condition: {request.copyCondition}%</p>
+              <p className="text-xs text-gray-600 mt-1">Condition: {condition}%</p>
             </div>
           </div>
         </div>
@@ -100,7 +101,7 @@ const RejectModal = ({ isOpen, onClose, request, onConfirm }) => {
       setError("Please provide a reason for rejection");
       return;
     }
-    onConfirm(request.id, reason);
+    onConfirm(request.requestId, reason);
     handleClose();
   };
 
@@ -113,9 +114,9 @@ const RejectModal = ({ isOpen, onClose, request, onConfirm }) => {
         
         <div className="mb-4">
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <p className="font-semibold text-gray-800">{request.title}</p>
-            <p className="text-sm text-gray-600">{request.author}, {request.year}</p>
-            <p className="text-sm text-gray-600 mt-2">Requested by: <span className="font-medium">{request.user}</span></p>
+            <p className="font-semibold text-gray-800">{request.book?.title}</p>
+            <p className="text-sm text-gray-600">{request.book?.author}, {request.book?.publicationYear}</p>
+            <p className="text-sm text-gray-600 mt-2">Requested by: <span className="font-medium">{request.user?.username}</span></p>
           </div>
 
           <label className="block mb-2">
@@ -164,10 +165,32 @@ const RejectModal = ({ isOpen, onClose, request, onConfirm }) => {
 };
 
 const BorrowRequestsPage = () => {
-  const [requests, setRequests] = useState(mockBorrowRequests);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const data = await borrowRequestService.getAllRequests();
+      setRequests(data.data);
+      setError(null);
+    } catch (err) {
+      console.error("API Error:", err);
+      const errorMessage = err.response?.data?.message || 'An unexpected error occurred while fetching borrow requests. Please try again.';
+      setError(errorMessage);
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
   const handleApprove = (req) => {
     setSelectedRequest(req);
@@ -179,25 +202,27 @@ const BorrowRequestsPage = () => {
     setIsRejectModalOpen(true);
   };
 
-  const confirmApprove = (id) => {
-    // TODO: KHI CÓ BE - Call API để approve request (copyId đã có sẵn trong request)
-    setRequests((prev) =>
-      prev.filter((r) => r.id !== id) // Xóa request khỏi danh sách
-    );
-    console.log(`Request ${id} approved`);
-    // Backend sẽ:
-    // 1. Update borrow_requests: set status='approved'
-    // 2. Create borrowing_records với borrowed_condition và borrowed_copy_price từ copy hiện tại
-    // 3. Update book_copies: set availability=false
+  const confirmApprove = async (id) => {
+    try {
+      await borrowRequestService.approveRequest(id);
+      fetchRequests(); // Refresh list
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to approve the request. Please try again.';
+      setError(errorMessage);
+    }
   };
 
-  const confirmReject = (id, reason) => {
-    // TODO: KHI CÓ BE - Call API để reject request với lý do
-    setRequests((prev) =>
-      prev.filter((r) => r.id !== id) // Xóa request khỏi danh sách
-    );
-    console.log(`Request ${id} rejected with reason: ${reason}`);
+  const confirmReject = async (id, reason) => {
+    try {
+      await borrowRequestService.rejectRequest(id, reason);
+      fetchRequests(); // Refresh list
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to reject the request. Please try again.';
+      setError(errorMessage);
+    }
   };
+
+  if (loading) return <div className="p-6 text-center text-gray-500">Loading requests...</div>;
 
   return (
     <div className="p-6 bg-[#F3F3F7] min-h-screen">
@@ -205,83 +230,91 @@ const BorrowRequestsPage = () => {
         Borrow Requests
       </h2>
 
+      {error && (
+        <p className="text-center text-red-500 text-sm mb-4">{error}</p>
+      )}
+
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#F3F3F7] pb-3">
         <div className="flex items-center px-6 gap-6 text-gray-600 font-medium text-sm">
           <div className="w-[300px]">Title</div>
           <div className="w-[100px]">Copy ID</div>
-          <div className="w-[100px]">User</div>
+          <div className="w-[100px]">Username</div>
           <div className="w-[150px]">Pick-up Date</div>
-          <div className="w-[150px]">Return Date</div>
+          <div className="w-[150px]">Request Date</div>
           <div className="flex-1">Action</div>
         </div>
       </div>
 
       {/* Card List */}
       <div className="flex flex-col gap-4">
-        {requests.map((req) => {
-          const getConditionColor = (condition) => {
-            if (condition >= 80) return 'text-green-600';
-            if (condition >= 60) return 'text-blue-600';
-            if (condition >= 50) return 'text-yellow-600';
-            return 'text-red-600';
-          };
+        {requests.length === 0 && !error ? (
+          <p className="text-center text-gray-500 mt-8">No pending borrow requests.</p>
+        ) : (
+          requests.map((req) => {
+            const getConditionColor = (condition) => {
+              if (condition >= 80) return 'text-green-600';
+              if (condition >= 60) return 'text-blue-600';
+              if (condition >= 50) return 'text-yellow-600';
+              return 'text-red-600';
+            };
 
-          return (
-            <div
-              key={req.id}
-              className="bg-white rounded-lg shadow p-6 flex items-center gap-6"
-            >
-              {/* Book Cover + Title */}
-              <div className="flex items-center gap-3 w-[300px]">
-                <img
-                  src={req.coverUrl}
-                  alt={req.title}
-                  className="w-16 h-20 object-cover rounded shadow-sm"
-                />
-                <div>
-                  <div className="font-semibold text-gray-900">{req.title}</div>
-                  <div className="text-xs text-gray-500">
-                    {req.author}, {req.year}
+            return (
+              <div
+                key={req.requestId}
+                className="bg-white rounded-lg shadow p-6 flex items-center gap-6"
+              >
+                {/* Book Cover + Title */}
+                <div className="flex items-center gap-3 w-[300px]">
+                  <img
+                    src={req.book.coverImageUrl}
+                    alt={req.book.title}
+                    className="w-16 h-20 object-cover rounded shadow-sm"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">{req.book.title}</div>
+                    <div className="text-xs text-gray-500">
+                      {req.book.author}, {req.book.publicationYear}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Copy ID with condition */}
-              <div className="w-[100px]">
-                <div className="font-medium text-gray-900">{req.copyId}</div>
-                <div className={`text-xs font-medium ${getConditionColor(req.copyCondition)}`}>
-                  {req.copyCondition}%
+                {/* Copy ID with condition */}
+                <div className="w-[100px]">
+                  <div className="font-medium text-gray-900">{req.copyId}</div>
+                  <div className={`text-xs font-medium ${getConditionColor(req.copy.condition)}`}>
+                    {req.copy.condition}%
+                  </div>
+                </div>
+
+                {/* User */}
+                <div className="w-[100px] text-gray-800">{req.user.username}</div>
+
+                {/* Pick-up Date */}
+                <div className="w-[150px] text-gray-800">{new Date(req.pickupDate).toLocaleDateString()}</div>
+
+                {/* Request Date */}
+                <div className="w-[150px] text-gray-800">{new Date(req.requestDate).toLocaleDateString()}</div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 flex-1">
+                  <button
+                    onClick={() => handleApprove(req)}
+                    className="px-4 py-2 border  rounded-lg hover:bg-blue-50 transition text-sm font-medium "style={{ color: '#3273AF' }}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(req)}
+                    className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition text-sm font-medium"
+                  >
+                    Reject
+                  </button>
                 </div>
               </div>
-
-              {/* User */}
-              <div className="w-[100px] text-gray-800">{req.user}</div>
-
-              {/* Pick-up Date */}
-              <div className="w-[150px] text-gray-800">{req.pickupDate}</div>
-
-              {/* Return Date */}
-              <div className="w-[150px] text-gray-800">{req.returnDate}</div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 flex-1">
-                <button
-                  onClick={() => handleApprove(req)}
-                  className="px-4 py-2 border  rounded-lg hover:bg-blue-50 transition text-sm font-medium "style={{ color: '#3273AF' }}
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleReject(req)}
-                  className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition text-sm font-medium"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* Approve Modal */}

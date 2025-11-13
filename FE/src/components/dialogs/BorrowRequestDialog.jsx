@@ -1,44 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../button";
 
-const BorrowRequestDialog = ({ isOpen, onClose, book, onConfirm }) => {
-  const [requestDate, setRequestDate] = useState(() => {
-    const today = new Date();
-    return {
-      day: String(today.getDate()).padStart(2, "0"),
-      month: String(today.getMonth() + 1).padStart(2, "0"),
-      year: today.getFullYear(),
-    };
-  });
-
+const BorrowRequestDialog = ({ isOpen, onClose, book, copy, onConfirm }) => {
   const [pickupDate, setPickupDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return {
-      day: String(tomorrow.getDate()).padStart(2, "0"),
-      month: String(tomorrow.getMonth() + 1).padStart(2, "0"),
-      year: tomorrow.getFullYear(),
-    };
+    return tomorrow.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   });
 
-  const [bookSerialNo, setBookSerialNo] = useState("");
+  const requestDate = new Date().toISOString().split('T')[0]; // Current date, non-editable
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
+    if (!copy) {
+      console.error("No copy available to request.");
+      // Optionally, show an error to the user
+      return;
+    }
     const requestData = {
-      bookId: book?.id,
-      bookTitle: book?.title,
-      requestedOn: `${requestDate.day}-${requestDate.month}-${requestDate.year}`,
-      pickupDate: `${pickupDate.day}-${pickupDate.month}-${pickupDate.year}`,
-      bookSerialNo: bookSerialNo,
+      book_id: book?.book_id,
+      copy_id: copy?.copy_id,
+      pickup_date: pickupDate,
     };
-    console.log('Borrow request submitted:', requestData);
-    // Call the parent's onConfirm callback
     if (onConfirm) {
       onConfirm(requestData);
     }
   };
+
+  const getConditionLabel = (condition) => {
+    if (condition >= 80) return 'Excellent';
+    if (condition >= 60) return 'Good';
+    if (condition >= 50) return 'Fair';
+    return 'Poor';
+  };
+
+  const condition = copy?.condition || 0;
+  const conditionLabel = getConditionLabel(condition);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -47,7 +45,6 @@ const BorrowRequestDialog = ({ isOpen, onClose, book, onConfirm }) => {
             Borrow Request Details
           </h2>
           
-          {/* Book Title */}
           {book && (
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600">Requesting:</p>
@@ -56,112 +53,74 @@ const BorrowRequestDialog = ({ isOpen, onClose, book, onConfirm }) => {
             </div>
           )}
 
-        {/* Requested on Date */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Requested on
           </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={requestDate.day}
-              onChange={(e) =>
-                setRequestDate({ ...requestDate, day: e.target.value })
-              }
-              className="w-16 px-3 py-2 border border-gray-300 rounded-md text-center"
-              placeholder="DD"
-              maxLength={2}
-            />
-            <input
-              type="text"
-              value={requestDate.month}
-              onChange={(e) =>
-                setRequestDate({ ...requestDate, month: e.target.value })
-              }
-              className="w-16 px-3 py-2 border border-gray-300 rounded-md text-center"
-              placeholder="MM"
-              maxLength={2}
-            />
-            <input
-              type="text"
-              value={requestDate.year}
-              onChange={(e) =>
-                setRequestDate({ ...requestDate, year: e.target.value })
-              }
-              className="w-24 px-3 py-2 border border-gray-300 rounded-md text-center"
-              placeholder="YYYY"
-              maxLength={4}
-            />
-          </div>
+          <input
+            type="date"
+            value={requestDate}
+            readOnly
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+          />
         </div>
 
-        {/* Pick-up date */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Pick-up date
           </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={pickupDate.day}
-              onChange={(e) =>
-                setPickupDate({ ...pickupDate, day: e.target.value })
-              }
-              className="w-16 px-3 py-2 border border-gray-300 rounded-md text-center"
-              placeholder="DD"
-              maxLength={2}
-            />
-            <input
-              type="text"
-              value={pickupDate.month}
-              onChange={(e) =>
-                setPickupDate({ ...pickupDate, month: e.target.value })
-              }
-              className="w-16 px-3 py-2 border border-gray-300 rounded-md text-center"
-              placeholder="MM"
-              maxLength={2}
-            />
-            <input
-              type="text"
-              value={pickupDate.year}
-              onChange={(e) =>
-                setPickupDate({ ...pickupDate, year: e.target.value })
-              }
-              className="w-24 px-3 py-2 border border-gray-300 rounded-md text-center"
-              placeholder="YYYY"
-              maxLength={4}
-            />
-          </div>
-        </div>
-
-        {/* Book Serial No */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Book Serial No.
-          </label>
           <input
-            type="text"
-            value={bookSerialNo}
-            onChange={(e) => setBookSerialNo(e.target.value)}
+            type="date"
+            value={pickupDate}
+            onChange={(e) => setPickupDate(e.target.value)}
+            min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]} // Min date is tomorrow
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            placeholder="98043023"
           />
         </div>
 
-        {/* Note */}
-        <p className="text-xs text-gray-500 mb-6 italic">
-          Please note where or notify you! Time frame given for you to pick-up
-          the book. It's one of the best mind-blowing book about UI/UX design.{" "}
-          <span className="text-blue-600 cursor-pointer hover:underline">
-            Read more...
-          </span>
-        </p>
+        {copy ? (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              You will receive:
+            </label>
+            <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono font-semibold text-gray-900 text-base">
+                  Copy {copy.copy_id}
+                </span>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  condition >= 80 ? 'bg-green-100 text-green-700' :
+                  condition >= 60 ? 'bg-blue-100 text-blue-700' :
+                  'bg-yellow-100 text-yellow-700'
+                }`}>
+                  {conditionLabel}
+                </span>
+              </div>
+              <div className="text-xs text-gray-600 mb-1">Condition</div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full ${
+                    condition >= 80 ? 'bg-green-500' :
+                    condition >= 60 ? 'bg-blue-500' :
+                    'bg-yellow-500'
+                  }`}
+                  style={{ width: `${condition}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">{condition}%</div>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
+            <p className="text-sm text-yellow-800">No copies are available for this book right now.</p>
+          </div>
+        )}
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <Button
             onClick={handleSubmit}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={!copy}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400"
           >
             Request Borrow
           </Button>

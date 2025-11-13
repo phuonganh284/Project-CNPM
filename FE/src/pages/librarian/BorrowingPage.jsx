@@ -1,9 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BorrowingRow from '../../components/BorrowingRow.jsx';
-import { mockBorrowing } from '../../data/mockBorrowing.js';
+import borrowingService from '../../services/borrowingService.js';
 
 const BorrowingPage = () => {
-  const [borrowedBooks, setBorrowedBooks] = useState(mockBorrowing);
+  const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchBorrowings = async () => {
+    try {
+      setLoading(true);
+      const data = await borrowingService.getAllBorrowings();
+      setBorrowedBooks(data);
+      setError(null);
+    } catch (err) {
+      console.error("API Error:", err);
+      const errorMessage = err.response?.data?.message || 'An unexpected error occurred while fetching borrowings. Please try again.';
+      setError(errorMessage);
+      setBorrowedBooks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBorrowings();
+  }, []);
+
+  if (loading) return <div className="p-6 text-center text-gray-500">Loading current borrowings...</div>;
 
   return (
     <div className="p-4 sm:p-6 min-h-screen font-sans">
@@ -11,6 +35,10 @@ const BorrowingPage = () => {
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <h2 className="text-2xl font-semibold text-gray-800">Current Borrowing</h2>
       </div>
+
+      {error && (
+        <p className="text-center text-red-500 text-sm mb-4">{error}</p>
+      )}
 
       {/* Column Headers */}
       <div className="hidden sm:flex items-center text-sm font-medium text-gray-600 bg-[#F3F3F7] py-3 px-6 mb-4 sticky top-0 z-10">
@@ -28,11 +56,13 @@ const BorrowingPage = () => {
             <BorrowingRow key={borrow.id} borrow={borrow} />
           ))
         ) : (
-          <div className="text-center p-10 bg-white rounded-lg border border-gray-200 shadow-md">
-            <p className="text-gray-500 text-lg font-medium">
-              No books are currently checked out. The library is quiet! 😌
-            </p>
-          </div>
+          !error && (
+            <div className="text-center p-10 bg-white rounded-lg border border-gray-200 shadow-md">
+              <p className="text-gray-500 text-lg font-medium">
+                No books are currently checked out. The library is quiet! 😌
+              </p>
+            </div>
+          )
         )}
       </div>
     </div>

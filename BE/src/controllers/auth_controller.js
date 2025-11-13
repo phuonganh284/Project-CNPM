@@ -5,13 +5,21 @@ const { generateToken: generateVerificationToken, generateCode, getTokenExpires 
 const { sendVerificationEmail, sendPasswordResetEmail, sendPasswordChangedEmail } = require('../utils/emailService');
 
 const generateToken = (user) => {
+    const payload = {
+        id: user.user_id,
+        email: user.email,
+        role: user.role,
+        name: user.name
+    };
+
+    if (user.role === 'reader' && user.reader_id) {
+        payload.reader_id = user.reader_id;
+    } else if (user.role === 'librarian' && user.librarian_id) {
+        payload.librarian_id = user.librarian_id;
+    }
+
     return jwt.sign(
-        {
-            id: user.user_id,
-            email: user.email,
-            role: user.role,
-            name: user.name
-        },
+        payload,
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
     );
@@ -164,7 +172,7 @@ const loginReader = async (req, res) => {
     
     try {
         const query = `
-            SELECT u.*, 'reader' as role 
+            SELECT u.*, r.reader_id, 'reader' as role 
             FROM users u 
             JOIN readers r ON u.user_id = r.user_id 
             WHERE u.email = $1
@@ -239,7 +247,7 @@ const loginLibrarian = async (req, res) => {
     
     try {
         const query = `
-            SELECT u.*, 'librarian' as role 
+            SELECT u.*, l.librarian_id, 'librarian' as role 
             FROM users u 
             JOIN librarians l ON u.user_id = l.user_id 
             WHERE u.email = $1

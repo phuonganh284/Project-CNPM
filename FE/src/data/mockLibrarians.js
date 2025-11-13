@@ -1,40 +1,20 @@
-
-// mockLibrarians for Librarian Profile
-export const mockLibrarians = [ 
+export const mockLibrarians = [
     {
-        librarianId: 'L001',
-        username: 'sarah_johnson',
-        email: 'sarah.johnson@library.com',
-        password: 'librarian123',
+        id: 'lib1',
         name: 'Dr. Sarah Johnson',
-        status: 'active',
-        phone: '+1-555-123-4567',
-        bio: 'Senior Librarian with 10+ years of experience in library management and information services.',
-        department: 'Information Services',
-        role: 'librarian'
+        email: 'sarah.johnson@library.com',
+        username: 'sarah_johnson',
+        avatar_url: '/man%201.svg',
+        phone: '555-123-4567',
+        bio: "I'm a Senior Librarian with 10+ years of experience in library management and information services."
     },
     {
-        librarianId: 'L002',
-        username: 'michael_chen',
-        email: 'michael.chen@library.com',
-        password: 'librarian456',
-        name: 'Michael Chen',
-        status: 'active',
-        phone: '+1-555-234-5678',
-        bio: 'Digital Resources Specialist with expertise in digital library systems and cataloging.',
-        department: 'Digital Resources',
-        role: 'librarian'
-    },
-    {
-        librarianId: 'L003',
-        username: 'emily_rodriguez',
-        email: 'emily.rodriguez@library.com',
-        password: 'librarian789',
-        name: 'Emily Rodriguez',
-        status: 'active',
-        phone: '+1-555-345-6789',
-        bio: 'Reference Librarian specializing in academic research support and database management.',
-        department: 'Reference Services',
-        role: 'librarian'
+        id: 'lib2',
+        name: 'Mr. David Lee',
+        email: 'david.lee@library.com',
+        username: 'david_lee',
+        avatar_url: '/man%201.svg',
+        phone: '555-987-6543',
+        bio: "Passionate about books and helping readers discover new worlds."
     }
 ];

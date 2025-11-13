@@ -63,9 +63,9 @@ const RequestRow = ({ request, onConfirmDelivery }) => {
                 {request.pickupDate}
             </div>
 
-            {/* Column 6: Return Date - Width 15% */}
+            {/* Column 6: Requested At - Width 15% */}
             <div className="w-[15%] text-sm text-gray-700 pr-4 min-w-[100px]">
-                {request.returnDate}
+                {request.requestedAt}
             </div>
 
             {/* Column 7: Action - Width 10% */}

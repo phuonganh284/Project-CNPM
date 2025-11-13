@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BorrowCard from '../../components/BorrowCard';
-import { mockBorrows } from '../../data/mockBorrows';
+import borrowingService from '../../services/borrowingService';
 
 const RenewCalendarModal = ({ book, onConfirm, onCancel }) => {
     const [selectedDate, setSelectedDate] = useState('');
@@ -88,62 +88,101 @@ const ReturnConfirmModal = ({ book, onConfirm, onCancel }) => (
 );
 
 const MyBorrowsPage = () => {
-    const [borrows, setBorrows] = useState(mockBorrows);
+    const [borrows, setBorrows] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [bookToRenew, setBookToRenew] = useState(null);
     const [successMessage, setSuccessMessage] = useState('');
     const [bookToReturn, setBookToReturn] = useState(null);
 
-    const handleConfirmRenew = (book, newDate) => {
-        const updated = borrows.map(b =>
-            b.id === book.id ? { ...b, renewed: true, returnDue: newDate, isOverdue: false } : b
-        );
-        setBorrows(updated);
-        setBookToRenew(null);
-        setSuccessMessage(`Book "${book.title}" has been renewed until ${newDate}!`);
+    const fetchBorrows = async () => {
+        try {
+            setLoading(true);
+            const data = await borrowingService.getReaderBorrowings();
+            setBorrows(data.data);
+            setError(null);
+        } catch (err) {
+            console.error("API Error:", err);
+            const errorMessage = err.response?.data?.message || 'An unexpected error occurred while fetching your borrows. Please try again.';
+            setError(errorMessage);
+            setBorrows([]); // Ensure data is empty on error
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleConfirmReturn = (book) => {
-        const updated = borrows.map(b =>
-            b.id === book.id ? { ...b, isPendingReturn: true, isOverdue: false } : b
-        );
-        setBorrows(updated);
-        setBookToReturn(null);
+    useEffect(() => {
+        fetchBorrows();
+    }, []);
+
+    const handleConfirmRenew = async (book, newDate) => {
+        try {
+            await borrowingService.renewBorrowing(book.id, newDate);
+            setBookToRenew(null);
+            setSuccessMessage(`Book "${book.title}" has been renewed until ${newDate}!`);
+            fetchBorrows(); // Refresh the list
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || 'Failed to renew the book. Please try again.';
+            setError(errorMessage);
+            setBookToRenew(null);
+        }
     };
+
+    const handleConfirmReturn = async (book) => {
+        try {
+            await borrowingService.requestReturn(book.id);
+            setBookToReturn(null);
+            setSuccessMessage(`Return request for "${book.title}" has been submitted!`);
+            fetchBorrows(); // Refresh the list
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || 'Failed to submit the return request. Please try again.';
+            setError(errorMessage);
+            setBookToReturn(null);
+        }
+    };
+
+    if (loading) {
+        return <div className="p-6 text-center text-gray-500">Loading your borrows...</div>;
+    }
 
     return (
         <div className="p-6 min-h-screen relative">
             <h2 className="text-2xl font-semibold mb-6 text-gray-800">Your Borrows</h2>
 
-        <div className="fixed bottom-6 right-8 flex flex-col items-end space-y-2 z-50 pr-10">
+            {error && (
+                <p className="text-center text-red-500 text-sm mb-4">{error}</p>
+            )}
 
-          <div className="flex items-center bg-red-50 border border-red-200 rounded-md px-3 py-1 shadow-md">
-            <span className="w-2.5 h-2.5 bg-red-500 rounded-full mr-2"></span>
-            <p className="text-sm text-gray-800">Overdue</p>
-          </div>
-          <div className="flex items-center bg-blue-50 border border-blue-200 rounded-md px-3 py-1 shadow-md">
-            <span className="w-2.5 h-2.5 bg-blue-500 rounded-full mr-2"></span>
-            <p className="text-sm text-gray-800">Pending return</p>
-          </div>
-          <div className="flex items-center bg-green-50 border border-green-200 rounded-md px-3 py-1 shadow-md">
-            <span className="w-2.5 h-2.5 bg-green-500 rounded-full mr-2"></span>
-            <p className="text-sm text-gray-800">Already renewed once</p>
-          </div>
-        </div>
+            <div className="fixed bottom-6 right-8 flex flex-col items-end space-y-2 z-50 pr-10">
+                {/* Legend items */}
+                <div className="flex items-center bg-red-50 border border-red-200 rounded-md px-3 py-1 shadow-md">
+                    <span className="w-2.5 h-2.5 bg-red-500 rounded-full mr-2"></span>
+                    <p className="text-sm text-gray-800">Overdue</p>
+                </div>
+                <div className="flex items-center bg-blue-50 border border-blue-200 rounded-md px-3 py-1 shadow-md">
+                    <span className="w-2.5 h-2.5 bg-blue-500 rounded-full mr-2"></span>
+                    <p className="text-sm text-gray-800">Pending return</p>
+                </div>
+                <div className="flex items-center bg-green-50 border border-green-200 rounded-md px-3 py-1 shadow-md">
+                    <span className="w-2.5 h-2.5 bg-green-500 rounded-full mr-2"></span>
+                    <p className="text-sm text-gray-800">Already renewed once</p>
+                </div>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {borrows.length ? (
-                    borrows.map(b => (
+            {borrows.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {borrows.map(b => (
                         <BorrowCard
                             key={b.id}
                             borrow={b}
                             onRenewClick={setBookToRenew}
                             onReturnClick={setBookToReturn}
                         />
-                    ))
-                ) : (
-                    <p className="text-gray-600 text-lg">You currently have no active borrows.</p>
-                )}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                !error && <p className="text-center text-gray-500 text-lg mt-8">You currently have no active borrows.</p>
+            )}
 
             {bookToRenew && (
                 <RenewCalendarModal
