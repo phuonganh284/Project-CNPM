@@ -19,6 +19,7 @@ const BookCatalogPage = () => {
   const [activeTab, setActiveTab] = useState("books");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importProgress, setImportProgress] = useState({ done: 0, total: 0, errors: [] });
 
   const [newBook, setNewBook] = useState({
     book_id: "",
@@ -94,6 +95,69 @@ const BookCatalogPage = () => {
       console.error(err);
       setError("Failed to add book");
     }
+  };
+
+  // --- CSV Import Handler ---
+  const mapRowToBook = (row) => {
+    // Map CSV columns to API fields. CSV headers in your screenshot: title, author, publisher, publish_year, isbn, category, language, description, cover, price, total_stock, available_stock
+    return {
+      title: row.title || row.bookTitle || row.book_title || '',
+      author: row.author || '',
+      publisher: row.publisher || '',
+      publish_year: row.publish_year || row.publishYear || row.publish_year || '',
+      isbn: row.isbn || '',
+      category_name: row.category || row.category_name || '',
+      language: row.language || '',
+      description: row.description || '',
+      cover: row.cover && row.cover.trim() !== '' ? row.cover.trim() : undefined,
+      price: row.price ? Number(row.price) : undefined,
+      total_stock: row.total_stock ? Number(row.total_stock) : (row.totalStock ? Number(row.totalStock) : undefined),
+      available_stock: row.available_stock ? Number(row.available_stock) : (row.availableStock ? Number(row.availableStock) : undefined),
+    };
+  };
+
+  const handleImportUpload = async (parsedData) => {
+    if (!Array.isArray(parsedData) || parsedData.length === 0) {
+      setError('No rows found in CSV');
+      return;
+    }
+    setIsImportOpen(false);
+    setLoading(true);
+    setImportProgress({ done: 0, total: parsedData.length, errors: [] });
+
+    const CHUNK = 6; // parallel requests per batch
+    const rows = parsedData.slice();
+    const results = [];
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const chunk = rows.slice(i, i + CHUNK);
+      try {
+        const promises = chunk.map(r => {
+          const payload = mapRowToBook(r);
+          return createBookAdmin(payload).then(res => ({ ok: true, res })).catch(err => ({ ok: false, err }));
+        });
+        const settled = await Promise.all(promises);
+        settled.forEach(s => {
+          if (s.ok && s.res) {
+            results.push(s.res);
+          } else {
+            setImportProgress(prev => ({ ...prev, errors: [...prev.errors, s.err?.toString() || 'Unknown error'] }));
+          }
+        });
+      } catch (bulkErr) {
+        console.error('Chunk upload failed', bulkErr);
+        setImportProgress(prev => ({ ...prev, errors: [...prev.errors, bulkErr.toString()] }));
+      }
+      setImportProgress(prev => ({ ...prev, done: Math.min(prev.total, prev.done + chunk.length) }));
+    }
+
+    // merge newly created into books list
+    if (results.length > 0) {
+      setBooks(prev => [...prev, ...results]);
+      setSuccessMessage(`Imported ${results.length} books successfully`);
+      setTimeout(() => setSuccessMessage(''), 4000);
+    }
+
+    setLoading(false);
   };
 
   // --- Render ---
@@ -181,11 +245,19 @@ const BookCatalogPage = () => {
 
       <ImportCSVDialog
         isOpen={isImportOpen}
-        onUpload={() => { }}
+        onUpload={handleImportUpload}
         onCancel={() => setIsImportOpen(false)}
       />
 
       {successMessage && <div className="mt-4 text-green-600">{successMessage}</div>}
+      {importProgress.total > 0 && (
+        <div className="mt-4 text-sm text-gray-700">
+          Import progress: {importProgress.done}/{importProgress.total}
+          {importProgress.errors.length > 0 && (
+            <div className="text-red-600 mt-1">Errors: {importProgress.errors.length} (check console)</div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
