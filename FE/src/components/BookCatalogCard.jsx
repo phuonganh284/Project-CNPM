@@ -83,9 +83,10 @@ const BookCatalogCard = ({
             >
                 {/* Book Cover */}
                 <img
-                    src={cover}
-                    alt={title}
+                    src={cover || undefined}
+                    alt={title || 'Book cover'}
                     className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 mr-6"
+                    onError={(e) => { e.target.src = 'https://via.placeholder.com/70x99?text=No+Cover'; }}
                 />
 
                 {/* Book Info */}
