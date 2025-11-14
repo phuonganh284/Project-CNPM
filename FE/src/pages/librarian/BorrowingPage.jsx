@@ -63,9 +63,9 @@ const BorrowingPage = () => {
           ))
         ) : (
           !error && (
-            <div className="text-center p-10 bg-white rounded-lg border border-gray-200 shadow-md">
+            <div className="text-center p-10">
               <p className="text-gray-500 text-lg font-medium">
-                No books are currently checked out. The library is quiet! 😌
+                No books are currently checked out.
               </p>
             </div>
           )

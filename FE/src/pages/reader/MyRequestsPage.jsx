@@ -96,8 +96,8 @@ const MyRequestsPage = () => {
   return (
     <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4 p-4 mt-4">
       <div className="mb-6">
-        <h1 className="text-gray-800 font-inter text-2xl font-bold mb-2">
-          Your <span className="font-inter text-2xl font-bold mb-2" style={{ color: '#3273AF' }}>Requests</span>
+        <h1 className=" font-inter text-2xl font-semibold mb-2 ml-6">
+          Your Requests
         </h1>
       </div>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { mockLibrarians } from '../../data/mockLibrarians';
+import authService from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -44,9 +44,8 @@ const PasswordField = ({ label, id, name, placeholder, value, onChange, error })
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className={`w-full h-12 p-4 pr-12 bg-[#FAFBFC] border rounded-lg text-[#8D98AA] focus:outline-none ${
-            error ? 'border-red-500 focus:border-red-500' : 'border-[#E0E4EC] focus:border-[#3273AF]'
-          }`}
+          className={`w-full h-12 p-4 pr-12 bg-[#FAFBFC] border rounded-lg text-[#8D98AA] focus:outline-none ${error ? 'border-red-500 focus:border-red-500' : 'border-[#E0E4EC] focus:border-[#3273AF]'
+            }`}
         />
         <button
           type="button"
@@ -125,12 +124,12 @@ const EditMediaModal = ({ isOpen, onClose, currentAvatar, onAvatarChange }) => {
   const handleApply = () => {
     // TODO: Implement actual image upload logic
     console.log('Applying new profile image:', selectedImage);
-    
+
     // Cập nhật ảnh avatar trong parent component
     if (onAvatarChange) {
       onAvatarChange(previewUrl);
     }
-    
+
     onClose();
   };
 
@@ -143,15 +142,15 @@ const EditMediaModal = ({ isOpen, onClose, currentAvatar, onAvatarChange }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-[108px] left-[304px] right-[26px] bottom-0 flex items-center justify-center z-40" style={{backgroundColor: 'rgba(0, 0, 0, 0.1)'}}>
+    <div className="fixed top-[108px] left-[304px] right-[26px] bottom-0 flex items-center justify-center z-40" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
       <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
         <h2 className="text-2xl font-semibold text-gray-800 mb-6">Edit Media</h2>
-        
+
         {/* Profile Picture */}
         <div className="flex justify-center mb-6">
-          <img 
-            src={previewUrl} 
-            alt="Profile Preview" 
+          <img
+            src={previewUrl}
+            alt="Profile Preview"
             className="w-24 h-24 rounded-full shadow-md object-cover"
           />
         </div>
@@ -208,7 +207,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -220,25 +219,25 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.currentPassword.trim()) {
       newErrors.currentPassword = 'Required field';
     }
-    
+
     if (!formData.newPassword.trim()) {
       newErrors.newPassword = 'Required field';
     } else if (formData.newPassword.length < 6) {
       newErrors.newPassword = 'Password must be at least 6 characters';
     }
-    
+
     if (!formData.confirmPassword.trim()) {
       newErrors.confirmPassword = 'Required field';
     }
-    
+
     if (formData.newPassword && formData.confirmPassword && formData.newPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -306,13 +305,13 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-[108px] left-[304px] right-[26px] bottom-0 flex items-center justify-center z-40" style={{backgroundColor: 'rgba(0, 0, 0, 0.1)'}}>
+    <div className="fixed top-[108px] left-[304px] right-[26px] bottom-0 flex items-center justify-center z-40" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
       <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
         {!isCompleted ? (
           // Change Password Form
           <>
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">Change your password</h2>
-            
+
             <div className="space-y-6">
               {/* Current Password */}
               <PasswordField
@@ -386,7 +385,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           // Success Form
           <>
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Process Completed</h2>
-            
+
             {/* Success Icon */}
             <div className="flex justify-center mb-6">
               <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
@@ -426,6 +425,8 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 // Edit Profile Modal Component
 const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
   const [formData, setFormData] = useState(currentProfile || {});
+  const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState(null);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -441,9 +442,25 @@ const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
     }));
   };
 
-  const handleSave = () => {
-    onSave(formData);
-    onClose();
+  const handleSave = async () => {
+    setApiError(null);
+    setSaving(true);
+    try {
+      // Call backend to update profile
+      const res = await authService.updateProfile(formData);
+      if (res.success) {
+        const updated = res.data || {};
+        onSave(updated);
+        onClose();
+      } else {
+        setApiError(res.error || 'Failed to update profile');
+      }
+    } catch (err) {
+      console.error('Update profile error:', err);
+      setApiError('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -454,16 +471,16 @@ const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed top-[108px] left-[304px] right-[26px] bottom-0 z-50 flex items-center justify-center"
-      style={{backgroundColor: 'rgba(0, 0, 0, 0.1)'}}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}
     >
-      <div 
+      <div
         className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-semibold text-gray-800 mb-6">Edit Profile</h2>
-        
+
         <div className="flex flex-col gap-6">
           {/* Hàng 1: Tên, Email */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
@@ -538,9 +555,10 @@ const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
           <div className="flex justify-center gap-4 mt-4">
             <button
               onClick={handleSave}
-              className="w-24 h-10 bg-[#3273AF] text-white text-sm font-medium rounded-lg hover:bg-opacity-90 transition-colors"
+              disabled={saving}
+              className="w-24 h-10 bg-[#3273AF] text-white text-sm font-medium rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={handleCancel}
@@ -549,6 +567,9 @@ const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
               Cancel
             </button>
           </div>
+          {apiError && (
+            <div className="mt-3 text-sm text-red-500 text-center">{apiError}</div>
+          )}
         </div>
       </div>
     </div>
@@ -567,7 +588,7 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
         <h3 className="text-base font-medium text-[#4C535F]">Your Profile Picture</h3>
         <div className="flex items-center gap-4">
           <img src={avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full shadow-md" />
-          <button 
+          <button
             onClick={onShowEditMedia}
             className="text-xs text-[#919191] underline hover:text-[#3273AF] transition-colors cursor-pointer"
           >
@@ -583,13 +604,13 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
           <div className="flex flex-col gap-2">
             <label className="text-base font-medium text-[#4C535F]">Full name</label>
             <div className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
-              {profileData?.name || "Dr. Sarah Johnson"}
+              {profileData?.name || ''}
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-base font-medium text-[#4C535F]">Email</label>
             <div className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
-              {profileData?.email || "sarah.johnson@library.com"}
+              {profileData?.email || ''}
             </div>
           </div>
         </div>
@@ -599,7 +620,7 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
           <div className="flex flex-col gap-2">
             <label className="text-base font-medium text-[#4C535F]">Username</label>
             <div className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
-              {profileData?.username || "sarah_johnson"}
+              {profileData?.username || ''}
             </div>
           </div>
           <div className="flex flex-col gap-2">
@@ -608,7 +629,7 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#8D98AA]">+1</span>
               <div className="absolute left-12 top-1/2 -translate-y-1/2 h-5 w-px bg-[#E0E4EC]"></div>
               <div className="w-full h-12 pl-16 pr-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] flex items-center">
-                {profileData?.phone || "555-123-4567"}
+                {profileData?.phone || ''}
               </div>
             </div>
           </div>
@@ -618,15 +639,16 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
         <div>
           <label className="text-base font-medium text-[#4C535F] mb-2 block">Bio</label>
           <div className="w-full h-24 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA]">
-            {profileData?.bio || "I'm a Senior Librarian with 10+ years of experience in library management and information services."}
+            {profileData?.bio || ''}
           </div>
         </div>
 
         {/* Nút Edit Profile */}
         <div>
-          <button 
+          <button
             onClick={onShowEditProfile}
-            className="w-48 h-12 bg-[#3273AF] text-white text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors"
+            disabled={!profileData}
+            className="w-48 h-12 bg-[#3273AF] text-white text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Edit Profile
           </button>
@@ -639,11 +661,11 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
 // Login & Security Form Component
 function LoginSecurityForm({ onShowModal, profileData }) {
   const navigate = useNavigate();
-  
+
   // Sử dụng dữ liệu từ profileData (đã được lấy từ user đang đăng nhập)
   const librarian = {
-    username: profileData?.username || 'librarian_user',
-    email: profileData?.email || 'librarian@library.com',
+    username: profileData?.username || '',
+    email: profileData?.email || '',
     password: 'password123' // Không hiển thị password thật vì lý do bảo mật
   };
 
@@ -692,8 +714,8 @@ function LoginSecurityForm({ onShowModal, profileData }) {
           Forgot password?
         </button>
 
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={onShowModal}
           className="w-48 h-12 bg-[#3273AF] text-white text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors"
         >
@@ -711,38 +733,36 @@ const ProfilePage = () => {
   const [showEditMediaModal, setShowEditMediaModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState('/man%201.svg');
-  
-  // Lấy dữ liệu của user đang đăng nhập từ mockLibrarians
-  const [profileData, setProfileData] = useState(() => {
-    // Tìm user trong mockLibrarians dựa trên email từ AuthContext
-    const currentUser = mockLibrarians.find(librarian => 
-      librarian.email === user?.email
-    ) || mockLibrarians[0]; // Fallback về librarian đầu tiên nếu không tìm thấy
-    
-    return {
-      name: currentUser?.name || 'Dr. Sarah Johnson',
-      email: currentUser?.email || 'sarah.johnson@library.com',
-      username: currentUser?.username || 'sarah_johnson',
-      phone: '555-123-4567', // Không có trong mockLibrarians nên để default
-      bio: "I'm a Senior Librarian with 10+ years of experience in library management and information services." // Không có trong mockLibrarians nên để default
-    };
-  });
 
-  // Cập nhật profileData khi user thay đổi
+  // Profile data will be fetched from backend
+  const [profileData, setProfileData] = useState(null);
+
+  // Fetch profile on mount / when auth user changes
   React.useEffect(() => {
-    if (user?.email) {
-      const currentUser = mockLibrarians.find(librarian => 
-        librarian.email === user.email
-      ) || mockLibrarians[0];
-      
-      setProfileData({
-        name: currentUser?.name || 'Dr. Sarah Johnson',
-        email: currentUser?.email || 'sarah.johnson@library.com',
-        username: currentUser?.username || 'sarah_johnson',
-        phone: '555-123-4567',
-        bio: "I'm a Senior Librarian with 10+ years of experience in library management and information services."
-      });
-    }
+    let mounted = true;
+
+    const fetchProfile = async () => {
+      try {
+        const res = await authService.getProfile();
+        if (res.success && mounted) {
+          const data = res.data || {};
+          setProfileData(data);
+          // set avatar if provided by API (camelCase or snake_case fallback)
+          const avatar = data.profilePicture || data.profile_picture || '/man%201.svg';
+          setCurrentAvatar(avatar);
+        } else if (mounted) {
+          // fallback empty object to avoid uncontrolled rendering
+          setProfileData({});
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+        if (mounted) setProfileData({});
+      }
+    };
+
+    fetchProfile();
+
+    return () => { mounted = false; };
   }, [user?.email]);
 
   const handleSaveProfile = (newData) => {
@@ -752,39 +772,35 @@ const ProfilePage = () => {
   return (
     <div className="p-6 min-h-screen relative">
       <h2 className="text-2xl font-semibold mb-6 text-gray-800">Your Profile</h2>
-      
+
       <div className="bg-white rounded-lg shadow p-8 max-w-4xl">
         {/* Tabs */}
         <div className="flex gap-3 border-b-2 border-[#E0E4EC] mb-8">
-          <button 
+          <button
             onClick={() => setActiveTab('account')}
-            className={`flex flex-col gap-2 items-center px-3 pb-2 border-b-2 transition-colors ${
-              activeTab === 'account' 
-                ? 'border-[#3273AF]' 
-                : 'border-transparent'
-            }`}
+            className={`flex flex-col gap-2 items-center px-3 pb-2 border-b-2 transition-colors ${activeTab === 'account'
+              ? 'border-[#3273AF]'
+              : 'border-transparent'
+              }`}
           >
-            <span className={`text-xl font-medium transition-colors ${
-              activeTab === 'account' 
-                ? 'font-bold text-[#3273AF]' 
-                : 'text-[#717B8C]'
-            }`}>
+            <span className={`text-xl font-medium transition-colors ${activeTab === 'account'
+              ? 'font-bold text-[#3273AF]'
+              : 'text-[#717B8C]'
+              }`}>
               Account Setting
             </span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('security')}
-            className={`flex flex-col gap-2 items-center px-3 pb-2 border-b-2 transition-colors ${
-              activeTab === 'security' 
-                ? 'border-[#3273AF]' 
-                : 'border-transparent'
-            }`}
+            className={`flex flex-col gap-2 items-center px-3 pb-2 border-b-2 transition-colors ${activeTab === 'security'
+              ? 'border-[#3273AF]'
+              : 'border-transparent'
+              }`}
           >
-            <span className={`text-xl font-medium transition-colors ${
-              activeTab === 'security' 
-                ? 'font-bold text-[#3273AF]' 
-                : 'text-[#717B8C]'
-            }`}>
+            <span className={`text-xl font-medium transition-colors ${activeTab === 'security'
+              ? 'font-bold text-[#3273AF]'
+              : 'text-[#717B8C]'
+              }`}>
               Login & Security
             </span>
           </button>
@@ -792,28 +808,28 @@ const ProfilePage = () => {
 
         {/* Tab Content */}
         {activeTab === 'account' ? (
-          <AccountSettingsForm 
-            onShowEditMedia={() => setShowEditMediaModal(true)} 
+          <AccountSettingsForm
+            onShowEditMedia={() => setShowEditMediaModal(true)}
             onShowEditProfile={() => setShowEditProfileModal(true)}
             currentAvatar={currentAvatar}
             profileData={profileData}
           />
         ) : (
-          <LoginSecurityForm 
-            onShowModal={() => setShowChangePasswordModal(true)} 
+          <LoginSecurityForm
+            onShowModal={() => setShowChangePasswordModal(true)}
             profileData={profileData}
           />
         )}
       </div>
 
       {/* Change Password Modal - Outside the main content */}
-      <ChangePasswordModal 
+      <ChangePasswordModal
         isOpen={showChangePasswordModal}
         onClose={() => setShowChangePasswordModal(false)}
       />
 
       {/* Edit Media Modal - Outside the main content */}
-      <EditMediaModal 
+      <EditMediaModal
         isOpen={showEditMediaModal}
         onClose={() => setShowEditMediaModal(false)}
         currentAvatar={currentAvatar}
@@ -821,7 +837,7 @@ const ProfilePage = () => {
       />
 
       {/* Edit Profile Modal - Outside the main content */}
-      <EditProfileModal 
+      <EditProfileModal
         isOpen={showEditProfileModal}
         onClose={() => setShowEditProfileModal(false)}
         onSave={handleSaveProfile}

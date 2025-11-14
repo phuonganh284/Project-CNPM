@@ -10,9 +10,9 @@ const authService = {
             }
             return { success: false, error: response.data.message };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Registration failed' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Registration failed'
             };
         }
     },
@@ -24,21 +24,21 @@ const authService = {
             console.log('API response:', response);
             console.log('response.data:', response.data);
             console.log('response.data.success:', response.data.success);
-            
+
             if (response.data.success) {
                 return { success: true, data: response.data };
             }
-            return { 
-                success: false, 
-                error: response.data.message || 'Email verification failed' 
+            return {
+                success: false,
+                error: response.data.message || 'Email verification failed'
             };
         } catch (error) {
             console.error('verifyEmail error:', error);
             console.error('error.response:', error.response);
             console.error('error.response?.data:', error.response?.data);
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Email verification failed' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Email verification failed'
             };
         }
     },
@@ -54,9 +54,9 @@ const authService = {
             }
             return { success: false, error: response.data.message };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Login failed' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Login failed'
             };
         }
     },
@@ -72,9 +72,9 @@ const authService = {
             }
             return { success: false, error: response.data.message };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Login failed' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Login failed'
             };
         }
     },
@@ -105,9 +105,9 @@ const authService = {
             const response = await api.post('/auth/request-password-reset', { email });
             return { success: true, data: response.data };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Request failed' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Request failed'
             };
         }
     },
@@ -117,9 +117,9 @@ const authService = {
             const response = await api.post('/auth/reset-password', { token, newPassword });
             return { success: true, data: response.data };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Reset failed' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Reset failed'
             };
         }
     },
@@ -129,24 +129,36 @@ const authService = {
             const response = await api.get('/auth/profile');
             return { success: true, data: response.data.data };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Failed to fetch profile' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to fetch profile'
             };
+        }
+    },
+
+    updateProfile: async (profile) => {
+        try {
+            const response = await api.put('/auth/profile', profile);
+            if (response.data.success) {
+                return { success: true, data: response.data.data };
+            }
+            return { success: false, error: response.data.message };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.message || 'Failed to update profile' };
         }
     },
 
     changePassword: async (currentPassword, newPassword) => {
         try {
-            const response = await api.put('/auth/change-password', { 
-                currentPassword, 
-                newPassword 
+            const response = await api.put('/auth/change-password', {
+                currentPassword,
+                newPassword
             });
             return { success: true, data: response.data };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.response?.data?.message || 'Password change failed' 
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Password change failed'
             };
         }
     }

@@ -53,7 +53,7 @@ const NotificationDropdown = () => {
         fetchNotifications();
     }, [user]);
 
-    const unreadCount = notifications.filter(n => !n.is_read).length;
+    const unreadCount = notifications.filter(n => !n.isRead).length;
 
     // Handler for clicking on a single notification
     const handleNotificationClick = (notification) => {
@@ -62,8 +62,8 @@ const NotificationDropdown = () => {
         setIsModalOpen(true);
 
         // Mark as read if it's unread and has a valid ID
-        if (!notification.is_read && notification.notification_id) {
-            handleMarkAsRead(notification.notification_id);
+        if (!notification.isRead && notification.notificationId) {
+            handleMarkAsRead(notification.notificationId);
         }
     };
 
@@ -97,7 +97,7 @@ const NotificationDropdown = () => {
             fetchNotifications();
         }
     };
-    
+
     // Simplified dropdown toggle
     const handleToggleDropdown = () => {
         if (!isOpen) {
@@ -179,7 +179,7 @@ const NotificationDropdown = () => {
                         ) : (
                             notifications.map((notif, index) => (
                                 <div
-                                    key={notif.notification_id || index}
+                                    key={notif.notificationId || index}
                                     onClick={() => handleNotificationClick(notif)}
                                     className={`
                                         px-5 py-4 
@@ -189,23 +189,23 @@ const NotificationDropdown = () => {
                                         flex
                                         gap-3
                                         cursor-pointer
-                                        ${!notif.is_read ? 'bg-blue-50/30' : ''}
+                                        ${!notif.isRead ? 'bg-blue-50/30' : ''}
                                     `}
                                 >
                                     {/* Dot indicator */}
                                     <div className="flex-shrink-0 mt-1">
-                                        {!notif.is_read && (
+                                        {!notif.isRead && (
                                             <div className="w-2 h-2 rounded-full bg-blue-500" />
                                         )}
                                     </div>
 
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
-                                        <p className={`font-inter text-sm mb-1 ${!notif.is_read ? 'text-gray-800 font-semibold' : 'text-gray-600'}`}>
+                                        <p className={`font-inter text-sm mb-1 ${!notif.isRead ? 'text-gray-800 font-semibold' : 'text-gray-600'}`}>
                                             {notif.content}
                                         </p>
                                         <span className="text-gray-400 font-inter text-xs">
-                                            {notif.time_ago} ago
+                                            {notif.timeAgo} ago
                                         </span>
                                     </div>
                                 </div>

@@ -9,7 +9,9 @@ async function getCopies(req, res) {
             return res.status(400).json({ success: false, message: 'bookId is required' });
         }
 
-        const copies = await CopyModel.getCopiesByBookId(bookId);
+        // Fetch copies but keep those with availability = true even if borrowed (so copies with pending requests remain visible)
+        const copiesAll = await CopyModel.getCopiesByBookId(bookId, false);
+        const copies = Array.isArray(copiesAll) ? copiesAll.filter(c => c.availability === true) : [];
         return res.json({ success: true, data: copies });
     } catch (err) {
         console.error('Error getting copies:', err);
@@ -61,7 +63,12 @@ async function deleteCopy(req, res) {
         return res.json({ success: true, message: 'Copy deleted successfully', data: result });
     } catch (err) {
         console.error('Error deleting copy:', err);
-        return res.status(500).json({ success: false, message: err.message || 'Error deleting copy' });
+        // Handle business validation errors with 400, not 500
+        if (err.message && (err.message.includes('Cannot delete') || err.message.includes('Copy not found'))) {
+            const status = err.message.includes('not found') ? 404 : 400;
+            return res.status(status).json({ success: false, message: err.message });
+        }
+        return res.status(500).json({ success: false, message: 'Error deleting copy' });
     }
 }
 

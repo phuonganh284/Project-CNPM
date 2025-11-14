@@ -291,7 +291,7 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
                             {categories.map((c) => (
                                 <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
                             ))}
-                            <option value="__new">Create new category...</option>
+
                         </select>
                         {creatingCategory && (
                             <input

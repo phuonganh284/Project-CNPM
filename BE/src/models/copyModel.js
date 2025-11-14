@@ -112,6 +112,74 @@ class CopyModel {
         return result.rows;
     }
 
+    // Backwards-compatible wrapper expected by controllers
+    static async getCopiesByBookId(book_id, available_only = false) {
+        return await this.findByBookId(book_id, available_only);
+    }
+
+    // Create a new copy record
+    static async createCopy({ book_id, condition = 100, status = 'normal', copy_price = 0, availability = true, borrowed = false }) {
+        if (!book_id) throw new Error('book_id is required');
+
+        const query = `
+            INSERT INTO book_copies (book_id, condition, status, copy_price, availability, borrowed)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `;
+
+        const result = await pool.query(query, [book_id, condition, status, copy_price, availability, borrowed]);
+        return result.rows[0];
+    }
+
+    // Soft-delete a copy (mark unavailable)
+    static async deleteCopy(copy_id) {
+        if (!copy_id) throw new Error('copy_id is required');
+
+        // Ensure the copy exists
+        const existing = await this.findById(copy_id);
+        if (!existing) throw new Error('Copy not found');
+
+        // Prevent deletion if currently borrowed
+        if (existing.borrowed === true) {
+            throw new Error('Cannot delete: copy is currently borrowed');
+        }
+
+        // Prevent deletion if there are pending/approved borrow requests for this copy
+        const reqQuery = `
+            SELECT COUNT(*) as count
+            FROM borrow_requests
+            WHERE copy_id = $1
+              AND status IN ('pending', 'approved')
+        `;
+        const reqRes = await pool.query(reqQuery, [copy_id]);
+        if (parseInt(reqRes.rows[0].count) > 0) {
+            throw new Error('Cannot delete: copy has pending or approved borrow requests');
+        }
+
+        // Prevent deletion if there are active borrowing records for this copy
+        const brQuery = `
+            SELECT COUNT(*) as count
+            FROM borrowing_records
+            WHERE copy_id = $1
+              AND status IN ('pending', 'approved')
+        `;
+        const brRes = await pool.query(brQuery, [copy_id]);
+        if (parseInt(brRes.rows[0].count) > 0) {
+            throw new Error('Cannot delete: copy has active borrowing records');
+        }
+
+        // Mark availability false (do not hard-delete)
+        const query = `
+            UPDATE book_copies
+            SET availability = FALSE
+            WHERE copy_id = $1
+            RETURNING *
+        `;
+
+        const result = await pool.query(query, [copy_id]);
+        return result.rows[0] || null;
+    }
+
     static async countAvailableCopies(book_id, min_condition = 50) {
         if (!book_id) {
             throw new Error('book_id is required');

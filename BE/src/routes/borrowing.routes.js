@@ -8,7 +8,7 @@ const { authenticateToken, authorizeRole } = require('../middleware/auth');
  * @desc    Librarian confirms book delivery - Create borrowing record from approved request
  * @access  Librarian only
  */
-router.post('/confirm-delivery/:requestId', 
+router.post('/confirm-delivery/:requestId',
   authenticateToken,
   authorizeRole('librarian'),
   BorrowingController.confirmDelivery
@@ -96,6 +96,17 @@ router.get('/history',
   authenticateToken,
   authorizeRole('reader'),
   BorrowingController.getBorrowingHistory
+);
+
+/**
+ * @route   GET /api/borrowings/history/:readerId
+ * @desc    Get complete borrowing history for a specific reader (librarian view)
+ * @access  Librarian only
+ */
+router.get('/history/:readerId',
+  authenticateToken,
+  authorizeRole('librarian'),
+  BorrowingController.getBorrowingHistoryForReader
 );
 
 /**

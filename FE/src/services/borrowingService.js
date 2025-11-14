@@ -74,6 +74,15 @@ const borrowingService = {
         }
     },
 
+    getBorrowingHistoryByReader: async (userId) => {
+        try {
+            const response = await api.get(`/borrowings/history/${userId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data?.message || error.message;
+        }
+    },
+
     getAllBorrowings: async () => {
         try {
             const response = await api.get('/borrowings?active=true');
