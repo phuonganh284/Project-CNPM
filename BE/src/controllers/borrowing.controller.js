@@ -21,12 +21,12 @@ const BorrowingController = {
       );
     } catch (error) {
       console.error('Error confirming delivery:', error);
-      
+
       if (error.message.includes('not found')) {
         return res.status(404).json(formatError(error, error.message, 404));
       }
-      if (error.message.includes('must be approved') || 
-          error.message.includes('already exists')) {
+      if (error.message.includes('must be approved') ||
+        error.message.includes('already exists')) {
         return res.status(400).json(formatError(error, error.message, 400));
       }
       if (error.message.includes('limit exceeded')) {
@@ -116,11 +116,11 @@ const BorrowingController = {
       if (error.message.includes('not found')) {
         return res.status(404).json(formatError(error, error.message, 404));
       }
-      if (error.message.includes('only renew approved') || 
-          error.message.includes('limit reached') ||
-          error.message.includes('overdue') ||
-          error.message.includes('must be in the future') ||
-          error.message.includes('more than 14 days')) {
+      if (error.message.includes('only renew approved') ||
+        error.message.includes('limit reached') ||
+        error.message.includes('overdue') ||
+        error.message.includes('must be in the future') ||
+        error.message.includes('more than 14 days')) {
         return res.status(400).json(formatError(error, error.message, 400));
       }
 
@@ -183,8 +183,8 @@ const BorrowingController = {
       }
 
       const returnRequest = await Borrowing.createReturnRequest(
-        parseInt(id), 
-        reader_id, 
+        parseInt(id),
+        reader_id,
         returnedCondition,
         damageDetails
       );
@@ -198,8 +198,8 @@ const BorrowingController = {
       if (error.message.includes('not found') || error.message.includes('does not belong')) {
         return res.status(404).json(formatError(error, error.message, 404));
       }
-      if (error.message.includes('Cannot create') || 
-          error.message.includes('already exists')) {
+      if (error.message.includes('Cannot create') ||
+        error.message.includes('already exists')) {
         return res.status(400).json(formatError(error, error.message, 400));
       }
 
@@ -286,9 +286,9 @@ const BorrowingController = {
       if (error.message.includes('not found')) {
         return res.status(404).json(formatError(error, error.message, 404));
       }
-      if (error.message.includes('must be') || 
-          error.message.includes('is required') ||
-          error.message.includes('Cannot assess')) {
+      if (error.message.includes('must be') ||
+        error.message.includes('is required') ||
+        error.message.includes('Cannot assess')) {
         return res.status(400).json(formatError(error, error.message, 400));
       }
 
@@ -319,8 +319,8 @@ const BorrowingController = {
       if (error.message.includes('not found')) {
         return res.status(404).json(formatError(error, error.message, 404));
       }
-      if (error.message.includes('Cannot complete') || 
-          error.message.includes('Must be assessed')) {
+      if (error.message.includes('Cannot complete') ||
+        error.message.includes('Must be assessed')) {
         return res.status(400).json(formatError(error, error.message, 400));
       }
 
@@ -362,6 +362,29 @@ const BorrowingController = {
       return res.status(500).json(
         formatError(error, 'Failed to retrieve borrowing history', 500)
       );
+    }
+  },
+
+  async getBorrowingHistoryForReader(req, res) {
+    try {
+      const { readerId } = req.params;
+
+      if (!readerId || isNaN(parseInt(readerId))) {
+        return res.status(400).json(formatError(null, 'A valid user id is required', 400));
+      }
+
+      // Map provided user_id to reader_id
+      const readerResult = await pool.query('SELECT reader_id FROM readers WHERE user_id = $1', [parseInt(readerId)]);
+      if (readerResult.rows.length === 0) {
+        return res.status(200).json(formatResponse([], 'No borrowing history found for this user.'));
+      }
+      const reader_id = readerResult.rows[0].reader_id;
+
+      const history = await Borrowing.getBorrowingHistory(reader_id);
+      return res.status(200).json(formatResponse(history, 'Borrowing history retrieved successfully'));
+    } catch (error) {
+      console.error('Error getting borrowing history for reader:', error);
+      return res.status(500).json(formatError(error, 'Failed to retrieve borrowing history', 500));
     }
   },
 };

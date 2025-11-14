@@ -31,8 +31,8 @@ const ApprovedRequestPage = () => {
 
   const handleConfirmDelivery = async (requestId) => {
     try {
-      const borrowing = await borrowingService.confirmPickup(requestId); 
-      
+      const borrowing = await borrowingService.confirmPickup(requestId);
+
       setMessage(`Confirmed delivery for "${borrowing.title}" to user ${borrowing.readerName}. The book is now officially borrowed.`);
       fetchApprovedRequests(); // Refresh the list
 
@@ -67,13 +67,13 @@ const ApprovedRequestPage = () => {
       )}
 
       <div className="hidden sm:flex items-center text-sm font-medium text-gray-600 bg-[#F3F3F7] py-3 px-6 mb-4 sticky top-0 z-10">
-        <div className="w-[25%]">Title</div>
-        <div className="w-[12%]">User</div>
-        <div className="w-[10%]">Copy ID</div>
+        <div className="w-[24%]">Title</div>
+        <div className="w-[11%]">User</div>
+        <div className="w-[11%]">Copy ID</div>
         <div className="w-[13%]">Condition</div>
         <div className="w-[15%]">Pick-up Date</div>
-        <div className="w-[15%]">Requested At</div>
-        <div className="w-[10%] text-right">Action</div>
+        <div className="w-[17%]">Requested At</div>
+        <div className="w-[9%] ">Action</div>
       </div>
 
       <div className="space-y-4">
@@ -87,8 +87,8 @@ const ApprovedRequestPage = () => {
           ))
         ) : (
           !error && (
-            <div className="text-center p-10 bg-white rounded-lg border border-gray-200 shadow-md">
-              <p className="text-gray-500 text-lg font-medium">No approved requests are currently awaiting delivery confirmation. 🎉</p>
+            <div className="text-center p-10">
+              <p className="text-gray-500 text-lg font-medium">No approved requests are currently awaiting delivery confirmation.</p>
             </div>
           )
         )}

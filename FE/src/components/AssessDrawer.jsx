@@ -11,11 +11,11 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
     const [condition, setCondition] = useState('OK');
     const [damageLines, setDamageLines] = useState([]);
     const [overdueRate, setOverdueRate] = useState(1); // % of book price per day
-    
+
     // Use the nested book object from the returnRequest prop
     const bookPriceFromDB = parseFloat(returnRequest?.book?.price) || 0;
     const bookPriceOriginal = Math.round(bookPriceFromDB);
-    
+
     const copyCondition = returnRequest?.borrowedCondition || 100;
     const bookPriceCurrent = Math.round((bookPriceOriginal * copyCondition) / 100);
 
@@ -70,7 +70,7 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                     updated.percentage = newRange.default;
                     updated.subtotal = Math.round((newRange.default * bookPriceCurrent) / 100);
                 }
-                
+
                 if (field === 'percentage') {
                     const range = DAMAGE_RANGES[line.level];
                     const clampedValue = Math.max(range.min, Math.min(value, range.max));
@@ -106,7 +106,7 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                     assessmentNotes: allNotes,
                 };
             }
-            
+
             onSave(returnRequest.id, payload);
         }
         onClose();
@@ -116,12 +116,12 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
 
     return (
         <>
-            <div 
+            <div
                 className="fixed inset-0 bg-black/50 z-[70] transition-opacity animate-in fade-in duration-200"
                 onClick={onClose}
             />
             <div className={`
-                fixed top-0 right-0 h-full w-[600px] bg-white shadow-2xl z-[80]
+                fixed top-0 right-0 h-full w-full sm:w-[600px] bg-white shadow-2xl z-[80]
                 transform transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
             `}>
@@ -133,7 +133,7 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                         </p>
                         <p className="font-inter text-sm opacity-90">Book: {returnRequest.book.title}</p>
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
                     >
@@ -144,7 +144,7 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                 </div>
 
                 <div className="overflow-y-auto h-[calc(100vh-80px)] px-6 py-6">
-                    
+
                     <div className="mb-6">
                         <h3 className="font-inter text-base font-semibold text-gray-800 mb-3">📦 Copy Information</h3>
                         <div className="bg-blue-50 rounded-xl p-4 space-y-2">
@@ -154,11 +154,10 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Condition:</span>
-                                <span className={`font-semibold ${
-                                    copyCondition >= 80 ? 'text-green-600' :
+                                <span className={`font-semibold ${copyCondition >= 80 ? 'text-green-600' :
                                     copyCondition >= 60 ? 'text-blue-600' :
-                                    copyCondition >= 50 ? 'text-yellow-600' : 'text-red-600'
-                                }`}>
+                                        copyCondition >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                    }`}>
                                     {copyCondition}%
                                 </span>
                             </div>
@@ -242,52 +241,53 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                                 {damageLines.map(line => {
                                     const range = DAMAGE_RANGES[line.level];
                                     return (
-                                    <div key={line.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="text-xs text-gray-600 block mb-1">Level</label>
-                                                <select
-                                                    value={line.level}
-                                                    onChange={(e) => updateDamageLine(line.id, 'level', e.target.value)}
-                                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                                                >
-                                                    {damageLevelOptions.map(opt => (
-                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
+                                        <div key={line.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-xs text-gray-600 block mb-1">Level</label>
+                                                    <select
+                                                        value={line.level}
+                                                        onChange={(e) => updateDamageLine(line.id, 'level', e.target.value)}
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                                    >
+                                                        {damageLevelOptions.map(opt => (
+                                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs text-gray-600 block mb-1">Percentage (%)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={line.percentage}
+                                                        onChange={(e) => updateDamageLine(line.id, 'percentage', Number(e.target.value))}
+                                                        onBlur={(e) => updateDamageLine(line.id, 'percentage', Number(e.target.value))} // Clamp on blur
+                                                        step="1"
+                                                        min={range.min}
+                                                        max={range.max}
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                                    />
+                                                </div>
                                             </div>
                                             <div>
-                                                <label className="text-xs text-gray-600 block mb-1">Percentage (%)</label>
+                                                <label className="text-xs text-gray-600 block mb-1">Note</label>
                                                 <input
-                                                    type="number"
-                                                    value={line.percentage}
-                                                    onChange={(e) => updateDamageLine(line.id, 'percentage', Number(e.target.value))}
-                                                    onBlur={(e) => updateDamageLine(line.id, 'percentage', Number(e.target.value))} // Clamp on blur
-                                                    step="1"
-                                                    min={range.min}
-                                                    max={range.max}
+                                                    type="text"
+                                                    value={line.note}
+                                                    onChange={(e) => updateDamageLine(line.id, 'note', e.target.value)}
+                                                    placeholder="Rách bìa, vết viết..."
                                                     className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                                 />
                                             </div>
+                                            <button
+                                                onClick={() => removeDamageLine(line.id)}
+                                                className="text-red-600 font-inter text-xs hover:underline"
+                                            >
+                                                Remove
+                                            </button>
                                         </div>
-                                        <div>
-                                            <label className="text-xs text-gray-600 block mb-1">Note</label>
-                                            <input
-                                                type="text"
-                                                value={line.note}
-                                                onChange={(e) => updateDamageLine(line.id, 'note', e.target.value)}
-                                                placeholder="Rách bìa, vết viết..."
-                                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={() => removeDamageLine(line.id)}
-                                            className="text-red-600 font-inter text-xs hover:underline"
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                )})}
+                                    )
+                                })}
                                 <div className="border-t border-gray-300 pt-3 mt-3">
                                     <div className="flex justify-between font-semibold">
                                         <span className="text-gray-700">Damage fee:</span>

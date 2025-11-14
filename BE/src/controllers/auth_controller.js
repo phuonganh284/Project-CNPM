@@ -27,18 +27,18 @@ const generateToken = (user) => {
 
 const register = async (req, res) => {
     const { email, password, username, name, full_name, role } = req.body;
-    
+
 
     const displayName = full_name || name;
     const userRole = role || 'reader';
-    
+
     if (!email || !password || !username || !displayName) {
         return res.status(400).json({
             success: false,
             message: 'Missing required fields: email, password, username, and name are required'
         });
     }
-    
+
     // Validate password length
     if (password.length < 6) {
         return res.status(400).json({
@@ -46,7 +46,7 @@ const register = async (req, res) => {
             message: 'Password must be at least 6 characters long'
         });
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         return res.status(400).json({
@@ -54,21 +54,21 @@ const register = async (req, res) => {
             message: 'Invalid email format'
         });
     }
-    
+
     if (!['reader', 'librarian'].includes(userRole)) {
         return res.status(400).json({
             success: false,
             message: 'Role must be either "reader" or "librarian"'
         });
     }
-    
+
     let client;
-    
+
     try {
         console.log('CHECK OVERLAPPED EMAIL')
         client = await pool.connect();
         await client.query('BEGIN');
-        
+
         const existingEmail = await client.query('SELECT * FROM users WHERE email = $1', [email]);
         console.log(existingEmail.rows)
         if (existingEmail.rows.length > 0) {
@@ -169,7 +169,7 @@ const register = async (req, res) => {
 // Reader login
 const loginReader = async (req, res) => {
     const { email, password } = req.body;
-    
+
     try {
         const query = `
             SELECT u.*, r.reader_id, 'reader' as role 
@@ -244,7 +244,7 @@ const loginReader = async (req, res) => {
 // Librarian login
 const loginLibrarian = async (req, res) => {
     const { email, password } = req.body;
-    
+
     try {
         const query = `
             SELECT u.*, l.librarian_id, 'librarian' as role 
@@ -318,7 +318,7 @@ const loginLibrarian = async (req, res) => {
 
 const login = async (req, res) => {
     const { email, password, role } = req.body;
-    
+
     if (role === 'reader') {
         return loginReader(req, res);
     } else if (role === 'librarian') {
@@ -334,9 +334,11 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT user_id, username, email, name, status, profile_picture, borrow_count FROM users WHERE user_id = $1',
+            'SELECT user_id, username, email, name, status, profile_picture FROM users WHERE user_id = $1',
             [req.user.id]
         );
+
+
 
         if (result.rows.length === 0) {
             return res.status(404).json({
@@ -360,7 +362,7 @@ const getProfile = async (req, res) => {
 
 const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
-    
+
     try {
         const result = await pool.query(
             'SELECT password FROM users WHERE user_id = $1',
@@ -442,7 +444,7 @@ const resetPassword = async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
@@ -776,7 +778,7 @@ const changePasswordWithNotification = async (req, res) => {
     console.log('Request body:', req.body);
     const { old_password, new_password, currentPassword } = req.body;
     const actual_old_password = old_password || currentPassword;
-    
+
     if (!actual_old_password || !new_password) {
         return res.status(400).json({
             success: false,
@@ -846,6 +848,31 @@ const changePasswordWithNotification = async (req, res) => {
         });
     }
 };
+const updateProfile = async (req, res) => {
+    try {
+        const usersModel = require('../models/usersModel');
+        const { name, profile_picture } = req.body;
+
+        const fields = {};
+        if (name !== undefined) fields.name = name;
+        if (profile_picture !== undefined) fields.profile_picture = profile_picture;
+
+        if (Object.keys(fields).length === 0) {
+            return res.status(400).json({ success: false, message: 'No valid fields to update' });
+        }
+
+        const updated = await usersModel.updateUser(req.user.id, fields);
+
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'User not found or nothing changed' });
+        }
+
+        res.json({ success: true, data: updated });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
 
 module.exports = {
     register,
@@ -861,4 +888,6 @@ module.exports = {
     forgotPassword,
     resetPasswordWithToken,
     changePasswordWithNotification
+    ,
+    updateProfile
 };

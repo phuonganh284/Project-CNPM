@@ -331,7 +331,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                                 </option>
 
                             ))}
-                            <option value="__new">Create new category...</option>
+
                         </select>
                         {creatingCategory && (
                             <input
