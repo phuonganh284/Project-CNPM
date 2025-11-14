@@ -1,9 +1,12 @@
 const { pool } = require('../config/database');
 const Notification = require('../models/notification.model');
+const CopyModel = require('../models/copyModel');
+const BookTitle = require('../models/bookTitle.model');
 
 async function checkExpiredRequests() {
   console.log('[CRON] Checking expired borrow requests...');
   
+  const client = await pool.connect();
   try {
     const query = `
       SELECT 
@@ -27,7 +30,7 @@ async function checkExpiredRequests() {
       ORDER BY br.pickup_date ASC
     `;
     
-    const result = await pool.query(query);
+    const result = await client.query(query);
     const expiredRequests = result.rows;
     
     if (expiredRequests.length === 0) {
@@ -42,38 +45,53 @@ async function checkExpiredRequests() {
     
     for (const req of expiredRequests) {
       try {
-        // a. Delete request khỏi database
+        await client.query('BEGIN');
+
+        // 1. Set the copy as available again
+        await CopyModel.setBorrowedStatus(req.copy_id, false, client);
+
+        // 2. Update the available stock for the book
+        await BookTitle.updateAvailableStock(req.book_id, client);
+
+        // 3. Delete request from database
         const deleteQuery = `
           DELETE FROM borrow_requests 
           WHERE request_id = $1
           RETURNING request_id
         `;
-        const deleteResult = await pool.query(deleteQuery, [req.request_id]);
+        const deleteResult = await client.query(deleteQuery, [req.request_id]);
         
         if (deleteResult.rows.length === 0) {
-          console.error(`[CRON] Failed to delete request ${req.request_id} - already deleted?`);
-          failedCount++;
-          continue;
+          throw new Error(`Failed to delete request ${req.request_id} - already deleted?`);
         }
         
-        // b. Format pickup_date
+        await client.query('COMMIT');
+
+        // 4. Format pickup_date for notification
         const pickupDateFormatted = new Date(req.pickup_date)
           .toLocaleDateString('en-GB')
           .replace(/\//g, '-');
         
-        // c. notification for reader
-        await Notification.createRequestExpired(
-          req.user_id,
-          req.request_id,
-          req.title,
-          req.copy_id,
-          pickupDateFormatted
-        );
+        // 5. Send notification to reader (fire-and-forget)
+        (async () => {
+          try {
+            await Notification.createRequestExpired(
+              req.user_id,
+              req.request_id,
+              req.title,
+              req.copy_id,
+              pickupDateFormatted
+            );
+          } catch (notifError) {
+            console.error(`[CRON] Failed to send notification for request ${req.request_id}:`, notifError);
+          }
+        })();
         
         console.log(`[CRON] ✓ Processed expired request ${req.request_id} for "${req.title}" (${req.reader_name})`);
         successCount++;
         
       } catch (error) {
+        await client.query('ROLLBACK');
         console.error(`[CRON] ✗ Error processing request ${req.request_id}:`, error.message);
         failedCount++;
       }
@@ -90,6 +108,8 @@ async function checkExpiredRequests() {
   } catch (error) {
     console.error('[CRON] Error in checkExpiredRequests:', error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 

@@ -14,8 +14,7 @@ const BorrowingController = {
         );
       }
 
-      // Create borrowing record
-      const borrowing = await Borrowing.create(parseInt(requestId));
+      const borrowing = await Borrowing.createFromRequest(parseInt(requestId));
 
       return res.status(201).json(
         formatResponse(borrowing, 'Book delivery confirmed. Borrowing record created successfully.')
@@ -52,12 +51,7 @@ const BorrowingController = {
       }
       const reader_id = readerResult.rows[0].reader_id;
 
-      let borrowings;
-      if (active === 'true') {
-        borrowings = await Borrowing.findActive(reader_id);
-      } else {
-        borrowings = await Borrowing.findByReaderId(reader_id);
-      }
+      let borrowings = await Borrowing.findActive(reader_id);
 
       return res.status(200).json(
         formatResponse(borrowings, 'Borrowings retrieved successfully')
@@ -171,7 +165,8 @@ const BorrowingController = {
   async createReturnRequest(req, res) {
     try {
       const { borrowId: id } = req.params; // borrow_id
-      const { returnedCondition, damageDetails } = req.body;
+      // Make returnedCondition optional, default to 100
+      const { returnedCondition = 100, damageDetails } = req.body;
       const user_id = req.user.id;
 
       // Manually fetch reader_id
@@ -184,12 +179,6 @@ const BorrowingController = {
       if (!id) {
         return res.status(400).json(
           formatError(null, 'Borrowing ID is required', 400)
-        );
-      }
-
-      if (!returnedCondition || returnedCondition < 0 || returnedCondition > 100) {
-        return res.status(400).json(
-          formatError(null, 'returned_condition must be between 0 and 100', 400)
         );
       }
 
@@ -346,7 +335,11 @@ const BorrowingController = {
       const user_id = req.user?.id;
 
       if (!user_id || isNaN(parseInt(user_id))) {
-        return res.status(400).json(formatError(null, 'Invalid user identifier in token.', 400));
+        return res.status(400).json(formatError(
+          { user: req.user, userIdAttempted: user_id },
+          'Invalid user identifier in token.',
+          400
+        ));
       }
 
       // Manually fetch reader_id
@@ -370,7 +363,7 @@ const BorrowingController = {
         formatError(error, 'Failed to retrieve borrowing history', 500)
       );
     }
-  }
+  },
 };
 
 module.exports = BorrowingController;

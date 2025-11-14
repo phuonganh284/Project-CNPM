@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
 const DAMAGE_RANGES = {
-    MINOR: { min: 5, max: 10, default: 5 },
-    MODERATE: { min: 20, max: 40, default: 20 },
-    SEVERE: { min: 60, max: 80, default: 60 },
-    LOST: { min: 100, max: 100, default: 100 },
+    MINOR: { min: 5, max: 10, default: 5, description: 'Trầy xước nhẹ, bẩn nhẹ, gập góc trang' },
+    MODERATE: { min: 20, max: 40, default: 20, description: 'Rách bìa nhỏ, mất trang đầu/cuối, vết bút chì' },
+    SEVERE: { min: 60, max: 80, default: 60, description: 'Rách bìa lớn, mất nhiều trang, vết bút mực/đánh dấu' },
+    LOST: { min: 100, max: 100, default: 100, description: 'Mất sách, không thể phục hồi' },
 };
 
-const AssessDrawer = ({ isOpen, onClose, returnRequest, bookData, onSave }) => {
+const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
     const [condition, setCondition] = useState('OK');
     const [damageLines, setDamageLines] = useState([]);
     const [overdueRate, setOverdueRate] = useState(1); // % of book price per day
     
-    const bookPriceUSD = bookData?.price || 6;
-    const bookPriceOriginal = Math.round(bookPriceUSD * 25000);
+    // Use the nested book object from the returnRequest prop
+    const bookPriceFromDB = parseFloat(returnRequest?.book?.price) || 0;
+    const bookPriceOriginal = Math.round(bookPriceFromDB);
     
     const copyCondition = returnRequest?.borrowedCondition || 100;
     const bookPriceCurrent = Math.round((bookPriceOriginal * copyCondition) / 100);
@@ -84,13 +85,29 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, bookData, onSave }) => {
 
     const handleSaveAssessment = () => {
         if (onSave) {
-            onSave(returnRequest.id, {
-                condition,
-                charge_total: totalFee,
-                overdueFee,
-                damageFee,
-                damageLines
-            });
+            let payload;
+
+            if (damageLines.length === 0) {
+                // If no damage, send OK status
+                payload = {
+                    assessedCondition: 'OK',
+                    damagePercentage: 0,
+                    assessmentNotes: 'No damage reported.',
+                };
+            } else {
+                // To match the backend API, we'll use the first damage line for the overall assessment level
+                // and percentage, but concatenate all notes.
+                const primaryDamageLine = damageLines[0];
+                const allNotes = damageLines.map(line => `${line.level}: ${line.note}`).join('; ');
+
+                payload = {
+                    assessedCondition: primaryDamageLine.level,
+                    damagePercentage: primaryDamageLine.percentage,
+                    assessmentNotes: allNotes,
+                };
+            }
+            
+            onSave(returnRequest.id, payload);
         }
         onClose();
     };
@@ -112,9 +129,9 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, bookData, onSave }) => {
                     <div>
                         <h2 className="font-inter text-xl font-semibold">Assess & Receive</h2>
                         <p className="font-inter text-sm opacity-90">
-                            Loan #{returnRequest.loanId} • {returnRequest.userName}
+                            Loan #{returnRequest.borrow_id} • {returnRequest.user.full_name}
                         </p>
-                        <p className="font-inter text-sm opacity-90">Book: {returnRequest.bookTitle}</p>
+                        <p className="font-inter text-sm opacity-90">Book: {returnRequest.book.title}</p>
                     </div>
                     <button 
                         onClick={onClose}
@@ -146,10 +163,6 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, bookData, onSave }) => {
                                 </span>
                             </div>
                             <div className="border-t border-blue-200 pt-2 mt-2">
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-600">Original price:</span>
-                                    <span className="text-gray-500 line-through">{bookPriceOriginal.toLocaleString()} đ</span>
-                                </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-700 font-medium">Current value:</span>
                                     <span className="text-blue-600 font-bold text-lg">
@@ -197,13 +210,29 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, bookData, onSave }) => {
 
                     <div className="mb-6">
                         <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-inter text-base font-semibold text-gray-800">🛠️ Damage lines (nhập tay)</h3>
+                            <h3 className="font-inter text-base font-semibold text-gray-800">🛠️ Damage lines</h3>
                             <button
                                 onClick={addDamageLine}
                                 className="text-[#4A90E2] font-inter text-sm font-medium hover:underline"
                             >
                                 + Add line
                             </button>
+                        </div>
+
+                        {/* Damage Ranges Reference */}
+                        <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 className="text-xs font-semibold text-gray-500 mb-2">Damage Level Reference:</h4>
+                            <div className="grid grid-cols-1 gap-y-2 text-xs">
+                                {Object.entries(DAMAGE_RANGES).map(([level, { min, max, description }]) => (
+                                    <div key={level} className="flex flex-col">
+                                        <div className="flex justify-between font-medium">
+                                            <span className="text-gray-700">{level}:</span>
+                                            <span className="font-mono text-gray-800">{min}% - {max}%</span>
+                                        </div>
+                                        <p className="text-gray-500 italic mt-0.5">{description}</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {damageLines.length === 0 ? (

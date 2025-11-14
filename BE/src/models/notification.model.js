@@ -16,14 +16,14 @@ class Notification {
     NEW_RETURN_REQUEST: 'NEW_RETURN_REQUEST',      // Có return request mới
   };
 
-  static async create(user_id, type_name, content, references = {}) {
+  static async create(user_id, type_name, content, metadata = {}, client = pool) {
     if (!user_id || !type_name || !content) {
       throw new Error('user_id, type_name, and content are required');
     }
 
     // Get type_id from type_name
     const typeQuery = 'SELECT type_id FROM notification_types WHERE type_name = $1';
-    const typeResult = await pool.query(typeQuery, [type_name]);
+    const typeResult = await client.query(typeQuery, [type_name]);
     
     if (typeResult.rows.length === 0) {
       throw new Error(`Invalid notification type: ${type_name}`);
@@ -39,30 +39,22 @@ class Notification {
         borrow_request_id,
         borrow_id,
         return_request_id,
-        receipt_id
+        receipt_id,
+        metadata
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING 
-        notification_id,
-        user_id,
-        type_id,
-        content,
-        created_at,
-        is_read,
-        borrow_request_id,
-        borrow_id,
-        return_request_id,
-        receipt_id
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
     `;
 
-    const result = await pool.query(query, [
+    const result = await client.query(query, [
       user_id,
       type_id,
       content,
-      references.borrow_request_id || null,
-      references.borrow_id || null,
-      references.return_request_id || null,
-      references.receipt_id || null
+      metadata.borrow_request_id || null,
+      metadata.borrow_id || null,
+      metadata.return_request_id || null,
+      metadata.receipt_id || null,
+      metadata
     ]);
 
     return result.rows[0];
@@ -71,48 +63,78 @@ class Notification {
   static async createRequestApproved(user_id, request_id, book_title, copy_id, pickup_date) {
     const content = `Your borrow request for "${book_title}" (Copy #${copy_id}) has been approved! Please pick up the book by ${pickup_date} before 20:00, or it will expire.`;
     
+    const metadata = {
+      borrow_request_id: request_id,
+      book_title,
+      copy_id,
+      pickup_date
+    };
+
     return await this.create(
       user_id,
       this.TYPES.REQUEST_APPROVED,
       content,
-      { borrow_request_id: request_id }
+      metadata
     );
   }
 
-  static async createRequestRejected(user_id, request_id, book_title, copy_id, rejection_reason) {
+  static async createRequestRejected(user_id, request_id, book_title, copy_id, rejection_reason, client = pool) {
     const content = `Your borrow request for "${book_title}" (Copy #${copy_id}) has been rejected. Reason: ${rejection_reason}`;
     
+    const metadata = {
+      borrow_request_id: request_id,
+      book_title,
+      copy_id,
+      rejection_reason
+    };
+
     return await this.create(
       user_id,
       this.TYPES.REQUEST_REJECTED,
       content,
-      { borrow_request_id: request_id }
+      metadata,
+      client
     );
   }
 
   static async createRequestExpired(user_id, request_id, book_title, copy_id, pickup_date) {
     const content = `Your approved request for "${book_title}" (Copy #${copy_id}) has expired. You did not pick up the book by ${pickup_date} 20:00. Please submit a new request if you still need it.`;
     
+    const metadata = {
+      borrow_request_id: request_id,
+      book_title,
+      copy_id,
+      pickup_date
+    };
+
     return await this.create(
       user_id,
       this.TYPES.REQUEST_EXPIRED,
       content,
-      { borrow_request_id: request_id }
+      metadata
     );
   }
 
-  static async createNewBorrowRequest(librarian_user_id, request_id, reader_name, reader_email, book_title, copy_id, pickup_date) {
-    const content = `New borrow request from ${reader_name} (${reader_email}) for "${book_title}" (Copy #${copy_id}). Pickup date: ${pickup_date}. Please review and approve/reject.`;
+  static async createNewBorrowRequest(librarian_user_id, request_id, username, book_title, copy_id, pickup_date) {
+    const content = `New borrow request from ${username} for "${book_title}".`;
     
+    const metadata = {
+      borrow_request_id: request_id,
+      username,
+      book_title,
+      copy_id,
+      pickup_date
+    };
+
     return await this.create(
       librarian_user_id,
       this.TYPES.NEW_BORROW_REQUEST,
       content,
-      { borrow_request_id: request_id }
+      metadata
     );
   }
 
-  static async notifyLibrariansNewRequest(request_id, reader_name, reader_email, book_title, copy_id, pickup_date) {
+  static async notifyLibrariansNewRequest(request_id, username, book_title, copy_id, pickup_date) {
     const query = `
       SELECT u.user_id 
       FROM librarians l
@@ -127,8 +149,7 @@ class Notification {
         const notif = await this.createNewBorrowRequest(
           row.user_id,
           request_id,
-          reader_name,
-          reader_email,
+          username,
           book_title,
           copy_id,
           pickup_date
@@ -157,10 +178,12 @@ class Notification {
         n.content,
         n.created_at,
         n.is_read,
+        n.is_viewed,
         n.borrow_request_id,
         n.borrow_id,
         n.return_request_id,
-        n.receipt_id
+        n.receipt_id,
+        n.metadata
       FROM notifications n
       JOIN notification_types nt ON n.type_id = nt.type_id
       WHERE n.user_id = $1
@@ -174,6 +197,28 @@ class Notification {
 
     const result = await pool.query(query, [user_id]);
     return result.rows;
+  }
+
+  static async markAsViewed(notification_id, user_id) {
+    if (!notification_id || !user_id) {
+      throw new Error('notification_id and user_id are required');
+    }
+
+    const query = `
+      UPDATE notifications
+      SET is_viewed = TRUE,
+          is_read = TRUE
+      WHERE notification_id = $1 AND user_id = $2
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [notification_id, user_id]);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Notification not found or does not belong to this user');
+    }
+
+    return result.rows[0];
   }
 
   static async markAsRead(notification_id, user_id) {
@@ -253,11 +298,19 @@ class Notification {
   static async createNewReturnRequest(librarian_user_id, return_id, borrow_id, reader_name, book_title, copy_id) {
     const content = `New return request from ${reader_name} for "${book_title}" (Copy #${copy_id}). Please assess the book condition.`;
     
+    const metadata = {
+      return_request_id: return_id,
+      borrow_id,
+      reader_name,
+      book_title,
+      copy_id
+    };
+
     return await this.create(
       librarian_user_id,
       this.TYPES.NEW_RETURN_REQUEST,
       content,
-      { return_request_id: return_id, borrow_id }
+      metadata
     );
   }
 
@@ -305,33 +358,58 @@ class Notification {
       content = `Your returned book "${book_title}" (Copy #${copy_id}) has been assessed: ${assessed_condition}. Total fee: ${total_fee.toLocaleString()} đ (${feeBreakdown.join(', ')}). Please complete payment to finalize return.`;
     }
     
+    const metadata = {
+      return_request_id: return_id,
+      book_title,
+      copy_id,
+      assessed_condition,
+      total_fee,
+      overdue_fee,
+      damage_fee
+    };
+
     return await this.create(
       user_id,
       this.TYPES.PENALTY_ISSUED,
       content,
-      { return_request_id: return_id }
+      metadata
     );
   }
 
   static async createDueSoonNotification(user_id, borrow_id, book_title, copy_id, due_date, days_remaining) {
     const content = `Reminder: "${book_title}" (Copy #${copy_id}) is due in ${days_remaining} day${days_remaining > 1 ? 's' : ''} (${due_date}). Please return or renew before the due date to avoid late fees.`;
     
+    const metadata = {
+      borrow_id,
+      book_title,
+      copy_id,
+      due_date,
+      days_remaining
+    };
+
     return await this.create(
       user_id,
       this.TYPES.BORROW_DUE_SOON,
       content,
-      { borrow_id }
+      metadata
     );
   }
 
   static async createOverdueNotification(user_id, borrow_id, book_title, copy_id, days_overdue) {
     const content = `OVERDUE: "${book_title}" (Copy #${copy_id}) is ${days_overdue} day${days_overdue > 1 ? 's' : ''} overdue. Please return immediately to minimize late fees.`;
     
+    const metadata = {
+      borrow_id,
+      book_title,
+      copy_id,
+      days_overdue
+    };
+
     return await this.create(
       user_id,
       this.TYPES.BORROW_OVERDUE,
       content,
-      { borrow_id }
+      metadata
     );
   }
 }

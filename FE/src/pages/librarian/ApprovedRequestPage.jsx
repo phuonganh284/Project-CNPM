@@ -31,10 +31,9 @@ const ApprovedRequestPage = () => {
 
   const handleConfirmDelivery = async (requestId) => {
     try {
-      await borrowingService.confirmPickup(requestId); 
+      const borrowing = await borrowingService.confirmPickup(requestId); 
       
-      const deliveredRequest = requests.find(req => req.id === requestId);
-      setMessage(`Confirmed delivery for "${deliveredRequest.book.title}" to user ${deliveredRequest.user.full_name}. The book is now officially borrowed.`);
+      setMessage(`Confirmed delivery for "${borrowing.title}" to user ${borrowing.readerName}. The book is now officially borrowed.`);
       fetchApprovedRequests(); // Refresh the list
 
       setTimeout(() => {
@@ -79,9 +78,9 @@ const ApprovedRequestPage = () => {
 
       <div className="space-y-4">
         {requests.length > 0 ? (
-          requests.map((request) => (
+          requests.map((request, index) => (
             <RequestRow
-              key={request.id}
+              key={`${request.request_id}-${index}`}
               request={request}
               onConfirmDelivery={handleConfirmDelivery}
             />

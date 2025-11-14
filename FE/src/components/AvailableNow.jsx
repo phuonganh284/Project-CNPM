@@ -102,7 +102,7 @@ const AvailableNow = ({ books }) => {
                 `}</style>
                 {displayBooks.map(book => (
                     <BookCard
-                        key={book.id}
+                        key={book.book_id}
                         book={book}
                         variant="carousel"
                     />
@@ -110,7 +110,7 @@ const AvailableNow = ({ books }) => {
                 {/* Duplicate first 3 books for seamless loop */}
                 {displayBooks.slice(0, 3).map((book, index) => (
                     <BookCard
-                        key={`duplicate-${book.id}-${index}`}
+                        key={`duplicate-${book.book_id}-${index}`}
                         book={book}
                         variant="carousel"
                     />

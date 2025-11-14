@@ -68,61 +68,47 @@ const BookDetailPage = () => {
     );
   }
 
-  const isBorrowed = book.currentUserStatus === 'borrowed';
-  const isRequested = book.currentUserStatus?.startsWith('requested');
-  const borrowLimitReached = user?.role === 'reader' && book.currentUserTotalActive >= 5;
-
   const getStatusConfig = () => {
-    if (isBorrowed) {
+    if (book.userHasRequestedOrBorrowed) {
       return {
-        label: "You have this book",
-        className: "bg-blue-100 text-blue-700",
-        buttonText: "VIEW MY BORROWS",
-        buttonDisabled: false,
-      };
-    }
-    if (isRequested) {
-      return {
-        label: "You requested this book",
-        className: "bg-yellow-100 text-yellow-700",
-        buttonText: "VIEW MY REQUESTS",
-        buttonDisabled: false,
-      };
-    }
-    if (borrowLimitReached) {
-      return {
-        label: `Borrow Limit Reached (${book.currentUserTotalActive}/5)`,
-        className: "bg-red-100 text-red-700",
-        buttonText: "BORROW",
+        label: "You already have this item",
+        className: "bg-gray-300 text-gray-800",
+        buttonText: "BORROWED",
         buttonDisabled: true,
       };
     }
-    if (book.available_stock > 0) {
+    if (book.userBorrowCount >= 5) {
       return {
-        label: "Available",
-        className: "bg-green-500 text-white",
-        buttonText: "BORROW",
-        buttonDisabled: false,
+        label: `Borrow Limit Reached (${book.userBorrowCount}/5)`,
+        className: "bg-red-100 text-red-700",
+        buttonText: "LIMIT REACHED",
+        buttonDisabled: true,
+      };
+    }
+    if (book.available_stock <= 0) {
+      return {
+        label: "Out of stock",
+        className: "bg-red-100 text-red-700",
+        buttonText: "OUT OF STOCK",
+        buttonDisabled: true,
       };
     }
     return {
-      label: "Out of stock",
-      className: "bg-red-100 text-red-700",
+      label: "Available",
+      className: "bg-green-500 text-white",
       buttonText: "BORROW",
-      buttonDisabled: true,
+      buttonDisabled: false,
     };
   };
 
   const statusConfig = getStatusConfig();
 
   const handleButtonClick = () => {
-    if (isBorrowed) {
-      navigate("/my-borrows");
-    } else if (isRequested) {
-      navigate("/my-requests");
-    } else {
+    // Only open the borrow dialog if the book is available for the user to borrow
+    if (!statusConfig.buttonDisabled) {
       setShowBorrowDialog(true);
     }
+    // If the button is disabled, do nothing. The reason is already displayed on the button itself.
   };
 
   const handleBorrowConfirm = async (requestData) => {

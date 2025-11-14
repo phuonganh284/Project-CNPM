@@ -1,17 +1,22 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
+// Helper to format the notification title from the type_name
+const formatTitle = (typeName) => {
+    if (!typeName) return 'Notification';
+    return typeName.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+};
+
+const NotificationModal = ({ notification, isOpen, onClose }) => {
     const navigate = useNavigate();
 
-    // Đóng modal khi nhấn ESC
     useEffect(() => {
         const handleEsc = (e) => {
             if (e.key === 'Escape') onClose();
         };
         if (isOpen) {
             document.addEventListener('keydown', handleEsc);
-            document.body.style.overflow = 'hidden'; // Prevent scroll
+            document.body.style.overflow = 'hidden';
         }
         return () => {
             document.removeEventListener('keydown', handleEsc);
@@ -21,339 +26,171 @@ const NotificationModal = ({ notification, isOpen, onClose, onMarkAsRead }) => {
 
     if (!isOpen || !notification) return null;
 
+    const { metadata, type_name, content, time_ago } = notification;
+    const title = formatTitle(type_name);
+
+    // This function can be simplified or expanded based on design needs
     const getTypeStyles = (type) => {
         switch (type) {
             case 'NEW_BORROW_REQUEST':
-            case 'CHARGE_ISSUED':
-                return {
-                    bg: 'bg-red-50',
-                    border: 'border-red-200',
-                    icon: 'bg-red-500',
-                    text: 'text-red-700',
-                };
+            case 'PENALTY_ISSUED':
             case 'OVERDUE':
-            case 'DUE_SOON':
-                return {
-                    bg: 'bg-orange-50',
-                    border: 'border-orange-200',
-                    icon: 'bg-orange-500',
-                    text: 'text-orange-700',
-                };
+                return { bg: 'bg-red-50', border: 'border-red-200', icon: 'bg-red-500', text: 'text-red-700' };
+            case 'BORROW_DUE_SOON':
+                return { bg: 'bg-orange-50', border: 'border-orange-200', icon: 'bg-orange-500', text: 'text-orange-700' };
             case 'REQUEST_APPROVED':
-            case 'REQUEST_REJECTED':
-            case 'NEW_RETURN_REQUEST':
-            case 'SYSTEM_ALERT':
+                return { bg: 'bg-green-50', border: 'border-green-200', icon: 'bg-green-500', text: 'text-green-700' };
             default:
-                return {
-                    bg: 'bg-blue-50',
-                    border: 'border-blue-200',
-                    icon: 'bg-blue-500',
-                    text: 'text-blue-700',
-                };
+                return { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-500', text: 'text-blue-700' };
         }
     };
 
-    const styles = getTypeStyles(notification.type);
-    const payload = notification.payload || {};
+    const styles = getTypeStyles(type_name);
 
-    // Render nội dung theo từng loại notification
     const renderContent = () => {
-        switch (notification.type) {
-            case 'CHARGE_ISSUED':
+        if (!metadata) {
+            return <p className="text-gray-700">{content}</p>;
+        }
+
+        const DetailItem = ({ icon, label, value }) => (
+            <div className="flex items-start text-sm">
+                <div className="flex-shrink-0 w-5 h-5 mr-3 text-gray-400">{icon}</div>
+                <div className="flex-1">
+                    <span className="font-semibold text-gray-800">{label}:</span>
+                    <span className="ml-2 text-gray-600">{value}</span>
+                </div>
+            </div>
+        );
+
+        const BookIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>;
+        const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>;
+        const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h22.5" /></svg>;
+        const FeeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.75A.75.75 0 013 4.5h.75m0 0a.75.75 0 01.75.75v.75m0 0v.75a.75.75 0 01-.75.75h-.75m0 0H3m3.75 0h.75a.75.75 0 01.75.75v.75m0 0v.75a.75.75 0 01-.75.75h-.75m0 0h-.75a.75.75 0 01-.75-.75v-.75m0 0A.75.75 0 016 12h.75m0 0h.75a.75.75 0 01.75.75v.75m0 0v.75a.75.75 0 01-.75.75h-.75m0 0h-.75a.75.75 0 01-.75-.75v-.75m0 0a.75.75 0 01.75-.75h.75M12 12h.008v.008H12V12zm0 0h.008v.008H12V12zm.75 0h.008v.008h-.008V12zm0 0h.008v.008h-.008V12z" /></svg>;
+        const InfoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+        const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+
+
+        switch (type_name) {
+            case 'REQUEST_APPROVED':
                 return (
-                    <div className="space-y-4">
-                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                            <p className="text-red-700 font-inter text-sm font-semibold mb-2">
-                                Payment Required
-                            </p>
-                            <p className="text-gray-700 font-inter text-sm">
-                                Please pay at the library counter before picking up your next book.
-                            </p>
+                    <div className="space-y-3">
+                        <p className="text-gray-800 bg-green-50 p-3 rounded-lg text-sm">{content}</p>
+                        <div className="border-t pt-3 space-y-3">
+                            <DetailItem icon={<BookIcon />} label="Book" value={metadata.book_title} />
+                            <DetailItem icon={<InfoIcon />} label="Copy ID" value={`#${metadata.copy_id}`} />
+                            <DetailItem icon={<CalendarIcon />} label="Pickup By" value={new Date(metadata.pickup_date).toLocaleDateString('en-GB')} />
                         </div>
-
-                        <div className="space-y-2">
-                            <p className="text-gray-600 font-inter text-sm"><strong>Book:</strong> {payload.bookTitle}</p>
-                            <p className="text-gray-600 font-inter text-sm"><strong>Charge ID:</strong> {payload.chargeId}</p>
+                    </div>
+                );
+            
+            case 'REQUEST_REJECTED':
+                 return (
+                    <div className="space-y-3">
+                        <p className="text-gray-800">Your borrow request for "{metadata.book_title}" was rejected.</p>
+                        <div className="border-t pt-3 space-y-2">
+                            <DetailItem icon={<BookIcon />} label="Book" value={metadata.book_title} />
+                            <DetailItem icon={<InfoIcon />} label="Copy ID" value={`#${metadata.copy_id}`} />
+                            <p className="font-semibold text-gray-800 text-sm mt-2">Reason:</p>
+                            <p className="bg-gray-100 p-3 rounded-lg text-gray-600 text-sm">{metadata.rejection_reason || 'No reason provided.'}</p>
                         </div>
+                    </div>
+                );
 
-                        <div className="border-t border-gray-200 pt-4">
-                            <p className="text-gray-700 font-inter text-sm font-semibold mb-3">Breakdown:</p>
-                            {payload.lines?.map((line, idx) => (
-                                <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100">
-                                    <span className="text-gray-600 font-inter text-sm">{line.label}</span>
-                                    <span className="text-gray-800 font-inter text-sm font-medium">{line.subtotal.toLocaleString()} đ</span>
-                                </div>
-                            ))}
-                            <div className="flex justify-between items-center pt-3">
-                                <span className="text-gray-800 font-inter text-base font-bold">Total:</span>
-                                <span className="text-red-600 font-inter text-lg font-bold">{payload.amount_total?.toLocaleString()} đ</span>
+            case 'PENALTY_ISSUED':
+                return (
+                    <div className="space-y-3">
+                        <p className="text-gray-800 bg-yellow-50 p-3 rounded-lg text-sm">{content}</p>
+                        <div className="border-t pt-3 space-y-3">
+                            <DetailItem icon={<BookIcon />} label="Book" value={metadata.book_title} />
+                            <DetailItem icon={<InfoIcon />} label="Copy ID" value={`#${metadata.copy_id}`} />
+                            <DetailItem icon={<InfoIcon />} label="Assessed" value={metadata.assessed_condition} />
+                            {metadata.damage_fee > 0 && <DetailItem icon={<FeeIcon />} label="Damage Fee" value={`${metadata.damage_fee.toLocaleString()} đ`} />}
+                            {metadata.overdue_fee > 0 && <DetailItem icon={<FeeIcon />} label="Overdue Fee" value={`${metadata.overdue_fee.toLocaleString()} đ`} />}
+                            <div className="!mt-4 pt-3 border-t">
+                                <DetailItem icon={<FeeIcon />} label="Total Fee" value={<span className="font-bold text-red-600">{metadata.total_fee.toLocaleString()} đ</span>} />
                             </div>
                         </div>
                     </div>
                 );
 
-            case 'REQUEST_APPROVED':
+            case 'BORROW_DUE_SOON':
                 return (
-                    <div className="space-y-4">
-                        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                            <p className="text-green-700 font-inter text-sm font-semibold mb-2">
-                                ✓ Your request has been approved!
-                            </p>
-                            <p className="text-gray-700 font-inter text-sm">
-                                Please pick up the book by <strong>{payload.pickup_date}</strong> before 20:00, or it will expire.
-                            </p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-gray-600 font-inter text-sm"><strong>Book:</strong> {payload.bookTitle}</p>
-                            <p className="text-gray-600 font-inter text-sm"><strong>Author:</strong> {payload.bookAuthor}</p>
-                            <p className="text-gray-600 font-inter text-sm"><strong>Pickup Date:</strong> {payload.pickup_date}</p>
+                    <div className="space-y-3">
+                        <p className="text-gray-800">{content}</p>
+                        <div className="border-t pt-3 space-y-3">
+                            <DetailItem icon={<BookIcon />} label="Book" value={metadata.book_title} />
+                            <DetailItem icon={<InfoIcon />} label="Copy ID" value={`#${metadata.copy_id}`} />
+                            <DetailItem icon={<CalendarIcon />} label="Due Date" value={new Date(metadata.due_date).toLocaleDateString('en-GB')} />
+                            <DetailItem icon={<ClockIcon />} label="Days Remaining" value={metadata.days_remaining} />
                         </div>
                     </div>
                 );
-
-            case 'REQUEST_REJECTED':
+            case 'BORROW_OVERDUE':
                 return (
-                    <div className="space-y-4">
-                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                            <p className="text-orange-700 font-inter text-sm font-semibold mb-2">
-                                Request Rejected
-                            </p>
-                            <p className="text-gray-700 font-inter text-sm">
-                                Your borrow request for "{payload.bookTitle}" was rejected.
-                            </p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-gray-700 font-inter text-sm font-semibold">Reason:</p>
-                            <p className="text-gray-600 font-inter text-sm bg-gray-50 p-3 rounded-lg">
-                                {payload.reject_reason}
-                            </p>
-                        </div>
-                    </div>
-                );
-
-            case 'DUE_SOON':
-                return (
-                    <div className="space-y-4">
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                            <p className="text-yellow-700 font-inter text-sm font-semibold mb-2">
-                                ⏰ Book due in 3 days
-                            </p>
-                            <p className="text-gray-700 font-inter text-sm">
-                                Please return or renew "{payload.bookTitle}" before {payload.due_date}.
-                            </p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-gray-600 font-inter text-sm"><strong>Due Date:</strong> {payload.due_date}</p>
-                            {payload.canRenew && (
-                                <p className="text-gray-600 font-inter text-sm">
-                                    <strong>Renewals:</strong> {payload.renew_count} / {payload.max_renews}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                );
-
-            case 'OVERDUE':
-                return (
-                    <div className="space-y-4">
-                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                            <p className="text-red-700 font-inter text-sm font-semibold mb-2">
-                                ⚠️ Book Overdue
-                            </p>
-                            <p className="text-gray-700 font-inter text-sm">
-                                "{payload.bookTitle}" is {payload.days_overdue} days overdue. Late fees apply.
-                            </p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-gray-600 font-inter text-sm"><strong>Due Date:</strong> {payload.due_date}</p>
-                            <p className="text-gray-600 font-inter text-sm"><strong>Days Overdue:</strong> {payload.days_overdue}</p>
-                            {payload.total_late_fee && (
-                                <p className="text-red-600 font-inter text-sm font-semibold">
-                                    <strong>Late Fee:</strong> {payload.total_late_fee.toLocaleString()} đ
-                                </p>
-                            )}
+                    <div className="space-y-3">
+                        <p className="text-gray-800">{content}</p>
+                        <div className="border-t pt-3 space-y-3">
+                            <DetailItem icon={<BookIcon />} label="Book" value={metadata.book_title} />
+                            <DetailItem icon={<InfoIcon />} label="Copy ID" value={`#${metadata.copy_id}`} />
+                            <DetailItem icon={<ClockIcon />} label="Days Overdue" value={metadata.days_overdue} />
                         </div>
                     </div>
                 );
 
             case 'NEW_BORROW_REQUEST':
-                return (
-                    <div className="space-y-4">
-                        <div className="space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">User:</span>
-                                <span className="text-gray-800 font-inter text-sm font-medium">{payload.userName} ({payload.userId})</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">Email:</span>
-                                <span className="text-gray-800 font-inter text-sm">{payload.userEmail}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">Book:</span>
-                                <span className="text-gray-800 font-inter text-sm font-medium">{payload.bookTitle}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">Pickup Date:</span>
-                                <span className="text-gray-800 font-inter text-sm font-medium">{payload.pickup_date}</span>
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                            <p className="text-gray-600 font-inter text-sm">
-                                Please review this request in the <strong>Borrow Requests</strong> page to approve or reject.
-                            </p>
+                 return (
+                    <div className="space-y-3">
+                        <p className="text-gray-800">{content}</p>
+                        <div className="border-t pt-3 space-y-3">
+                            <DetailItem icon={<UserIcon />} label="User" value={metadata.username} />
+                            <DetailItem icon={<BookIcon />} label="Book" value={metadata.book_title} />
+                            <DetailItem icon={<InfoIcon />} label="Copy ID" value={`#${metadata.copy_id}`} />
+                            <DetailItem icon={<CalendarIcon />} label="Pickup Date" value={new Date(metadata.pickup_date).toLocaleDateString('en-GB')} />
                         </div>
                     </div>
                 );
-
             case 'NEW_RETURN_REQUEST':
-                return (
-                    <div className="space-y-4">
-                        <div className="space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">User:</span>
-                                <span className="text-gray-800 font-inter text-sm font-medium">{payload.userName} ({payload.userId})</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">Book:</span>
-                                <span className="text-gray-800 font-inter text-sm font-medium">{payload.bookTitle}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">Borrowed:</span>
-                                <span className="text-gray-800 font-inter text-sm">{payload.borrowed_at}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600 font-inter text-sm">Due Date:</span>
-                                <span className="text-gray-800 font-inter text-sm">{payload.due_date}</span>
-                            </div>
-                            {payload.days_overdue > 0 && (
-                                <div className="flex justify-between">
-                                    <span className="text-red-600 font-inter text-sm font-semibold">Days Overdue:</span>
-                                    <span className="text-red-600 font-inter text-sm font-semibold">{payload.days_overdue}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                            <p className="text-gray-600 font-inter text-sm">
-                                Please go to <strong>Return Requests</strong> page to assess the book condition and process the return.
-                            </p>
-                        </div>
-                    </div>
-                );
-
-            case 'SYSTEM_ALERT':
-                return (
-                    <div className="space-y-4">
-                        <div className="space-y-3">
-                            <p className="text-gray-600 font-inter text-sm"><strong>Book:</strong> {payload.bookTitle}</p>
-                            <p className="text-gray-600 font-inter text-sm"><strong>Available:</strong> {payload.available_count} copies</p>
-                            <p className="text-gray-600 font-inter text-sm"><strong>Borrowed:</strong> {payload.borrowed_count} copies</p>
-                            <p className="text-gray-600 font-inter text-sm"><strong>Pending Requests:</strong> {payload.pending_requests}</p>
-                        </div>
-
-                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                            <p className="text-orange-700 font-inter text-sm font-semibold mb-2">Recommendation:</p>
-                            <p className="text-gray-700 font-inter text-sm">
-                                {payload.recommendation}
-                            </p>
+                 return (
+                    <div className="space-y-3">
+                        <p className="text-gray-800">{content}</p>
+                        <div className="border-t pt-3 space-y-3">
+                            <DetailItem icon={<UserIcon />} label="User" value={metadata.reader_name} />
+                            <DetailItem icon={<BookIcon />} label="Book" value={metadata.book_title} />
+                            <DetailItem icon={<InfoIcon />} label="Copy ID" value={`#${metadata.copy_id}`} />
                         </div>
                     </div>
                 );
 
             default:
-                return (
-                    <p className="text-gray-700 font-inter text-[15px] leading-relaxed whitespace-pre-line">
-                        {notification.fullContent || notification.description}
-                    </p>
-                );
+                return <p className="text-gray-700">{content}</p>;
         }
     };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/50 animate-in fade-in duration-200"
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div className="relative bg-white rounded-3xl shadow-2xl w-[90%] max-w-[600px] max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
-                {/* Header */}
+            <div className="absolute inset-0 bg-black/50 animate-in fade-in duration-200" onClick={onClose} />
+            <div className="relative bg-white rounded-3xl shadow-2xl w-[90%] max-w-[500px] max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
                 <div className={`${styles.bg} ${styles.border} border-b px-6 py-4 flex items-start justify-between`}>
                     <div className="flex items-start gap-4 flex-1">
-                        {/* Type indicator */}
-                        <div className={`${styles.icon} w-5 h-5 rounded-full mt-2 flex-shrink-0`} />
-
+                        <div className={`${styles.icon} w-5 h-5 rounded-full mt-1 flex-shrink-0`} />
                         <div className="flex-1">
-                            <h2 className={`${styles.text} font-inter text-lg font-semibold mb-1`}>
-                                {notification.title}
-                            </h2>
-                            <p className="text-gray-500 text-sm font-inter">
-                                {notification.time} ago
-                            </p>
+                            <h2 className={`${styles.text} font-inter text-lg font-semibold`}>{title}</h2>
+                            <p className="text-gray-500 text-sm font-inter">{time_ago} ago</p>
                         </div>
                     </div>
-
-                    {/* Close button */}
-                    <button
-                        onClick={onClose}
-                        className="flex-shrink-0 w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center transition-colors"
-                    >
+                    <button onClick={onClose} className="flex-shrink-0 w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center transition-colors">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M15 5L5 15M5 5L15 15" stroke="#4D4D4D" strokeWidth="2" strokeLinecap="round" />
                         </svg>
                     </button>
                 </div>
-
-                {/* Content */}
-                <div className="px-6 py-6 overflow-y-auto max-h-[calc(80vh-200px)]">
+                <div className="px-6 py-6 overflow-y-auto flex-1">
                     {renderContent()}
                 </div>
-
-                {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                    <button
-                        onClick={onClose}
-                        className="px-5 py-2.5 rounded-full border border-gray-300 text-gray-700 font-inter text-sm font-medium hover:bg-gray-50 transition-colors"
-                    >
+                    <button onClick={onClose} className="px-5 py-2.5 rounded-full border border-gray-300 text-gray-700 font-inter text-sm font-medium hover:bg-gray-50 transition-colors">
                         Close
                     </button>
-
-                    {/* Nút Go to page cho librarian notifications */}
-                    {(notification.type === 'NEW_BORROW_REQUEST' || notification.type === 'NEW_RETURN_REQUEST') && (
-                        <button
-                            onClick={() => {
-                                onMarkAsRead(notification.id);
-                                onClose();
-                                const targetPage = notification.type === 'NEW_BORROW_REQUEST'
-                                    ? '/borrow-requests'
-                                    : '/return-requests';
-                                navigate(targetPage);
-                            }}
-                            className="px-5 py-2.5 rounded-full bg-[#4A90E2] text-white font-inter text-sm font-medium hover:bg-[#357ABD] transition-colors"
-                        >
-                            Go to {notification.type === 'NEW_BORROW_REQUEST' ? 'Borrow Requests' : 'Return Requests'}
-                        </button>
-                    )}
-
-                    {/* Nút Mark as Read cho các notification khác */}
-                    {!notification.isRead && notification.type !== 'NEW_BORROW_REQUEST' && notification.type !== 'NEW_RETURN_REQUEST' && (
-                        <button
-                            onClick={() => {
-                                onMarkAsRead(notification.id);
-                                onClose();
-                            }}
-                            className="px-5 py-2.5 rounded-full bg-[#4A90E2] text-white font-inter text-sm font-medium hover:bg-[#357ABD] transition-colors"
-                        >
-                            Mark as Read
-                        </button>
-                    )}
                 </div>
             </div>
         </div>

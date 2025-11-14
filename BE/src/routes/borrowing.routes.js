@@ -27,27 +27,6 @@ router.get('/my-borrowings',
 );
 
 /**
- * @route   PUT /api/borrowings/:id/renew
- * @desc    Renew/extend borrowing
- * @access  Reader only
- */
-router.put('/:id/renew',
-  authenticateToken,
-  authorizeRole('reader'),
-  BorrowingController.renewBorrowing
-);
-
-/**
- * @route   GET /api/borrowings/:id
- * @desc    Get borrowing details by ID
- * @access  Reader/Librarian
- */
-router.get('/:id',
-  authenticateToken,
-  BorrowingController.getBorrowingById
-);
-
-/**
  * @route   GET /api/borrowings
  * @desc    Get all borrowings (librarian view)
  * @access  Librarian only
@@ -106,6 +85,8 @@ router.post('/return-requests/:returnId/complete',
   BorrowingController.completeReturn
 );
 
+// ==================== GENERIC ROUTES (MUST BE LAST) ====================
+
 /**
  * @route   GET /api/borrowings/history
  * @desc    Get complete borrowing history for authenticated reader
@@ -115,6 +96,27 @@ router.get('/history',
   authenticateToken,
   authorizeRole('reader'),
   BorrowingController.getBorrowingHistory
+);
+
+/**
+ * @route   PUT /api/borrowings/:id/renew
+ * @desc    Renew/extend borrowing
+ * @access  Reader only
+ */
+router.put('/:id/renew',
+  authenticateToken,
+  authorizeRole('reader'),
+  BorrowingController.renewBorrowing
+);
+
+/**
+ * @route   GET /api/borrowings/:id
+ * @desc    Get borrowing details by ID
+ * @access  Reader/Librarian
+ */
+router.get('/:id',
+  authenticateToken,
+  BorrowingController.getBorrowingById
 );
 
 module.exports = router;

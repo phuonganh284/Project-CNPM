@@ -89,18 +89,14 @@ const getBooks = async (req, res) => {
                     c.category_id,
                     c.category_name,
                     bt.total_stock,
-                    COUNT(CASE WHEN bc.availability = TRUE AND br.borrow_id IS NULL THEN 1 ELSE NULL END) AS available_stock_for_borrow
+                    bt.available_stock AS available_stock_for_borrow
                 FROM
                     book_titles bt
                 LEFT JOIN
                     categories c ON bt.category_id = c.category_id
-                LEFT JOIN
-                    book_copies bc ON bt.book_id = bc.book_id
-                LEFT JOIN
-                    borrowing_records br ON bc.copy_id = br.copy_id AND br.status = 'approved'
                 ${whereClause}
                 GROUP BY
-                    bt.book_id, bt.title, bt.author, bt.publisher, bt.publish_year, bt.cover, bt.price, c.category_id, c.category_name, bt.total_stock
+                    bt.book_id, c.category_id
                 ${orderByClause}
             `;
 
@@ -117,18 +113,14 @@ const getBooks = async (req, res) => {
                     c.category_id,
                     c.category_name,
                     bt.total_stock,
-                    COUNT(CASE WHEN bc.availability = TRUE AND br.borrow_id IS NULL THEN 1 ELSE NULL END) AS available_stock_for_borrow
+                    bt.available_stock AS available_stock_for_borrow
                 FROM
                     book_titles bt
                 LEFT JOIN
                     categories c ON bt.category_id = c.category_id
-                LEFT JOIN
-                    book_copies bc ON bt.book_id = bc.book_id
-                LEFT JOIN
-                    borrowing_records br ON bc.copy_id = br.copy_id AND br.status = 'approved'
                 ${whereClause}
                 GROUP BY
-                    bt.book_id, bt.title, bt.author, bt.publisher, bt.publish_year, bt.cover, bt.price, c.category_id, c.category_name, bt.total_stock
+                    bt.book_id, c.category_id
                 ORDER BY
                     bt.book_id DESC
             `;
@@ -188,11 +180,8 @@ const getBookById = async (req, res) => {
                 c.category_id,
                 c.category_name,
                 bt.total_stock,
-                (
-                    SELECT COUNT(*)
-                    FROM book_copies bc
-                    WHERE bc.book_id = bt.book_id AND bc.availability = TRUE
-                ) AS available_stock
+                bt.available_stock,
+                bt.availability_status
             FROM
                 book_titles bt
             LEFT JOIN
@@ -221,38 +210,25 @@ const getBookById = async (req, res) => {
         const { rows: copyRows } = await pool.query(copiesQuery, [id]);
 
         const bookData = bookRows[0];
-        let currentUserStatus = null;
-        let currentUserTotalActive = 0;
+        let userBorrowCount = 0;
+        let userHasRequestedOrBorrowed = false;
 
         if (userId) {
             const readerResult = await pool.query('SELECT reader_id FROM readers WHERE user_id = $1', [userId]);
             if (readerResult.rows.length > 0) {
                 const readerId = readerResult.rows[0].reader_id;
+                const bookId = id;
 
-                // Get total active count for the user
-                currentUserTotalActive = await BorrowRequest.countTotalActiveRequestsAndBorrowings(readerId);
+                // 1. Get total active count for the user
+                userBorrowCount = await BorrowRequest.countTotalActiveRequestsAndBorrowings(readerId);
 
-                // Check for active borrowing record
-                const borrowingResult = await pool.query(
-                    `SELECT br.status FROM borrowing_records br
-                     JOIN book_copies bc ON br.copy_id = bc.copy_id
-                     WHERE br.reader_id = $1 AND bc.book_id = $2 AND br.status = 'approved'`,
-                    [readerId, id]
-                );
+                // 2. Check if user has an active borrow or request for this specific book title
+                const isBorrowing = await BorrowRequest.isCurrentlyBorrowingTitle(readerId, bookId);
+                const hasPending = await BorrowRequest.hasPendingRequestForBook(readerId, bookId);
+                const hasApproved = await BorrowRequest.hasApprovedRequestForBook(readerId, bookId);
 
-                if (borrowingResult.rows.length > 0) {
-                    currentUserStatus = 'borrowed';
-                } else {
-                    // If not borrowed, check for pending/approved requests
-                    const requestResult = await pool.query(
-                        `SELECT br.status FROM borrow_requests br
-                         JOIN book_copies bc ON br.copy_id = bc.copy_id
-                         WHERE br.reader_id = $1 AND bc.book_id = $2 AND br.status IN ('pending', 'approved')`,
-                        [readerId, id]
-                    );
-                    if (requestResult.rows.length > 0) {
-                        currentUserStatus = `requested_${requestResult.rows[0].status}`; // e.g., 'requested_pending'
-                    }
+                if (isBorrowing || hasPending || hasApproved) {
+                    userHasRequestedOrBorrowed = true;
                 }
             }
         }
@@ -273,10 +249,10 @@ const getBookById = async (req, res) => {
                 category_name: bookData.category_name
             },
             total_stock: bookData.total_stock,
-            available_stock: bookData.available_stock,
+            available_stock: parseInt(bookData.available_stock, 10),
             copies: copyRows,
-            currentUserStatus: currentUserStatus,
-            currentUserTotalActive: currentUserTotalActive
+            userBorrowCount: userBorrowCount,
+            userHasRequestedOrBorrowed: userHasRequestedOrBorrowed
         };
 
         res.json({ book });

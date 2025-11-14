@@ -41,6 +41,12 @@ const BorrowCard = ({ borrow, onRenewClick, onReturnClick }) => {
         return 'Poor';
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    };
+
     return (
         <div className="bg-white p-4 rounded-lg shadow-md relative"> 
             {/* ✅ Hiển thị chấm màu trạng thái */}
@@ -102,10 +108,10 @@ const BorrowCard = ({ borrow, onRenewClick, onReturnClick }) => {
                 <div className="flex flex-col items-end w-1/2 ml-2">
                     <div className="text-right mb-4">
                         <p className="text-xs text-gray-500 mb-1">Borrowed on</p>
-                        <p className="text-sm font-medium text-gray-700 mb-3">{borrow.borrowedOn}</p>
+                        <p className="text-sm font-medium text-gray-700 mb-3">{formatDate(borrow.borrowDate)}</p>
                         
                         <p className="text-xs font-semibold text-gray-600 mb-1">Return Due</p>
-                        <p className="text-sm font-medium text-gray-700">{borrow.returnDue}</p>
+                        <p className="text-sm font-medium text-gray-700">{formatDate(borrow.dueDate)}</p>
                     </div>
 
                     <div className="w-full flex flex-col space-y-2">

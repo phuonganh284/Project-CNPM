@@ -18,83 +18,99 @@ const NotificationDropdown = () => {
         if (!user) return;
         try {
             setLoading(true);
-            const data = await notificationService.getNotifications();
-            setNotifications(data.data);
+            const result = await notificationService.getNotifications();
+            if (result && result.data) {
+                setNotifications(result.data);
+            }
             setError(null);
         } catch (err) {
             console.error("API Error:", err);
             const errorMessage = err.response?.data?.message || 'An unexpected error occurred while fetching notifications. Please try again.';
             setError(errorMessage);
-            setNotifications([]); // Ensure data is empty on error
+            setNotifications([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // Đóng dropdown khi click bên ngoài
+    // Effect to close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         };
-
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
-
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOpen]);
 
-    // Load notifications when user is available
+    // Effect to fetch notifications on user change
     useEffect(() => {
         fetchNotifications();
     }, [user]);
 
-    // Đếm số notification chưa đọc
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
-    // Hàm xử lý khi bấm "View" một notification
-    const handleViewNotification = (notification) => {
+    // Handler for clicking on a single notification
+    const handleNotificationClick = (notification) => {
+        // Open the detail modal
         setSelectedNotification(notification);
         setIsModalOpen(true);
-        setIsOpen(false);
 
-        // Tự động đánh dấu đã đọc khi mở modal
-        if (!notification.is_read) {
-            handleMarkAsRead(notification.id);
+        // Mark as read if it's unread and has a valid ID
+        if (!notification.is_read && notification.notification_id) {
+            handleMarkAsRead(notification.notification_id);
         }
     };
 
-    // Hàm đánh dấu notification đã đọc
+    // API call to mark a single notification as read
     const handleMarkAsRead = async (notificationId) => {
         try {
-            await notificationService.markAsRead(notificationId);
-            // Refresh notifications to get the latest state
-            fetchNotifications();
+            // Call the service, which now returns the full updated list of notifications
+            const result = await notificationService.markAsViewed(notificationId);
+            if (result && result.data) {
+                setNotifications(result.data);
+            }
         } catch (err) {
             console.error("Failed to mark as read:", err);
+            // Re-fetch to ensure UI is in sync with backend on error
+            fetchNotifications();
         }
     };
 
-    // Hàm xử lý khi bấm "View all notifications"
-    const handleViewAll = async () => {
+    // Handler for the "Mark all as read" button
+    const handleMarkAllAsRead = async () => {
+        if (unreadCount === 0) return;
         try {
-            await notificationService.markAllAsRead();
-            setIsOpen(false);
-            fetchNotifications();
+            // Call the service, which now returns the full updated list of notifications
+            const result = await notificationService.markAllAsRead();
+            if (result && result.data) {
+                setNotifications(result.data);
+            }
         } catch (err) {
             console.error("Failed to mark all as read:", err);
+            // Re-fetch to ensure UI is in sync with backend on error
+            fetchNotifications();
         }
+    };
+    
+    // Simplified dropdown toggle
+    const handleToggleDropdown = () => {
+        if (!isOpen) {
+            fetchNotifications(); // Fetch fresh data when opening
+        }
+        setIsOpen(!isOpen);
     };
 
     return (
         <div className="relative z-[60]" ref={dropdownRef}>
             {/* Notification Button */}
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggleDropdown}
                 className="
                     flex 
                     items-center 
@@ -161,9 +177,10 @@ const NotificationDropdown = () => {
                         ) : notifications.length === 0 ? (
                             <div className="p-4 text-center text-gray-500">No new notifications.</div>
                         ) : (
-                            notifications.map((notif) => (
+                            notifications.map((notif, index) => (
                                 <div
-                                    key={notif.id}
+                                    key={notif.notification_id || index}
+                                    onClick={() => handleNotificationClick(notif)}
                                     className={`
                                         px-5 py-4 
                                         border-b border-gray-100
@@ -171,12 +188,12 @@ const NotificationDropdown = () => {
                                         transition-colors
                                         flex
                                         gap-3
+                                        cursor-pointer
                                         ${!notif.is_read ? 'bg-blue-50/30' : ''}
                                     `}
                                 >
                                     {/* Dot indicator */}
-                                    <div className="flex-shrink-0 mt-1 flex flex-col items-center gap-2">
-                                        {/* Unread indicator */}
+                                    <div className="flex-shrink-0 mt-1">
                                         {!notif.is_read && (
                                             <div className="w-2 h-2 rounded-full bg-blue-500" />
                                         )}
@@ -185,19 +202,11 @@ const NotificationDropdown = () => {
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
                                         <p className={`font-inter text-sm mb-1 ${!notif.is_read ? 'text-gray-800 font-semibold' : 'text-gray-600'}`}>
-                                            {notif.message}
+                                            {notif.content}
                                         </p>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-gray-400 font-inter text-xs">
-                                                {new Date(notif.created_at).toLocaleString()}
-                                            </span>
-                                            <button
-                                                onClick={() => handleViewNotification(notif)}
-                                                className="text-[#4A90E2] font-inter text-xs font-medium hover:underline cursor-pointer"
-                                            >
-                                                View
-                                            </button>
-                                        </div>
+                                        <span className="text-gray-400 font-inter text-xs">
+                                            {notif.time_ago} ago
+                                        </span>
                                     </div>
                                 </div>
                             ))
@@ -205,12 +214,13 @@ const NotificationDropdown = () => {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-5 py-3 border-t border-gray-200 text-center">
+                    <div className="px-5 py-3 border-t border-gray-200 text-center bg-gray-50">
                         <button
-                            onClick={handleViewAll}
-                            className="text-[#4A90E2] font-inter text-sm font-medium hover:underline cursor-pointer"
+                            onClick={handleMarkAllAsRead}
+                            className="text-[#4A90E2] font-inter text-sm font-medium hover:underline cursor-pointer disabled:text-gray-400 disabled:cursor-not-allowed"
+                            disabled={unreadCount === 0}
                         >
-                            View all notifications
+                            Mark all as read
                         </button>
                     </div>
                 </div>
@@ -221,7 +231,6 @@ const NotificationDropdown = () => {
                 notification={selectedNotification}
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onMarkAsRead={handleMarkAsRead}
             />
         </div>
     );

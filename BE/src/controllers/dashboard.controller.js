@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const { pool } = require('../config/database');
 const { formatResponse, formatError } = require('../utils/responseFormatter');
 
 class DashboardController {
@@ -85,10 +85,9 @@ class DashboardController {
       // 10. Total Revenue (late fees collected this month)
       const revenueQuery = `
         SELECT COALESCE(SUM(total_fee), 0) as total 
-        FROM return_requests 
-        WHERE status = 'completed'
-          AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)
-          AND completed_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+        FROM borrow_history 
+        WHERE return_date >= DATE_TRUNC('month', CURRENT_DATE)
+          AND return_date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
       `;
       const revenueResult = await pool.query(revenueQuery);
       const totalRevenue = parseFloat(revenueResult.rows[0].total) || 0;
@@ -238,37 +237,10 @@ class DashboardController {
   static async getPopularBooks(req, res) {
     try {
       const limit = parseInt(req.query.limit) || 10;
-
-      const query = `
-        SELECT 
-          bt.book_id,
-          bt.title,
-          bt.author,
-          bt.cover,
-          COUNT(br.borrow_id) as borrow_count
-        FROM book_titles bt
-        LEFT JOIN book_copies bc ON bt.book_id = bc.book_id
-        LEFT JOIN borrowing_records br ON bc.copy_id = br.copy_id
-        GROUP BY bt.book_id, bt.title, bt.author, bt.cover
-        HAVING COUNT(br.borrow_id) > 0
-        ORDER BY borrow_count DESC
-        LIMIT $1
-      `;
-
-      const result = await pool.query(query, [limit]);
-
-      const popularBooks = result.rows.map(row => ({
-        id: row.book_id,
-        title: row.title,
-        author: row.author,
-        coverUrl: row.cover || 'https://via.placeholder.com/167x203?text=No+Cover',
-        borrowCount: parseInt(row.borrow_count)
-      }));
-
+      const popularBooks = await DashboardController.getPopularBooksData(limit);
       return res.status(200).json(
         formatResponse(popularBooks, 'Popular books retrieved successfully')
       );
-
     } catch (error) {
       console.error('Error getting popular books:', error);
       return res.status(500).json(
@@ -320,10 +292,9 @@ class DashboardController {
       approvedRequests: 'SELECT COUNT(*) as count FROM borrow_requests WHERE status = $1',
       returnRequests: 'SELECT COUNT(*) as count FROM return_requests WHERE status = $1',
       overdueBooks: 'SELECT COUNT(*) as count FROM borrowing_records WHERE status = $1 AND due_date < CURRENT_TIMESTAMP',
-      totalRevenue: `SELECT COALESCE(SUM(total_fee), 0) as total FROM return_requests 
-                     WHERE status = 'completed' 
-                     AND completed_at >= DATE_TRUNC('month', CURRENT_DATE)
-                     AND completed_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'`
+      totalRevenue: `SELECT COALESCE(SUM(total_fee), 0) as total FROM borrow_history 
+                     WHERE return_date >= DATE_TRUNC('month', CURRENT_DATE)
+                     AND return_date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'`
     };
 
     const results = await Promise.all([
@@ -446,16 +417,12 @@ class DashboardController {
   static async getPopularBooksData(limit = 10) {
     const query = `
       SELECT 
-        bt.book_id,
-        bt.title,
-        bt.author,
-        bt.cover,
-        COUNT(br.borrow_id) as borrow_count
-      FROM book_titles bt
-      LEFT JOIN book_copies bc ON bt.book_id = bc.book_id
-      LEFT JOIN borrowing_records br ON bc.copy_id = br.copy_id
-      GROUP BY bt.book_id, bt.title, bt.author, bt.cover
-      HAVING COUNT(br.borrow_id) > 0
+        book_id,
+        title,
+        author,
+        cover,
+        borrow_count
+      FROM book_titles
       ORDER BY borrow_count DESC
       LIMIT $1
     `;

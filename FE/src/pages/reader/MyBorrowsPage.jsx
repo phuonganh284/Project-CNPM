@@ -117,7 +117,7 @@ const MyBorrowsPage = () => {
 
     const handleConfirmRenew = async (book, newDate) => {
         try {
-            await borrowingService.renewBorrowing(book.id, newDate);
+            await borrowingService.renewBorrowing(book.borrowId, newDate);
             setBookToRenew(null);
             setSuccessMessage(`Book "${book.title}" has been renewed until ${newDate}!`);
             fetchBorrows(); // Refresh the list
@@ -130,7 +130,7 @@ const MyBorrowsPage = () => {
 
     const handleConfirmReturn = async (book) => {
         try {
-            await borrowingService.requestReturn(book.id);
+            await borrowingService.requestReturn(book.borrowId);
             setBookToReturn(null);
             setSuccessMessage(`Return request for "${book.title}" has been submitted!`);
             fetchBorrows(); // Refresh the list
@@ -173,7 +173,7 @@ const MyBorrowsPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {borrows.map(b => (
                         <BorrowCard
-                            key={b.id}
+                            key={b.borrowId}
                             borrow={b}
                             onRenewClick={setBookToRenew}
                             onReturnClick={setBookToReturn}

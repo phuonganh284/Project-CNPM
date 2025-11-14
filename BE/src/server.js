@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const pool = require('./config/database');
+const { pool } = require('./config/database');
 const { startScheduler, stopScheduler } = require('./jobs/scheduler');
 
 const app = express();

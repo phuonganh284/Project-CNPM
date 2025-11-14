@@ -1,5 +1,7 @@
 const BorrowRequest = require('../models/borrowRequest.model');
-const Copy = require('../models/copy.model');
+const Borrowing = require('../models/borrowing.model');
+const CopyModel = require('../models/copyModel.js');
+const Notification = require('../models/notification.model'); // Import Notification model
 const { formatResponse, formatError } = require('../utils/responseFormatter');
 const { pool } = require('../config/database');
 
@@ -62,7 +64,7 @@ class BorrowRequestController {
       }
 
       // Find best available copy
-      const copy = await Copy.findBestAvailableCopy(finalBookId);
+      const copy = await CopyModel.findBestAvailableCopy(finalBookId);
       if (!copy) {
         return res.status(404).json(
           formatError('No available copies', 'This book is currently out of stock or all copies are in poor condition', 404)
@@ -71,6 +73,31 @@ class BorrowRequestController {
 
       // Create request
       const request = await BorrowRequest.create(reader_id, copy.copy_id, finalPickupDate);
+
+      // --- Fire-and-forget Notification ---
+      (async () => {
+        try {
+          // Fetch additional details for notification content
+          const userQuery = 'SELECT username FROM users WHERE user_id = $1';
+          const userResult = await pool.query(userQuery, [user_id]);
+          const username = userResult.rows[0]?.username || 'unknown_user';
+
+          const bookQuery = 'SELECT title FROM book_titles WHERE book_id = $1';
+          const bookResult = await pool.query(bookQuery, [finalBookId]);
+          const book_title = bookResult.rows[0]?.title || 'Unknown Book';
+
+          await Notification.notifyLibrariansNewRequest(
+            request.request_id,
+            username,
+            book_title,
+            copy.copy_id,
+            finalPickupDate
+          );
+        } catch (notificationError) {
+          console.error('Failed to send new borrow request notification:', notificationError);
+        }
+      })();
+      // --- End Notification ---
 
       // Combine request with copy info
       const responseData = {
@@ -161,34 +188,21 @@ class BorrowRequestController {
         );
       }
 
-      const request = await BorrowRequest.findById(request_id);
-      if (!request) {
-        return res.status(404).json(
-          formatError('Request not found', 'Borrow request does not exist', 404)
-        );
-      }
-
-      if (request.status !== 'pending') {
-        return res.status(400).json(
-          formatError('Request already processed', `This request has already been ${request.status}`, 400)
-        );
-      }
-
-      const copy = await Copy.findById(request.copy_id);
-      if (!copy || !copy.availability) {
-        return res.status(400).json(
-          formatError('Copy not available', 'This copy is no longer available for borrowing', 400)
-        );
-      }
-
-      const approvedRequest = await BorrowRequest.approve(request_id);
+      const result = await BorrowRequest.approve(request_id);
 
       return res.status(200).json(
-        formatResponse(approvedRequest, 'Borrow request approved successfully')
+        formatResponse(result, 'Request approved successfully. User has been notified.')
       );
 
     } catch (error) {
-      console.error('Error approving borrow request:', error);
+      console.error('Error approving borrow request:', error.message);
+      // Return a more specific error code if possible
+      if (error.message.includes('not found')) {
+        return res.status(404).json(formatError('Not Found', error.message, 404));
+      }
+      if (error.message.includes('status')) {
+        return res.status(400).json(formatError('Invalid Request', error.message, 400));
+      }
       return res.status(500).json(
         formatError('Internal server error', 'Failed to approve borrow request', 500)
       );
@@ -225,6 +239,36 @@ class BorrowRequestController {
       }
 
       const rejectedRequest = await BorrowRequest.reject(request_id, rejection_reason);
+
+      // --- Fire-and-forget Notification ---
+      (async () => {
+        try {
+          // Fetch details for notification
+          const detailsQuery = `
+            SELECT r.user_id, bt.title
+            FROM readers r
+            JOIN borrow_requests br ON r.reader_id = br.reader_id
+            JOIN book_copies bc ON br.copy_id = bc.copy_id
+            JOIN book_titles bt ON bc.book_id = bt.book_id
+            WHERE br.request_id = $1
+          `;
+          const result = await pool.query(detailsQuery, [request_id]);
+          const notifDetails = result.rows[0];
+
+          if (notifDetails) {
+            await Notification.createRequestRejected(
+              notifDetails.user_id,
+              request_id,
+              notifDetails.title,
+              request.copy_id,
+              rejection_reason
+            );
+          }
+        } catch (notificationError) {
+          console.error('Failed to send request rejected notification:', notificationError);
+        }
+      })();
+      // --- End Notification ---
 
       return res.status(200).json(
         formatResponse(

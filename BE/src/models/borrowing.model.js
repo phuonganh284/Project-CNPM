@@ -1,132 +1,9 @@
 const { pool } = require('../config/database');
 const Notification = require('./notification.model');
+const BookTitle = require('./bookTitle.model');
+const CopyModel = require('./copyModel');
 
 const Borrowing = {
-  /**
-   * Confirm delivery - Create borrowing record when librarian confirms reader picked up book
-   * @param {number} request_id - ID of approved borrow request
-   * @returns {Object} Created borrowing record with full details
-   * @throws {Error} If validation fails or database error
-   */
-  async create(request_id) {
-    if (!request_id) {
-      throw new Error('request_id is required');
-    }
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-
-      // 1. Get request details with all necessary info
-      const requestQuery = `
-        SELECT 
-          br.request_id, 
-          br.reader_id, 
-          br.copy_id, 
-          br.pickup_date, 
-          br.status,
-          bc.condition,
-          bc.copy_price,
-          bc.availability,
-          bt.title,
-          u.user_id,
-          u.name as reader_name,
-          u.status as user_status
-        FROM borrow_requests br
-        JOIN book_copies bc ON br.copy_id = bc.copy_id
-        JOIN book_titles bt ON bc.book_id = bt.book_id
-        JOIN readers r ON br.reader_id = r.reader_id
-        JOIN users u ON r.user_id = u.user_id
-        WHERE br.request_id = $1
-      `;
-      const requestResult = await client.query(requestQuery, [request_id]);
-      
-      if (requestResult.rows.length === 0) {
-        throw new Error('Borrow request not found');
-      }
-
-      const request = requestResult.rows[0];
-
-      // 2. Validate request status
-      if (request.status !== 'approved') {
-        throw new Error(`Cannot confirm delivery for request with status: ${request.status}`);
-      }
-
-      // 3. Validate copy is still available
-      if (!request.availability) {
-        throw new Error('Copy is no longer available');
-      }
-
-      // 4. Check if borrowing record already exists for this request
-      const existingCheck = await client.query(
-        'SELECT borrow_id FROM borrowing_records WHERE request_id = $1',
-        [request_id]
-      );
-      if (existingCheck.rows.length > 0) {
-        throw new Error('Borrowing record already exists for this request');
-      }
-
-      // 5. Check borrow limit (max 5 active borrows per reader)
-      const activeBorrowsCheck = await client.query(
-        'SELECT COUNT(*) as count FROM borrowing_records WHERE reader_id = $1 AND status = $2',
-        [request.reader_id, 'approved']
-      );
-      const activeBorrowCount = parseInt(activeBorrowsCheck.rows[0].count);
-      if (activeBorrowCount >= 5) {
-        throw new Error('Reader has reached maximum borrow limit (5 active books)');
-      }
-
-      // 6. Calculate due_date (NOW + 30 days)
-      const borrowDate = new Date();
-      const dueDate = new Date(borrowDate);
-      dueDate.setDate(dueDate.getDate() + 30);
-
-      // 7. Create borrowing record (borrowed_copy_price set by trigger)
-      const insertQuery = `
-        INSERT INTO borrowing_records 
-        (reader_id, copy_id, request_id, borrow_date, due_date, status, renew_count)
-        VALUES ($1, $2, $3, $4, $5, 'approved', 0)
-        RETURNING *
-      `;
-      const borrowingResult = await client.query(insertQuery, [
-        request.reader_id,
-        request.copy_id,
-        request_id,
-        borrowDate,
-        dueDate
-      ]);
-
-      // 8. Update copy borrowed status to TRUE
-      await client.query(
-        'UPDATE book_copies SET borrowed = TRUE WHERE copy_id = $1',
-        [request.copy_id]
-      );
-
-      // 9. Update user's borrow_count and status
-      await client.query(`
-        UPDATE users 
-        SET borrow_count = borrow_count + 1,
-            status = CASE 
-              WHEN borrow_count + 1 >= 5 THEN 'borrowing'
-              ELSE status
-            END
-        WHERE user_id = $1
-      `, [request.user_id]);
-
-      await client.query('COMMIT');
-      
-      // 10. Fetch complete borrowing info to return
-      const completeBorrowing = await this.findById(borrowingResult.rows[0].borrow_id);
-      return completeBorrowing;
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-  },
-
   /**
    * Find borrowing by ID with full details
    * @param {number} borrow_id - ID of borrowing record
@@ -177,6 +54,93 @@ const Borrowing = {
     return result.rows[0] || null;
   },
 
+  async createFromRequest(request_id) {
+    if (!request_id) {
+        throw new Error('request_id is required');
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Get request details and lock the copy for update
+        const requestQuery = `
+            SELECT 
+                br.reader_id, 
+                br.copy_id,
+                br.status,
+                bc.book_id,
+                bc.availability,
+                bc.condition as copy_condition, -- Get the current condition of the copy
+                u.user_id
+            FROM borrow_requests br
+            JOIN book_copies bc ON br.copy_id = bc.copy_id
+            JOIN readers r ON br.reader_id = r.reader_id
+            JOIN users u ON r.user_id = u.user_id
+            WHERE br.request_id = $1
+            FOR UPDATE OF bc;
+        `;
+        const requestResult = await client.query(requestQuery, [request_id]);
+        
+        if (requestResult.rows.length === 0) {
+            throw new Error('Borrow request not found.');
+        }
+        
+        const request = requestResult.rows[0];
+
+        // 2. Validate request
+        if (request.status !== 'approved') {
+            throw new Error(`Cannot create borrowing from request with status: ${request.status}`);
+        }
+        if (!request.availability) {
+            throw new Error('Copy is no longer available for borrowing.');
+        }
+
+        // 3. Calculate due_date (NOW + 30 days)
+        const borrowDate = new Date();
+        const dueDate = new Date(borrowDate);
+        dueDate.setDate(dueDate.getDate() + 30);
+
+        // 4. Create the borrowing record, now including the borrowed_condition
+        const insertBorrowingQuery = `
+            INSERT INTO borrowing_records (reader_id, copy_id, request_id, borrow_date, due_date, status, borrowed_condition)
+            VALUES ($1, $2, $3, $4, $5, 'approved', $6)
+            RETURNING borrow_id;
+        `;
+        const borrowingResult = await client.query(insertBorrowingQuery, [
+            request.reader_id, 
+            request.copy_id, 
+            request_id, 
+            borrowDate, 
+            dueDate, 
+            request.copy_condition // Pass the condition here
+        ]);
+        const newBorrowId = borrowingResult.rows[0].borrow_id;
+
+        // 5. Update user's borrow count
+        await client.query('UPDATE users SET borrowcount = borrowcount + 1 WHERE user_id = $1', [request.user_id]);
+        
+        // 6. Increment book_titles.borrow_count
+        await client.query('UPDATE book_titles SET borrow_count = borrow_count + 1 WHERE book_id = $1', [request.book_id]);
+
+        // 7. Delete the now-processed borrow request
+        await client.query('DELETE FROM borrow_requests WHERE request_id = $1', [request_id]);
+
+        await client.query('COMMIT');
+        
+        // Fetch the newly created borrowing record with full details
+        const newBorrowingRecord = await this.findById(newBorrowId);
+        console.log("Debug: newBorrowingRecord returned by createFromRequest:", newBorrowingRecord);
+        return newBorrowingRecord;
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+  },
+
   /**
    * Find all borrowings for a specific reader
    * @param {number} reader_id - ID of reader
@@ -209,18 +173,24 @@ const Borrowing = {
         CASE 
           WHEN br.due_date < CURRENT_TIMESTAMP AND br.status = 'approved' THEN TRUE 
           ELSE FALSE 
-        END as is_overdue,
+        END as "isOverdue",
+        (br.renew_count > 0) as renewed,
+        EXISTS (
+          SELECT 1 
+          FROM return_requests rr 
+          WHERE rr.borrow_id = br.borrow_id AND rr.status IN ('pending', 'assessed')
+        ) AS "isPendingReturn",
         EXTRACT(DAY FROM (CURRENT_TIMESTAMP - br.due_date)) as days_overdue,
-        rr.completed_at as returned_date, -- Actual return date
-        rr.overdue_fee as late_fee,
-        rr.damage_fee as damage_fee,
-        rr.returned_condition as returned_condition_by_reader, -- Reader's assessed condition
-        rr.assessed_condition as final_assessed_condition, -- Librarian's assessed condition
-        rr.total_fee as total_charge
+        rr_completed.completed_at as returned_date, -- Actual return date
+        rr_completed.overdue_fee as late_fee,
+        rr_completed.damage_fee as damage_fee,
+        rr_completed.returned_condition as returned_condition_by_reader, -- Reader's assessed condition
+        rr_completed.assessed_condition as final_assessed_condition, -- Librarian's assessed condition
+        rr_completed.total_fee as total_charge
       FROM borrowing_records br
       JOIN book_copies bc ON br.copy_id = bc.copy_id
       JOIN book_titles bt ON bc.book_id = bt.book_id
-      LEFT JOIN return_requests rr ON br.borrow_id = rr.borrow_id AND rr.status = 'completed'
+      LEFT JOIN return_requests rr_completed ON br.borrow_id = rr_completed.borrow_id AND rr_completed.status = 'completed'
       WHERE br.reader_id = $1
     `;
 
@@ -254,6 +224,7 @@ const Borrowing = {
         br.borrowed_copy_price,
         br.status,
         br.renew_count,
+        br.borrowed_condition as "borrowedCondition", -- Select the snapshot condition
         bc.condition as current_condition,
         bt.book_id,
         bt.title,
@@ -268,7 +239,13 @@ const Borrowing = {
         CASE 
           WHEN br.due_date < CURRENT_TIMESTAMP THEN TRUE 
           ELSE FALSE 
-        END as is_overdue,
+        END as "isOverdue",
+        (br.renew_count > 0) as renewed,
+        EXISTS (
+          SELECT 1 
+          FROM return_requests rr 
+          WHERE rr.borrow_id = br.borrow_id AND rr.status IN ('pending', 'assessed')
+        ) AS "isPendingReturn",
         EXTRACT(DAY FROM (CURRENT_TIMESTAMP - br.due_date)) as days_overdue
       FROM borrowing_records br
       JOIN book_copies bc ON br.copy_id = bc.copy_id
@@ -517,7 +494,13 @@ const Borrowing = {
         damage_details ? JSON.stringify(damage_details) : null
       ]);
 
-      // 5. Get full borrowing info for notification
+      // 5. Update borrowing_records status to 'pending'
+      await client.query(
+        `UPDATE borrowing_records SET status = 'pending' WHERE borrow_id = $1`,
+        [borrow_id]
+      );
+
+      // 6. Get full borrowing info for notification
       const borrowingInfo = await client.query(`
         SELECT 
           br.copy_id,
@@ -536,7 +519,7 @@ const Borrowing = {
 
       await client.query('COMMIT');
 
-      // 6. Notify all librarians about new return request
+      // 7. Notify all librarians about new return request
       try {
         await Notification.notifyLibrariansNewReturnRequest(
           result.rows[0].return_id,
@@ -547,10 +530,8 @@ const Borrowing = {
         );
       } catch (notifError) {
         console.error('Failed to notify librarians about new return request:', notifError);
-        // Don't throw - notification failure shouldn't block return request creation
       }
 
-      // 7. Return full return request info
       const fullRequest = await this.getReturnRequestById(result.rows[0].return_id);
       return fullRequest;
 
@@ -637,13 +618,16 @@ const Borrowing = {
         br.borrow_date,
         br.due_date,
         br.borrowed_copy_price,
+        br.borrowed_condition,
         bc.condition as current_condition,
         bt.book_id,
         bt.title,
         bt.author,
+        bt.publish_year,
         bt.cover,
         bt.price as book_price,
         u.user_id,
+        u.username, -- Added username to select clause
         u.name as reader_name,
         u.email as reader_email,
         CASE 
@@ -663,12 +647,43 @@ const Borrowing = {
     if (status_filter) {
       query += ' WHERE rr.status = $1';
       params.push(status_filter);
+    } else {
+      query += ` WHERE rr.status IN ('pending', 'assessed')`;
     }
 
     query += ' ORDER BY rr.request_date DESC';
 
     const result = await pool.query(query, params);
-    return result.rows;
+    
+    // Transform the flat data into the nested structure expected by the frontend
+    const transformedRequests = result.rows.map(row => ({
+      id: row.return_id,
+      borrow_id: row.borrow_id,
+      copyId: row.copy_id,
+      status: row.status,
+      assessed_condition: row.assessed_condition,
+      returned_condition: row.returned_condition,
+      borrowedCondition: row.borrowed_condition,
+      due_date: row.due_date,
+      fine: row.total_fee,
+      request_date: row.request_date,
+      assessed_at: row.assessed_at,
+      book: {
+        id: row.book_id,
+        title: row.title,
+        author: row.author,
+        publication_year: row.publish_year,
+        cover_image_url: row.cover,
+        price: row.book_price,
+      },
+      user: {
+        id: row.user_id,
+        full_name: row.username, // Changed to use username
+        email: row.reader_email,
+      }
+    }));
+
+    return transformedRequests;
   },
 
   /**
@@ -701,7 +716,6 @@ const Borrowing = {
       throw new Error(`assessed_condition must be one of: ${validConditions.join(', ')}`);
     }
 
-    // Validate damage_percentage is within range for assessed_condition
     const damageRanges = {
       'OK': [0, 0],
       'MINOR': [5, 10],
@@ -719,19 +733,15 @@ const Borrowing = {
     try {
       await client.query('BEGIN');
 
-      // 1. Get return request with full borrowing info
       const requestCheck = await client.query(`
         SELECT 
           rr.*,
-          br.borrow_date,
-          br.due_date,
           br.borrowed_copy_price,
-          br.borrowed_condition,
-          bc.condition as current_condition,
+          bc.condition as current_copy_condition,
           bc.copy_id,
           bt.book_id,
           bt.title,
-          r.reader_id,
+          bt.price as book_title_price,
           u.user_id
         FROM return_requests rr
         JOIN borrowing_records br ON rr.borrow_id = br.borrow_id
@@ -748,69 +758,50 @@ const Borrowing = {
 
       const request = requestCheck.rows[0];
 
-      // 2. Check status (only pending requests can be assessed)
       if (request.status !== 'pending') {
         throw new Error(`Cannot assess return request with status: ${request.status}`);
       }
 
-      // 3. Calculate overdue fee
-      const now = new Date();
-      const dueDate = new Date(request.due_date);
-      const overdueDays = Math.max(0, Math.ceil((now - dueDate) / (1000 * 60 * 60 * 24)));
-      const overdueFee = overdueDays * parseFloat(process.env.OVERDUE_RATE_PER_DAY || 2) * request.borrowed_copy_price / 100;
-
-      // 4. Calculate damage fee using librarian-specified percentage
+      const overdueFee = 0; // Overdue fee calculation can be added here if needed
       const damageFee = request.borrowed_copy_price * damage_percentage / 100;
-
-      // 5. Calculate total fee
       const total_fee = overdueFee + damageFee;
 
-      // 6. Update return request
-      const updateQuery = `
-        UPDATE return_requests
-        SET 
-          status = 'assessed',
-          assessed_condition = $1,
-          damage_percentage = $2,
-          overdue_fee = $3,
-          damage_fee = $4,
-          total_fee = $5,
-          assessment_notes = $6,
-          assessed_at = CURRENT_TIMESTAMP
-        WHERE return_id = $7
-        RETURNING *
-      `;
+      await client.query(
+        `UPDATE return_requests
+         SET status = 'assessed', assessed_condition = $1, damage_percentage = $2, overdue_fee = $3, damage_fee = $4, total_fee = $5, assessment_notes = $6, assessed_at = CURRENT_TIMESTAMP
+         WHERE return_id = $7`,
+        [assessed_condition, damage_percentage, overdueFee, damageFee, total_fee, assessment_notes || null, return_id]
+      );
 
-      await client.query(updateQuery, [
-        assessed_condition,
-        damage_percentage,
-        overdueFee,
-        damageFee,
-        total_fee,
-        assessment_notes || null,
-        return_id
-      ]);
+      const newCondition = Math.max(0, request.current_copy_condition - damage_percentage);
+      const newCopyPrice = request.book_title_price * newCondition / 100;
+
+      // Prepare the update query for the book copy
+      let updateCopyQuery = `UPDATE book_copies SET condition = $1, copy_price = $2`;
+      const queryParams = [newCondition, newCopyPrice];
+
+      // If the book is assessed as LOST, also update its status and availability
+      if (assessed_condition === 'LOST') {
+        updateCopyQuery += `, status = 'lost', availability = FALSE`;
+      }
+
+      updateCopyQuery += ` WHERE copy_id = $3`;
+      queryParams.push(request.copy_id);
+
+      // Execute the update query
+      await client.query(updateCopyQuery, queryParams);
 
       await client.query('COMMIT');
 
-      // 7. Send bill notification to reader
       try {
         await Notification.createAssessmentNotification(
-          request.user_id,
-          return_id,
-          request.title,
-          request.copy_id,
-          assessed_condition,
-          total_fee,
-          overdueFee,
-          damageFee
+          request.user_id, return_id, request.title, request.copy_id,
+          assessed_condition, total_fee, overdueFee, damageFee
         );
       } catch (notifError) {
         console.error('Failed to send assessment notification to reader:', notifError);
-        // Don't throw - notification failure shouldn't block assessment
       }
 
-      // 7. Return full updated return request
       const updated = await this.getReturnRequestById(return_id);
       return updated;
 
@@ -837,89 +828,64 @@ const Borrowing = {
     try {
       await client.query('BEGIN');
 
-      // 1. Get return request with borrowing info
+      // Step 1: Get all details from the return_request and its associated borrow_record.
       const fullRequest = await this.getReturnRequestById(return_id);
-
       if (!fullRequest) {
         throw new Error('Return request not found');
       }
 
-      // 2. Check status (must be assessed before completing)
       if (fullRequest.status !== 'assessed') {
         throw new Error(`Cannot complete return request with status: ${fullRequest.status}. Must be assessed first.`);
       }
 
-      // 3. Update return request status
+      // Step 2: Determine the final status for the history record.
+      const historyStatus = new Date() > new Date(fullRequest.due_date) ? 'overdue' : 'on-time';
+
+      // Step 3: Insert the enriched, self-contained record into borrow_history.
+      const historyInsertQuery = `
+        INSERT INTO borrow_history (
+          reader_id, borrow_id, copy_id, return_id,
+          borrow_date, due_date, return_date,
+          borrowed_copy_price, status,
+          late_fee, damage_fee, total_fee,
+          librarian_assessed_condition, reader_returned_condition, assessment_notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7, $8, $9, $10, $11, $12, $13, $14)
+      `;
+      await client.query(historyInsertQuery, [
+        fullRequest.reader_id, fullRequest.borrow_id, fullRequest.copy_id, return_id,
+        fullRequest.borrow_date, fullRequest.due_date,
+        fullRequest.borrowed_copy_price, historyStatus,
+        fullRequest.overdue_fee, fullRequest.damage_fee, fullRequest.total_fee,
+        fullRequest.assessed_condition, fullRequest.returned_condition, fullRequest.assessment_notes
+      ]);
+
+      // Step 4: Delete the now-archived return_request.
       await client.query(
-        `UPDATE return_requests 
-         SET status = 'completed', completed_at = CURRENT_TIMESTAMP 
-         WHERE return_id = $1`,
+        `DELETE FROM return_requests WHERE return_id = $1`,
         [return_id]
       );
 
-      // 4. Update borrowing record status - MOVED to step 7
-
-      // 5. Calculate new copy condition using librarian's damage percentage
-      // Start from borrowed_condition (snapshot when borrowed)
-      const damagePercent = fullRequest.damage_percentage || 0;
-      let newCondition = Math.max(0, fullRequest.borrowed_condition - damagePercent);
-
-      // 6. Update copy condition and price
+      // Step 5: Delete the record from borrowing_records.
       await client.query(
-        `UPDATE book_copies 
-         SET condition = $1, 
-             copy_price = (SELECT price FROM book_titles WHERE book_id = $2) * $1 / 100 
-         WHERE copy_id = $3`,
-        [newCondition, fullRequest.book_id, fullRequest.copy_id]
+        `DELETE FROM borrowing_records WHERE borrow_id = $1`,
+        [fullRequest.borrow_id]
       );
 
-      // 7. Update statuses and availability based on assessment
-      if (fullRequest.assessed_condition === 'LOST') {
-        // Update book_copies for a LOST book
-        await client.query(
-          `UPDATE book_copies 
-           SET status = 'lost', 
-               condition = 0, 
-               availability = FALSE,
-               borrowed = FALSE
-           WHERE copy_id = $1`,
-          [fullRequest.copy_id]
-        );
-        // Update borrowing_records for a LOST book
-        await client.query(
-          `UPDATE borrowing_records 
-           SET status = 'lost'
-           WHERE borrow_id = $1`,
-          [fullRequest.borrow_id]
-        );
-      } else {
-        // Update book_copies for a NORMAL return
-        await client.query(
-          'UPDATE book_copies SET borrowed = FALSE WHERE copy_id = $1',
-          [fullRequest.copy_id]
-        );
-        // Update borrowing_records for a NORMAL return
-        await client.query(
-          `UPDATE borrowing_records 
-           SET status = 'returned'
-           WHERE borrow_id = $1`,
-          [fullRequest.borrow_id]
-        );
-      }
+      // Step 6: Set the copy as no longer borrowed and available.
+      await CopyModel.setBorrowedStatus(fullRequest.copy_id, false, client);
+      
+      // Step 7: Recalculate available stock for the book title.
+      await BookTitle.updateAvailableStock(fullRequest.book_id, client);
 
-      // 8. Decrease user's borrow_count
+      // Step 8: Decrease user's borrow count.
       await client.query(
-        `UPDATE users 
-         SET borrow_count = GREATEST(0, borrow_count - 1) 
-         WHERE user_id = $1`,
+        `UPDATE users SET borrowcount = GREATEST(0, borrowcount - 1) WHERE user_id = $1`,
         [fullRequest.user_id]
       );
 
       await client.query('COMMIT');
 
-      // 8. Return completed request
-      const completed = await this.getReturnRequestById(return_id);
-      return completed;
+      return { success: true, message: `Return for borrow_id ${fullRequest.borrow_id} completed and archived.` };
 
     } catch (error) {
       await client.query('ROLLBACK');
@@ -939,39 +905,64 @@ const Borrowing = {
       throw new Error('reader_id is required');
     }
 
+    // The main table is now borrow_history, which is self-contained and enriched.
     const query = `
       SELECT 
-        br.borrow_id,
-        br.copy_id,
-        br.request_id,
-        br.borrow_date,
-        br.due_date,
-        br.borrowed_copy_price,
-        br.status,
-        br.renew_count,
-        bc.condition as current_copy_condition,
+        bh.*, -- Select all columns from borrow_history
         bt.book_id,
         bt.title,
         bt.author,
         bt.publisher,
         bt.cover,
         bt.isbn,
-        rr.completed_at as returned_date,
-        rr.overdue_fee as late_fee,
-        rr.damage_fee as damage_fee,
-        rr.returned_condition as reader_returned_condition,
-        rr.assessed_condition as librarian_assessed_condition,
-        rr.total_fee as total_charge
-      FROM borrowing_records br
-      JOIN book_copies bc ON br.copy_id = bc.copy_id
+        u.user_id,
+        u.username,
+        u.name as reader_name,
+        u.email as reader_email
+      FROM borrow_history bh
+      -- Join to get book and user details
+      JOIN book_copies bc ON bh.copy_id = bc.copy_id
       JOIN book_titles bt ON bc.book_id = bt.book_id
-      LEFT JOIN return_requests rr ON br.borrow_id = rr.borrow_id AND rr.status = 'completed'
-      WHERE br.reader_id = $1
-      ORDER BY br.borrow_date DESC;
+      JOIN readers r ON bh.reader_id = r.reader_id
+      JOIN users u ON r.user_id = u.user_id
+      WHERE bh.reader_id = $1
+      ORDER BY bh.borrow_date DESC;
     `;
 
     const result = await pool.query(query, [reader_id]);
-    return result.rows;
+    
+    // Transform the flat data into the nested structure expected by the frontend
+    const transformedHistory = result.rows.map(row => ({
+      id: row.borrow_id,
+      borrow_id: row.borrow_id,
+      copy_id: row.copy_id,
+      borrow_date: row.borrow_date,
+      due_date: row.due_date,
+      borrowed_copy_price: row.borrowed_copy_price,
+      status: row.status, // status from borrow_history
+      returned_date: row.return_date,
+      late_fee: row.late_fee,
+      damage_fee: row.damage_fee,
+      total_charge: row.total_fee,
+      reader_returned_condition: row.reader_returned_condition,
+      librarian_assessed_condition: row.librarian_assessed_condition,
+      book: {
+        id: row.book_id,
+        title: row.title,
+        author: row.author,
+        publisher: row.publisher,
+        cover_image_url: row.cover,
+        isbn: row.isbn,
+      },
+      user: {
+        id: row.user_id,
+        username: row.username,
+        full_name: row.reader_name,
+        email: row.reader_email,
+      }
+    }));
+
+    return transformedHistory;
   }
 };
 

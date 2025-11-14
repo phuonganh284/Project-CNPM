@@ -26,14 +26,14 @@ router.put(
 );
 
 /**
- * @route   PUT /api/notifications/:id/read
- * @desc    Mark a specific notification as read
+ * @route   PUT /api/notifications/:id/view
+ * @desc    Mark a specific notification as viewed
  * @access  Private
  */
 router.put(
-  '/:id/read',
+  '/:id/view',
   authenticateToken,
-  NotificationController.markAsRead
+  NotificationController.markAsViewed
 );
 
 module.exports = router;

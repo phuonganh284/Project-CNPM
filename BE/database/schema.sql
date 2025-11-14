@@ -151,32 +151,6 @@ CREATE TABLE notifications (
 -- SEMANTIC CONSTRAINTS AND TRIGGERS
 -- ===============================================
 
--- 1. Update availability and stock when condition < 60
-CREATE OR REPLACE FUNCTION update_copy_availability()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.condition < 60 THEN
-        NEW.availability := FALSE;
-    END IF;
-    UPDATE book_titles
-    SET available_stock = (
-        SELECT COUNT(*) FROM book_copies WHERE book_id = NEW.book_id AND availability = TRUE
-    ),
-    availability_status = CASE
-        WHEN (SELECT COUNT(*) FROM book_copies WHERE book_id = NEW.book_id AND availability = TRUE) = 0 THEN 'out-of-stock'
-        ELSE 'available'
-    END
-    WHERE book_id = NEW.book_id;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_update_copy_availability
-AFTER INSERT OR UPDATE ON book_copies
-FOR EACH ROW
-EXECUTE FUNCTION update_copy_availability();
-
 -- 2. Limit to 5 active borrows per reader
 CREATE OR REPLACE FUNCTION check_borrow_limit()
 RETURNS TRIGGER AS $$

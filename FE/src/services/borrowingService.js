@@ -21,7 +21,8 @@ const borrowingService = {
 
     requestReturn: async (borrowingId) => {
         try {
-            const response = await api.put(`/borrowings/${borrowingId}/request-return`);
+            // The backend now defaults the condition, so we can send an empty body.
+            const response = await api.post(`/borrowings/${borrowingId}/return-request`, {});
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;
@@ -30,7 +31,7 @@ const borrowingService = {
 
     confirmPickup: async (borrowingId) => {
         try {
-            const response = await api.put(`/borrowings/${borrowingId}/confirm-pickup`);
+            const response = await api.post(`/borrowings/confirm-delivery/${borrowingId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;
@@ -39,25 +40,25 @@ const borrowingService = {
 
     getReturnRequests: async () => {
         try {
-            const response = await api.get('/borrowings/return-requests?status=pending');
+            const response = await api.get('/borrowings/return-requests');
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;
         }
     },
 
-    assessReturn: async (borrowingId, assessmentData) => {
+    assessReturn: async (returnId, assessmentData) => {
         try {
-            const response = await api.put(`/borrowings/${borrowingId}/assess`, assessmentData);
+            const response = await api.put(`/borrowings/return-requests/${returnId}/assess`, assessmentData);
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;
         }
     },
 
-    confirmReturn: async (borrowingId) => {
+    confirmReturn: async (returnId) => {
         try {
-            const response = await api.put(`/borrowings/${borrowingId}/confirm-return`);
+            const response = await api.post(`/borrowings/return-requests/${returnId}/complete`);
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;

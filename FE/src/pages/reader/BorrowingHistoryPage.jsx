@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import borrowingService from '../../services/borrowingService';
 
+// Helper function for safe date formatting
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '-';
+  // Force DD/MM/YYYY format
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+};
+
 const BorrowingHistoryPage = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,13 +43,13 @@ const BorrowingHistoryPage = () => {
   const filteredHistory = filterStatus === 'All' 
     ? history 
     : history.filter(record => 
-        filterStatus === 'Late' 
-          ? record.status === 'Returned Late' // Assuming this status comes from backend
-          : record.status === 'Returned'
+        filterStatus === 'On Time' 
+          ? record.status === 'on-time' 
+          : record.status === 'overdue'
       );
 
-  const totalLateFees = history.reduce((sum, record) => sum + (record.late_fee || 0), 0);
-  const totalDamageFees = history.reduce((sum, record) => sum + (record.damage_fee || 0), 0);
+  const totalLateFees = history.reduce((sum, record) => sum + (parseFloat(record.late_fee) || 0), 0);
+  const totalDamageFees = history.reduce((sum, record) => sum + (parseFloat(record.damage_fee) || 0), 0);
 
   if (loading) {
     return <div className="p-6 text-center text-gray-500">Loading borrowing history...</div>;
@@ -69,12 +82,12 @@ const BorrowingHistoryPage = () => {
             <div className="bg-white rounded-lg shadow-sm p-4">
               <p className="text-sm text-gray-600 mb-1">Returned On Time</p>
               <p className="text-2xl font-bold text-green-600">
-                {history.filter(r => r.status === 'Returned').length}
+                {history.filter(r => r.status === 'on-time').length}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow-sm p-4">
               <p className="text-sm text-gray-600 mb-1">Total Charges</p>
-              <p className="text-2xl font-bold text-red-600">${totalLateFees + totalDamageFees}</p>
+              <p className="text-2xl font-bold text-red-600">${(totalLateFees + totalDamageFees).toFixed(2)}</p>
             </div>
           </div>
 
@@ -99,7 +112,7 @@ const BorrowingHistoryPage = () => {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                On Time ({history.filter(r => r.status === 'Returned').length})
+                On Time ({history.filter(r => r.status === 'on-time').length})
               </button>
               <button
                 onClick={() => setFilterStatus('Late')}
@@ -109,90 +122,73 @@ const BorrowingHistoryPage = () => {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Late ({history.filter(r => r.status === 'Returned Late').length})
+                Late ({history.filter(r => r.status === 'overdue').length})
               </button>
             </div>
           </div>
 
           {/* History Table */}
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700 text-sm">
+            <div className="grid grid-cols-9 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700 text-sm">
               <div className="col-span-3">Book</div>
               <div className="col-span-1">Copy</div>
               <div className="col-span-1">Borrowed</div>
               <div className="col-span-1">Due Date</div>
-              <div className="col-span-1">Returned</div>
-              <div className="col-span-2">Assessed Condition</div>
+              <div className="col-span-1">Assessed Condition</div>
               <div className="col-span-1">Status</div>
-              <div className="col-span-2">Total Charge</div>
+              <div className="col-span-1">Total Charge</div>
             </div>
 
             <div className="divide-y divide-gray-200">
               {filteredHistory.length > 0 ? (
                 filteredHistory.map((record) => {
-                  const totalCharge = (record.late_fee || 0) + (record.damage_fee || 0);
-                  
+                  const totalCharge = (parseFloat(record.late_fee) || 0) + (parseFloat(record.damage_fee) || 0);
+                  const coverUrl = record.book?.coverImageUrl || null;
+
                   return (
                     <div
                       key={record.id}
-                      className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors items-center"
+                      className="grid grid-cols-9 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors items-center"
                     >
                       <div className="col-span-3 flex items-center gap-3">
-                        <img
-                          src={record.book.cover_image_url}
-                          alt={record.book.title}
-                          className="w-10 h-14 object-cover rounded shadow-sm flex-shrink-0"
-                          onError={(e) => { e.target.src = 'https://via.placeholder.com/40x56?text=No+Cover'; }}
-                        />
+                        {coverUrl ? (
+                          <img
+                            src={coverUrl}
+                            alt={record.book?.title || 'Book cover'}
+                            className="w-10 h-14 object-cover rounded shadow-sm flex-shrink-0"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; const parent = e.currentTarget.parentElement; if(parent) { const div = document.createElement('div'); div.className = 'w-10 h-14 bg-gray-200 rounded shadow-sm flex-shrink-0 flex items-center justify-center text-xs text-gray-500'; div.innerText = 'Error'; parent.insertBefore(div, e.currentTarget); } }}
+                          />
+                        ) : (
+                          <div className="w-10 h-14 bg-gray-200 rounded shadow-sm flex-shrink-0 flex items-center justify-center text-xs text-gray-500">
+                            No Cover
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <h3 className="font-semibold text-gray-800 mb-0.5 truncate text-sm">
-                            {record.book.title}
+                            {record.book?.title || '-'}
                           </h3>
-                          <p className="text-xs text-gray-500 truncate">{record.book.author}</p>
+                          <p className="text-xs text-gray-500 truncate">{record.book?.author || '-'}</p>
                         </div>
                       </div>
-                      <div className="col-span-1 text-gray-600 text-sm font-mono">{record.copy_id}</div>
-                      <div className="col-span-1 text-gray-600 text-xs">{new Date(record.borrow_date).toLocaleDateString()}</div>
-                      <div className="col-span-1 text-gray-600 text-xs">{new Date(record.due_date).toLocaleDateString()}</div>
-                      <div className="col-span-1 text-gray-600 text-xs">{new Date(record.return_date).toLocaleDateString()}</div>
-                      <div className="col-span-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-semibold text-sm ${
-                            record.returned_condition >= 80 ? 'text-green-600' :
-                            record.returned_condition >= 60 ? 'text-blue-600' :
-                            record.returned_condition >= 50 ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                            {record.returned_condition}%
-                          </span>
-                          <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[80px]">
-                            <div 
-                              className={`h-1.5 rounded-full ${
-                                record.returned_condition >= 80 ? 'bg-green-500' :
-                                record.returned_condition >= 60 ? 'bg-blue-500' :
-                                record.returned_condition >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                              }`}
-                              style={{ width: `${record.returned_condition}%` }}
-                            ></div>
-                          </div>
-                        </div>
+                      <div className="col-span-1 text-gray-600 text-sm font-mono">{record.copyId || '-'}</div>
+                      <div className="col-span-1 text-gray-600 text-xs">{formatDate(record.borrowDate)}</div>
+                      <div className="col-span-1 text-gray-600 text-xs">{formatDate(record.dueDate)}</div>
+                      <div className="col-span-1 text-gray-600 text-sm font-semibold">
+                        {record.finalAssessedCondition != null
+                          ? `${parseFloat(record.finalAssessedCondition).toFixed(0)}%`
+                          : record.librarianAssessedCondition || '-'}
                       </div>
                       <div className="col-span-1">
                         <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap inline-block ${
-                          record.status === 'Returned' 
+                          record.status === 'on-time'
                             ? 'bg-green-100 text-green-700'
                             : 'bg-red-100 text-red-700'
                         }`}>
-                          {record.status === 'Returned' ? 'On Time' : 'Late'}
+                          {record.status === 'on-time' ? 'On Time' : 'Late'}
                         </span>
                       </div>
-                      <div className="col-span-2">
-                        {totalCharge > 0 ? (
-                          <div>
-                            <span className="text-red-600 font-semibold text-sm">${totalCharge}</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-500 text-sm">-</span>
-                        )}
+                      <div className="col-span-1">
+                        <span className="text-red-600 font-semibold text-sm">${totalCharge.toFixed(2)}</span>
                       </div>
                     </div>
                   );

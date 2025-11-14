@@ -1,5 +1,7 @@
 const { pool } = require('../config/database');
 const Notification = require('./notification.model');
+const CopyModel = require('./copyModel.js');
+const BookTitle = require('./bookTitle.model');
 
 class BorrowRequest {
 
@@ -26,56 +28,73 @@ class BorrowRequest {
             throw new Error('Pickup date cannot be more than 14 days from now');
         }
 
-        const query = `
-            INSERT INTO borrow_requests (
-                reader_id, 
-                copy_id, 
-                pickup_date, 
-                request_date, 
-                status
-            )
-            VALUES ($1, $2, $3, COALESCE($4, NOW()), 'pending')
-            RETURNING 
-                request_id,
-                reader_id,
-                copy_id,
-                pickup_date,
-                request_date,
-                status
-        `;
-        
+        const client = await pool.connect();
         try {
-            const result = await pool.query(query, [reader_id, copy_id, pickup_date, request_date]);
-            const newRequest = result.rows[0];
+            await client.query('BEGIN');
+
+            const query = `
+                INSERT INTO borrow_requests (
+                    reader_id, 
+                    copy_id, 
+                    pickup_date, 
+                    request_date, 
+                    status
+                )
+                VALUES ($1, $2, $3, COALESCE($4, NOW()), 'pending')
+                RETURNING 
+                    request_id,
+                    reader_id,
+                    copy_id,
+                    pickup_date,
+                    request_date,
+                    status
+            `;
             
-           
-            try {
-                const fullRequest = await this.findById(newRequest.request_id);
-                
-                const pickupDateFormatted = new Date(fullRequest.pickup_date)
-                    .toLocaleDateString('en-GB')
-                    .replace(/\//g, '-');
-                
-                await Notification.notifyLibrariansNewRequest(
-                    fullRequest.request_id,
-                    fullRequest.reader_name,
-                    fullRequest.reader_email,
-                    fullRequest.title,
-                    fullRequest.copy_id,
-                    pickupDateFormatted
-                );
-            } catch (notifError) {
-                console.error('Failed to notify librarians:', notifError);
-                // Không throw error để không block create process
-            }
+            const result = await client.query(query, [reader_id, copy_id, pickup_date, request_date]);
+            const newRequest = result.rows[0];
+
+            // Set the copy as borrowed
+            await CopyModel.setBorrowedStatus(copy_id, true, client);
+
+            // Get book_id to update stock
+            const copyInfo = await client.query('SELECT book_id FROM book_copies WHERE copy_id = $1', [copy_id]);
+            const bookId = copyInfo.rows[0].book_id;
+            await BookTitle.updateAvailableStock(bookId, client);
+            
+            await client.query('COMMIT');
+
+            // Fire-and-forget notification
+            (async () => {
+                try {
+                    const fullRequest = await this.findById(newRequest.request_id);
+                    
+                    const pickupDateFormatted = new Date(fullRequest.pickup_date)
+                        .toLocaleDateString('en-GB')
+                        .replace(/\//g, '-');
+                    
+                    await Notification.notifyLibrariansNewRequest(
+                        fullRequest.request_id,
+                        fullRequest.reader_name,
+                        fullRequest.reader_email,
+                        fullRequest.title,
+                        fullRequest.copy_id,
+                        pickupDateFormatted
+                    );
+                } catch (notifError) {
+                    console.error('Failed to notify librarians:', notifError);
+                }
+            })();
             
             return newRequest;
         } catch (error) {
+            await client.query('ROLLBACK');
             // Handle specific database errors
             if (error.code === '23503') { // Foreign key violation
                 throw new Error('Invalid reader_id or copy_id');
             }
             throw error;
+        } finally {
+            client.release();
         }
     }
 
@@ -208,11 +227,11 @@ class BorrowRequest {
         const result = await pool.query(query);
         
         const transformedRequests = result.rows.map(row => ({
-            request_id: row.request_id,
-            reader_id: row.reader_id,
-            copy_id: row.copy_id,
-            pickup_date: row.pickup_date,
-            request_date: row.request_date,
+            requestId: row.request_id,
+            readerId: row.reader_id,
+            copyId: row.copy_id,
+            pickupDate: row.pickup_date,
+            requestDate: row.request_date,
             status: row.status,
             copy: {
                 condition: row.condition,
@@ -224,14 +243,14 @@ class BorrowRequest {
                 title: row.title,
                 author: row.author,
                 publisher: row.publisher,
-                publication_year: row.publish_year,
-                cover_image_url: row.cover,
+                publicationYear: row.publish_year,
+                coverImageUrl: row.cover,
                 isbn: row.isbn
             },
             user: {
                 id: row.user_id,
                 username: row.username,
-                full_name: row.reader_name,
+                fullName: row.reader_name,
                 email: row.reader_email,
                 status: row.reader_status
             }
@@ -313,57 +332,48 @@ class BorrowRequest {
             throw new Error('request_id is required');
         }
 
-        const existing = await this.findById(request_id);
-        if (!existing) {
-            throw new Error('Request not found');
-        }
-
-        if (existing.status !== 'pending') {
-            throw new Error(`Cannot approve request with status: ${existing.status}`);
-        }
-
-        if (!existing.availability) {
-            throw new Error('Copy is no longer available');
-        }
-
-        const query = `
-            UPDATE borrow_requests
-            SET status = 'approved'
-            WHERE request_id = $1 AND status = 'pending'
-            RETURNING 
-                request_id,
-                reader_id,
-                copy_id,
-                pickup_date,
-                request_date,
-                status
-        `;
-        
-        const result = await pool.query(query, [request_id]);
-
+        const client = await pool.connect();
         try {
-            const pickupDateFormatted = new Date(existing.pickup_date)
-                .toLocaleDateString('en-GB')
-                .replace(/\//g, '-');
-            
+            await client.query('BEGIN');
+
+            const request = await this.findById(request_id);
+            if (!request) {
+                throw new Error('Request not found');
+            }
+            if (request.status !== 'pending') {
+                throw new Error(`Cannot approve request with status: ${request.status}`);
+            }
+
+            const query = `
+                UPDATE borrow_requests
+                SET status = 'approved'
+                WHERE request_id = $1 AND status = 'pending'
+                RETURNING *;
+            `;
+            const result = await client.query(query, [request_id]);
+
+            if (result.rows.length === 0) {
+                throw new Error('Request was not found or already processed.');
+            }
+
             await Notification.createRequestApproved(
-                existing.user_id,
+                request.user_id,
                 request_id,
-                existing.title,
-                existing.copy_id,
-                pickupDateFormatted
+                request.title,
+                request.copy_id,
+                new Date(request.pickup_date).toLocaleDateString('en-CA')
             );
-        } catch (notifError) {
-            console.error('Failed to create approval notification:', notifError);
-        }
-        
-        if (result.rows.length === 0) {
-            throw new Error('Failed to approve request - may have been modified');
-        }
 
-        return result.rows[0];
+            await client.query('COMMIT');
+            return result.rows[0];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
-
+    
     static async reject(request_id, rejection_reason = null) {
         if (!request_id) {
             throw new Error('request_id is required');
@@ -373,46 +383,69 @@ class BorrowRequest {
             throw new Error('rejection_reason is required');
         }
 
-        const existing = await this.findById(request_id);
-        if (!existing) {
-            throw new Error('Request not found');
-        }
-
-        if (existing.status !== 'pending') {
-            throw new Error(`Cannot reject request with status: ${existing.status}`);
-        }
-
-        const query = `
-            DELETE FROM borrow_requests
-            WHERE request_id = $1 AND status = 'pending'
-            RETURNING 
-                request_id,
-                reader_id,
-                copy_id,
-                pickup_date,
-                request_date,
-                status
-        `;
-        
-        const result = await pool.query(query, [request_id]);
-        
-        if (result.rows.length === 0) {
-            throw new Error('Failed to reject request - may have been modified');
-        }
-        
+        const client = await pool.connect();
         try {
+            await client.query('BEGIN');
+
+            // Lock the request row for update and get all necessary info
+            const selectQuery = `
+                SELECT 
+                    br.status,
+                    br.copy_id,
+                    bc.book_id,
+                    r.user_id,
+                    bt.title
+                FROM borrow_requests br
+                JOIN book_copies bc ON br.copy_id = bc.copy_id
+                JOIN book_titles bt ON bc.book_id = bt.book_id
+                JOIN readers r ON br.reader_id = r.reader_id
+                WHERE br.request_id = $1
+                FOR UPDATE;
+            `;
+            const selectResult = await client.query(selectQuery, [request_id]);
+            const existing = selectResult.rows[0];
+
+            if (!existing) {
+                throw new Error('Request not found');
+            }
+
+            if (existing.status !== 'pending') {
+                throw new Error(`Cannot reject request with status: ${existing.status}`);
+            }
+
+            // Set the copy as available again
+            await CopyModel.setBorrowedStatus(existing.copy_id, false, client);
+            await BookTitle.updateAvailableStock(existing.book_id, client);
+
+            // Now delete the request
+            const deleteQuery = `DELETE FROM borrow_requests WHERE request_id = $1 RETURNING *`;
+            const result = await client.query(deleteQuery, [request_id]);
+            
+            if (result.rows.length === 0) {
+                // This should not happen due to the FOR UPDATE lock
+                throw new Error('Failed to reject request - may have been modified');
+            }
+
+            // Create notification before committing
             await Notification.createRequestRejected(
                 existing.user_id,
                 request_id,
                 existing.title,
                 existing.copy_id,
-                rejection_reason
+                rejection_reason,
+                client // Pass the transaction client
             );
-        } catch (notifError) {
-            console.error('Failed to create rejection notification:', notifError);
+
+            await client.query('COMMIT');
+            
+            return result.rows[0];
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
         }
-        
-        return result.rows[0];
     }
     
     static async hasPendingRequestForBook(reader_id, book_id) {
@@ -506,38 +539,54 @@ class BorrowRequest {
             throw new Error('request_id and reader_id are required');
         }
 
-        const existing = await this.findById(request_id);
-        if (!existing) {
-            throw new Error('Request not found');
-        }
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
 
-        if (existing.reader_id !== reader_id) {
-            throw new Error('Unauthorized - request does not belong to this reader');
-        }
+            const existing = await this.findById(request_id);
+            if (!existing) {
+                throw new Error('Request not found');
+            }
 
-        if (existing.status !== 'pending') {
-            throw new Error(`Cannot cancel request with status: ${existing.status}`);
-        }
+            if (existing.reader_id !== reader_id) {
+                throw new Error('Unauthorized - request does not belong to this reader');
+            }
 
-        const query = `
-            DELETE FROM borrow_requests
-            WHERE request_id = $1 AND reader_id = $2 AND status = 'pending'
-            RETURNING 
-                request_id,
-                reader_id,
-                copy_id,
-                pickup_date,
-                request_date,
-                status
-        `;
-        
-        const result = await pool.query(query, [request_id, reader_id]);
-        
-        if (result.rows.length === 0) {
-            throw new Error('Failed to cancel request - may have been modified');
-        }
+            if (existing.status !== 'pending') {
+                throw new Error(`Cannot cancel request with status: ${existing.status}`);
+            }
 
-        return result.rows[0];
+            // Set the copy as available again
+            await CopyModel.setBorrowedStatus(existing.copy_id, false, client);
+            await BookTitle.updateAvailableStock(existing.book_id, client);
+
+            const query = `
+                DELETE FROM borrow_requests
+                WHERE request_id = $1 AND reader_id = $2 AND status = 'pending'
+                RETURNING 
+                    request_id,
+                    reader_id,
+                    copy_id,
+                    pickup_date,
+                    request_date,
+                    status
+            `;
+            
+            const result = await client.query(query, [request_id, reader_id]);
+            
+            if (result.rows.length === 0) {
+                throw new Error('Failed to cancel request - may have been modified');
+            }
+
+            await client.query('COMMIT');
+            return result.rows[0];
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 }
 

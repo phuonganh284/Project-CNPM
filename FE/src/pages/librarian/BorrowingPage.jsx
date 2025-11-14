@@ -11,7 +11,7 @@ const BorrowingPage = () => {
     try {
       setLoading(true);
       const data = await borrowingService.getAllBorrowings();
-      setBorrowedBooks(data);
+      setBorrowedBooks(data.data);
       setError(null);
     } catch (err) {
       console.error("API Error:", err);
@@ -34,6 +34,12 @@ const BorrowingPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <h2 className="text-2xl font-semibold text-gray-800">Current Borrowing</h2>
+        <button
+          onClick={fetchBorrowings}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Refresh
+        </button>
       </div>
 
       {error && (

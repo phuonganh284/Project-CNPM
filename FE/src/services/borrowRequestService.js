@@ -12,7 +12,7 @@ const borrowRequestService = {
 
     cancelRequest: async (requestId) => {
         try {
-            const response = await api.delete(`/borrow-requests/${requestId}`);
+            const response = await api.delete(`/borrow-requests/${requestId}/cancel`);
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;
@@ -38,9 +38,11 @@ const borrowRequestService = {
         }
     },
 
-    rejectRequest: async (requestId) => {
+    rejectRequest: async (requestId, rejectionReason) => {
         try {
-            const response = await api.put(`/borrow-requests/${requestId}/reject`);
+            const response = await api.delete(`/borrow-requests/${requestId}/reject`, {
+                data: { rejection_reason: rejectionReason }
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;

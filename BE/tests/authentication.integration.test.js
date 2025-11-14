@@ -27,7 +27,7 @@ describe('Authentication Flow', () => {
   // Sau khi tất cả các test chạy xong, dọn dẹp người dùng đã tạo
   afterAll(async () => {
     await pool.query("DELETE FROM users WHERE email = $1", [testUser.email]);
-    await pool.end(); // Đóng kết nối database
+    // await pool.end(); // DO NOT END THE POOL IN TESTS
   });
 
   describe('POST /api/auth/register', () => {

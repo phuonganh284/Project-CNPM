@@ -10,9 +10,9 @@ const notificationService = {
         }
     },
 
-    markAsRead: async (notificationId) => {
+    markAsViewed: async (notificationId) => {
         try {
-            const response = await api.put(`/notifications/${notificationId}/read`);
+            const response = await api.put(`/notifications/${notificationId}/view`);
             return response.data;
         } catch (error) {
             throw error.response?.data?.message || error.message;

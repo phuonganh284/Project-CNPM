@@ -18,12 +18,12 @@ const ReturnRequestCard = ({
     return (
         <div
             className="
-                 h-[125px] mr-2
+                 h-[125px]
                 bg-white 
                 rounded-2xl 
                 border border-gray-200
                 flex items-center
-                px-6
+                px-6 gap-6
                 hover:shadow-md
                 transition-shadow
             "
@@ -33,11 +33,15 @@ const ReturnRequestCard = ({
             <img
                 src={bookCover}
                 alt={bookTitle}
-                className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 mr-6"
+                className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0"
+                onError={(e) => { 
+                    e.target.onerror = null; 
+                    e.target.src = 'https://placehold.co/70x99/EEE/313131?text=No+Cover'; 
+                }} 
             />
 
             {/* Book Info */}
-            <div className="flex-1 min-w-0 max-w-[300px] mr-2" >
+            <div className="w-[290px] flex-shrink-0" >
                 <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate">
                     {bookTitle}
                 </h3>
@@ -47,14 +51,14 @@ const ReturnRequestCard = ({
             </div>
 
             {/* User */}
-            <div className="w-[100px] flex-shrink-0 mr-10">
+            <div className="w-[100px] flex-shrink-0">
                 <p className="font-inter text-sm font-medium text-gray-800 truncate">
                     {userName}
                 </p>
             </div>
 
             {/* Right Content - Flexible */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-6 flex-shrink-0">
                 {rightContent}
             </div>
         </div>
