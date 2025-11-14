@@ -17,6 +17,13 @@ const ReaderDetailsPage = () => {
     const [returnRequests, setReturnRequests] = useState([]);
     const [borrowingRecords, setBorrowingRecords] = useState([]);
     const [borrowingHistory, setBorrowingHistory] = useState([]);
+    const [showRawHistory, setShowRawHistory] = useState(false);
+
+    const formatVND = (value) => {
+        const n = Number(value ?? 0);
+        if (Number.isNaN(n)) return '-';
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+    };
 
     useEffect(() => {
         let mounted = true;
@@ -358,8 +365,8 @@ const ReaderDetailsPage = () => {
             case "borrowingHistory":
                 const history = borrowingHistory || [];
 
-                const totalLateFees = history.reduce((sum, rec) => sum + (rec.late_fee || rec.lateFee || 0), 0);
-                const totalDamageFees = history.reduce((sum, rec) => sum + (rec.damage_fee || rec.damageFee || 0), 0);
+                const totalLateFees = history.reduce((sum, rec) => sum + Number(rec.late_fee ?? rec.lateFee ?? rec.overdue_fee ?? rec.overdueFee ?? 0), 0);
+                const totalDamageFees = history.reduce((sum, rec) => sum + Number(rec.damage_fee ?? rec.damageFee ?? 0), 0);
 
                 return (
                     <div>
@@ -377,7 +384,7 @@ const ReaderDetailsPage = () => {
                             </div>
                             <div className="bg-red-50 rounded-lg p-4">
                                 <p className="text-sm text-gray-600 mb-1">Total Charges</p>
-                                <p className="text-2xl font-bold text-red-600">${totalLateFees + totalDamageFees}</p>
+                                <p className="text-2xl font-bold text-red-600">{formatVND(totalLateFees + totalDamageFees)}</p>
                             </div>
                         </div>
 
@@ -396,7 +403,9 @@ const ReaderDetailsPage = () => {
                             {/* Table Body */}
                             <div className="divide-y divide-gray-200">
                                 {history.map((record, idx) => {
-                                    const totalCharge = (record.late_fee || record.lateFee || 0) + (record.damage_fee || record.damageFee || 0);
+                                    const late = Number(record.late_fee ?? record.lateFee ?? record.overdue_fee ?? record.overdueFee ?? 0);
+                                    const damage = Number(record.damage_fee ?? record.damageFee ?? 0);
+                                    const totalCharge = Number(record.total_charge ?? record.totalCharge ?? record.total_fee ?? record.totalFee ?? (late + damage));
 
                                     const book = record.book || {};
                                     const cover = book.cover_image_url || book.cover || book.coverImageUrl || '';
@@ -453,11 +462,11 @@ const ReaderDetailsPage = () => {
                                                 {totalCharge > 0 ? (
                                                     <div>
                                                         <span className="text-red-600 font-semibold text-sm">
-                                                            ${totalCharge}
+                                                            {formatVND(totalCharge)}
                                                         </span>
-                                                        {(record.late_fee || record.lateFee) > 0 && (record.damage_fee || record.damageFee) > 0 && (
+                                                        {(late > 0 || damage > 0) && (
                                                             <p className="text-xs text-gray-500 mt-0.5">
-                                                                Late: ${(record.late_fee || record.lateFee)} + Damage: ${(record.damage_fee || record.damageFee)}
+                                                                {late > 0 ? `Late: ${formatVND(late)}` : ''}{late > 0 && damage > 0 ? ' + ' : ''}{damage > 0 ? `Damage: ${formatVND(damage)}` : ''}
                                                             </p>
                                                         )}
                                                     </div>
@@ -468,6 +477,18 @@ const ReaderDetailsPage = () => {
                                         </div>
                                     );
                                 })}
+                            </div>
+                            {/* Debug toggle to show raw history JSON when troubleshooting field names */}
+                            <div className="p-4">
+                                <button
+                                    onClick={() => setShowRawHistory(s => !s)}
+                                    className="text-xs text-gray-600 hover:text-gray-800 underline"
+                                >
+                                    {showRawHistory ? 'Hide raw history' : 'Show raw history'}
+                                </button>
+                                {showRawHistory && (
+                                    <pre className="mt-2 max-h-64 overflow-auto text-xs bg-gray-100 p-2 rounded">{JSON.stringify(history, null, 2)}</pre>
+                                )}
                             </div>
                         </div>
                     </div>
