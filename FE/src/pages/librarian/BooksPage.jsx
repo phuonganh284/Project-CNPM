@@ -183,12 +183,6 @@ const BookCatalogPage = () => {
           {activeTab === "books" && (
             <div className="flex gap-3 mt-8">
               <button
-                onClick={() => setIsAddDialogOpen(true)}
-                className="px-7 py-2 bg-[#6476A6] text-white rounded-lg hover:bg-[#A5B6CE] cursor-pointer"
-              >
-                Add Book +
-              </button>
-              <button
                 onClick={() => setIsImportOpen(true)}
                 className="px-7 py-2 bg-white text-gray-600 rounded-lg border border-gray-400 hover:bg-gray-100 shadow-sm cursor-pointer"
               >
