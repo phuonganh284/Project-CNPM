@@ -40,9 +40,8 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
     }, [isOpen]);
 
     useEffect(() => {
-
         return () => {
-            if (preview && preview.startsWith?.("blob:")) {
+            if (preview && typeof preview === 'string' && preview.startsWith && preview.startsWith("blob:")) {
                 try {
                     URL.revokeObjectURL(preview);
                 } catch (e) {
@@ -51,7 +50,7 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
             }
         };
 
-    }, []);
+    }, [preview]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -83,13 +82,16 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
         });
     };
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const imageURL = URL.createObjectURL(file);
-            setPreview(imageURL);
-            setEditedBook((prev) => ({ ...prev, cover: imageURL, coverFile: file }));
-        }
+    const handleCoverUrlChange = (e) => {
+        const { value } = e.target;
+        setPreview(value || "");
+        setEditedBook((prev) => ({ ...prev, cover: value || undefined }));
+        setErrors((prev) => {
+            if (!prev || !prev.cover) return prev;
+            const next = { ...prev };
+            delete next.cover;
+            return next;
+        });
     };
 
     const handleSave = () => {
@@ -324,6 +326,18 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
                             <option value="Chinese">Chinese</option>
                         </select>
                     </div>
+
+                    <div>
+                        <label className="text-sm text-gray-700">Book Cover URL</label>
+                        <input
+                            type="text"
+                            name="cover"
+                            value={editedBook.cover || preview || ""}
+                            onChange={handleCoverUrlChange}
+                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Enter image URL"
+                        />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -339,30 +353,6 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
                             placeholder="Enter book description"
                         />
                     </div>
-
-                    <div className="flex flex-col mb-1 items-center gap-2">
-                        <label className="text-sm text-gray-700">Book Cover</label>
-                        <img
-                            src={preview || "/placeholder.svg"}
-                            alt="Error loading"
-                            className="w-32 h-40 object-cover rounded-lg border border-gray-300"
-                        />
-                        <label
-                            htmlFor="coverUpload"
-                            className="text-sm text-[#4A90E2] cursor-pointer hover:underline"
-                        >
-                            Upload picture
-                        </label>
-                        <input
-                            id="coverUpload"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            className="hidden"
-                        />
-
-                    </div>
-
                 </div>
 
                 {/* Buttons */}
