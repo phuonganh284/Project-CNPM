@@ -10,6 +10,8 @@ const getBooks = async (req, res) => {
         let queryParams = [];
         let whereClause = '';
 
+        let baseCondition = 'WHERE bt.is_deleted = FALSE ';
+
         if (search) {
             queryParams.push(`%${search}%`);
             const searchParamIndex = queryParams.length;
@@ -35,6 +37,14 @@ const getBooks = async (req, res) => {
                     break;
             }
         }
+
+        if (whereClause) {
+            whereClause = whereClause.replace('WHERE', 'AND');
+            whereClause = baseCondition + whereClause;
+        } else {
+            whereClause = baseCondition;
+        }
+
 
         if (userId) {
             // First, get the user's preferred categories and authors from their borrow history

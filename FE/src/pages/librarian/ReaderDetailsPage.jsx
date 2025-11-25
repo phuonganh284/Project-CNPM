@@ -478,7 +478,7 @@ const ReaderDetailsPage = () => {
                                     );
                                 })}
                             </div>
-                            {/* Debug toggle to show raw history JSON when troubleshooting field names */}
+                            {/* Debug toggle to show raw history JSON when troubleshooting field names 
                             <div className="p-4">
                                 <button
                                     onClick={() => setShowRawHistory(s => !s)}
@@ -489,7 +489,7 @@ const ReaderDetailsPage = () => {
                                 {showRawHistory && (
                                     <pre className="mt-2 max-h-64 overflow-auto text-xs bg-gray-100 p-2 rounded">{JSON.stringify(history, null, 2)}</pre>
                                 )}
-                            </div>
+                            </div>*/}
                         </div>
                     </div>
                 );
