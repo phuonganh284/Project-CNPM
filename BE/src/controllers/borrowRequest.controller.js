@@ -78,9 +78,9 @@ class BorrowRequestController {
       (async () => {
         try {
           // Fetch additional details for notification content
-          const userQuery = 'SELECT username FROM users WHERE user_id = $1';
+          const userQuery = 'SELECT username, email FROM users WHERE user_id = $1';
           const userResult = await pool.query(userQuery, [user_id]);
-          const username = userResult.rows[0]?.username || 'unknown_user';
+          const { username = 'unknown_user', email = 'no_email' } = userResult.rows[0] || {};
 
           const bookQuery = 'SELECT title FROM book_titles WHERE book_id = $1';
           const bookResult = await pool.query(bookQuery, [finalBookId]);
@@ -89,6 +89,7 @@ class BorrowRequestController {
           await Notification.notifyLibrariansNewRequest(
             request.request_id,
             username,
+            email,
             book_title,
             copy.copy_id,
             finalPickupDate

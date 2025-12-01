@@ -57,6 +57,9 @@ const NotificationDropdown = () => {
 
     // Handler for clicking on a single notification
     const handleNotificationClick = (notification) => {
+        // Close dropdown first
+        setIsOpen(false);
+        
         // Open the detail modal
         setSelectedNotification(notification);
         setIsModalOpen(true);
@@ -107,7 +110,7 @@ const NotificationDropdown = () => {
     };
 
     return (
-        <div className="relative z-[60]" ref={dropdownRef}>
+        <div className="relative z-[70]" ref={dropdownRef}>
             {/* Notification Button */}
             <button
                 onClick={handleToggleDropdown}

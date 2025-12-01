@@ -36,6 +36,7 @@ const Borrowing = {
         bt.isbn,
         u.user_id,
         u.name as reader_name,
+        u.username,
         u.email as reader_email,
         u.status as reader_status,
         CASE 
@@ -504,7 +505,10 @@ const Borrowing = {
       const borrowingInfo = await client.query(`
         SELECT 
           br.copy_id,
+          br.borrow_date,
+          br.due_date,
           bt.title,
+          bt.author,
           u.user_id,
           u.name as reader_name
         FROM borrowing_records br
@@ -517,6 +521,11 @@ const Borrowing = {
 
       const borrowInfo = borrowingInfo.rows[0];
 
+      // Calculate days_overdue
+      const currentDate = new Date();
+      const dueDate = new Date(borrowInfo.due_date);
+      const daysOverdue = Math.max(0, Math.ceil((currentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
+
       await client.query('COMMIT');
 
       // 7. Notify all librarians about new return request
@@ -526,7 +535,11 @@ const Borrowing = {
           borrow_id,
           borrowInfo.reader_name,
           borrowInfo.title,
-          borrowInfo.copy_id
+          borrowInfo.author, // Pass author
+          borrowInfo.copy_id,
+          borrowInfo.borrow_date, // Pass borrowed_date
+          borrowInfo.due_date,   // Pass due_date
+          daysOverdue            // Pass days_overdue
         );
       } catch (notifError) {
         console.error('Failed to notify librarians about new return request:', notifError);

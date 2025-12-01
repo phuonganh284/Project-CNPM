@@ -159,7 +159,7 @@ class DashboardController {
           JOIN users u ON r.user_id = u.user_id
           JOIN book_copies bc ON br.copy_id = bc.copy_id
           JOIN book_titles bt ON bc.book_id = bt.book_id
-          WHERE rr.request_date >= CURRENT_TIMESTAMP - INTERVAL '7 days'
+          WHERE rr.status = 'pending' AND rr.request_date >= CURRENT_TIMESTAMP - INTERVAL '7 days'
         )
         UNION ALL
         (
@@ -354,10 +354,9 @@ class DashboardController {
         JOIN borrowing_records br ON rr.borrow_id = br.borrow_id
         JOIN readers r ON br.reader_id = r.reader_id
         JOIN users u ON r.user_id = u.user_id
-        JOIN book_copies bc ON br.copy_id = bc.copy_id
-        JOIN book_titles bt ON bc.book_id = bt.book_id
-        WHERE rr.request_date >= CURRENT_TIMESTAMP - INTERVAL '7 days'
-      )
+                  JOIN book_copies bc ON br.copy_id = bc.copy_id
+                  JOIN book_titles bt ON bc.book_id = bt.book_id
+                  WHERE rr.status = 'pending' AND rr.request_date >= CURRENT_TIMESTAMP - INTERVAL '7 days'      )
       UNION ALL
       (
         SELECT 

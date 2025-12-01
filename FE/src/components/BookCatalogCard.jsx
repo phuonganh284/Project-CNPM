@@ -39,6 +39,11 @@ const BookCatalogCard = ({
     }
 
 
+    const handleCoverClick = (e) => {
+        e.stopPropagation();
+        navigate(`/book/${book_id}`);
+    }
+
     const handleDeleteClick = (e) => {
         e.stopPropagation();
         if (isBorrowed) return;
@@ -85,7 +90,8 @@ const BookCatalogCard = ({
                 <img
                     src={cover || undefined}
                     alt={title || 'Book cover'}
-                    className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 mr-6"
+                    className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 mr-6 cursor-pointer"
+                    onClick={handleCoverClick}
                     onError={(e) => { e.target.src = 'https://via.placeholder.com/70x99?text=No+Cover'; }}
                 />
 

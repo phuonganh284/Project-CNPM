@@ -34,6 +34,7 @@ const TopMain = ({ searchTerm, setSearchTerm, filter, setFilter }) => {
                 justify-between
                 px-4
                 gap-4
+                z-50
             "
         >
             {/* Search Bar - Hiển thị cho tất cả role */}

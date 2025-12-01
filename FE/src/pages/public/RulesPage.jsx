@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const RulesPage = () => {
+    const [activeTab, setActiveTab] = useState('borrowing');
+
+    const tabs = [
+        { id: 'borrowing', label: '📚 Borrowing Rules', icon: '📚' },
+        { id: 'pickup', label: '📅 Pickup & Request', icon: '📅' },
+        { id: 'return', label: '↩️ Return & Payment', icon: '↩️' },
+        { id: 'fines', label: '💰 Late Fees', icon: '💰' },
+        { id: 'damage', label: '⚠️ Damage Policy', icon: '⚠️' },
+        { id: 'conduct', label: '✓ Code of Conduct', icon: '✓' }
+    ];
+
     return (
         <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4 p-4 mt-2">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
                 <div className="mb-6 ml-6">
                     <h1 className="text-gray-800 font-inter text-3xl font-bold mb-2">
                         Library Rules & Regulations
@@ -13,10 +24,30 @@ const RulesPage = () => {
                     </p>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm p-8 ml-6">
+                {/* Tabs Navigation */}
+                <div className="bg-white rounded-t-lg shadow-sm ml-6 overflow-x-auto">
+                    <div className="flex border-b">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`px-6 py-4 font-medium text-sm whitespace-nowrap transition-colors ${
+                                    activeTab === tab.id
+                                        ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50'
+                                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-b-lg shadow-sm p-8 ml-6">
                     {/* Borrowing Rules */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Borrowing Rules</h2>
+                    {activeTab === 'borrowing' && (
+                    <section>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">📚 Borrowing Rules</h2>
                         <ul className="space-y-3 text-gray-700">
                             <li className="flex items-start">
                                 <span className="text-blue-600 mr-3">•</span>
@@ -36,10 +67,12 @@ const RulesPage = () => {
                             </li>
                         </ul>
                     </section>
+                    )}
 
                     {/* Pickup & Request Rules */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Borrow Request & Pickup</h2>
+                    {activeTab === 'pickup' && (
+                    <section>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">📅 Borrow Request & Pickup</h2>
                         <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-4">
                             <div className="flex items-start gap-2">
                                 <span className="text-yellow-600 text-xl">⚠️</span>
@@ -79,10 +112,12 @@ const RulesPage = () => {
                             </li>
                         </ul>
                     </section>
+                    )}
 
                     {/* Return & Payment Process */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Return & Payment Process</h2>
+                    {activeTab === 'return' && (
+                    <section>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">↩️ Return & Payment Process</h2>
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                             <h3 className="text-lg font-semibold text-blue-800 mb-3">📍 All returns and payments must be done at the library counter</h3>
                             <div className="space-y-3 text-gray-700">
@@ -131,10 +166,12 @@ const RulesPage = () => {
                             </li>
                         </ul>
                     </section>
+                    )}
 
                     {/* Late Returns & Fines */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Late Returns & Fines</h2>
+                    {activeTab === 'fines' && (
+                    <section>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">💰 Late Returns & Fines</h2>
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                             <h3 className="text-lg font-semibold text-red-800 mb-3">📅 Overdue Fee Calculation</h3>
                             <div className="space-y-2 text-gray-700">
@@ -160,10 +197,12 @@ const RulesPage = () => {
                             </li>
                         </ul>
                     </section>
+                    )}
 
                     {/* Damage & Loss */}
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Damage & Loss Policy</h2>
+                    {activeTab === 'damage' && (
+                    <section>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">⚠️ Damage & Loss Policy</h2>
                         <p className="text-gray-700 mb-4">
                             Damage fees are calculated as a <strong>percentage of the book's purchase price</strong>.
                             The librarian will assess the damage level and apply the appropriate rate.
@@ -226,10 +265,12 @@ const RulesPage = () => {
                             </p>
                         </div>
                     </section>
+                    )}
 
                     {/* Conduct */}
+                    {activeTab === 'conduct' && (
                     <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Code of Conduct</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">✓ Code of Conduct</h2>
                         <ul className="space-y-3 text-gray-700">
                             <li className="flex items-start">
                                 <span className="text-green-600 mr-3">•</span>
@@ -249,6 +290,7 @@ const RulesPage = () => {
                             </li>
                         </ul>
                     </section>
+                    )}
                 </div>
             </div>
         </div>

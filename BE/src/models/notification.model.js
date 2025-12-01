@@ -60,12 +60,13 @@ class Notification {
     return result.rows[0];
   }
 
-  static async createRequestApproved(user_id, request_id, book_title, copy_id, pickup_date) {
-    const content = `Your borrow request for "${book_title}" (Copy #${copy_id}) has been approved! Please pick up the book by ${pickup_date} before 20:00, or it will expire.`;
+  static async createRequestApproved(user_id, request_id, book_title, author, copy_id, pickup_date) {
+    const content = `Your borrow request for "${book_title}" has been approved! Please pick up the book by ${pickup_date} before 20:00, or it will expire.`;
     
     const metadata = {
       borrow_request_id: request_id,
       book_title,
+      author,
       copy_id,
       pickup_date
     };
@@ -78,12 +79,13 @@ class Notification {
     );
   }
 
-  static async createRequestRejected(user_id, request_id, book_title, copy_id, rejection_reason, client = pool) {
+  static async createRequestRejected(user_id, request_id, book_title, author, copy_id, rejection_reason, client = pool) {
     const content = `Your borrow request for "${book_title}" (Copy #${copy_id}) has been rejected. Reason: ${rejection_reason}`;
     
     const metadata = {
       borrow_request_id: request_id,
       book_title,
+      author,
       copy_id,
       rejection_reason
     };
@@ -115,12 +117,13 @@ class Notification {
     );
   }
 
-  static async createNewBorrowRequest(librarian_user_id, request_id, username, book_title, copy_id, pickup_date) {
+  static async createNewBorrowRequest(librarian_user_id, request_id, username, email, book_title, copy_id, pickup_date) {
     const content = `New borrow request from ${username} for "${book_title}".`;
     
     const metadata = {
       borrow_request_id: request_id,
       username,
+      email,
       book_title,
       copy_id,
       pickup_date
@@ -134,7 +137,7 @@ class Notification {
     );
   }
 
-  static async notifyLibrariansNewRequest(request_id, username, book_title, copy_id, pickup_date) {
+  static async notifyLibrariansNewRequest(request_id, username, email, book_title, copy_id, pickup_date) {
     const query = `
       SELECT u.user_id 
       FROM librarians l
@@ -150,6 +153,7 @@ class Notification {
           row.user_id,
           request_id,
           username,
+          email,
           book_title,
           copy_id,
           pickup_date
@@ -295,7 +299,7 @@ class Notification {
 
   // ==================== RETURN WORKFLOW NOTIFICATIONS ====================
 
-  static async createNewReturnRequest(librarian_user_id, return_id, borrow_id, reader_name, book_title, copy_id) {
+  static async createNewReturnRequest(librarian_user_id, return_id, borrow_id, reader_name, book_title, author, copy_id, borrow_date, due_date, days_overdue) {
     const content = `New return request from ${reader_name} for "${book_title}" (Copy #${copy_id}). Please assess the book condition.`;
     
     const metadata = {
@@ -303,7 +307,11 @@ class Notification {
       borrow_id,
       reader_name,
       book_title,
-      copy_id
+      author,
+      copy_id,
+      borrow_date,
+      due_date,
+      days_overdue
     };
 
     return await this.create(
@@ -314,7 +322,7 @@ class Notification {
     );
   }
 
-  static async notifyLibrariansNewReturnRequest(return_id, borrow_id, reader_name, book_title, copy_id) {
+  static async notifyLibrariansNewReturnRequest(return_id, borrow_id, reader_name, book_title, author, copy_id, borrow_date, due_date, days_overdue) {
     // Lấy tất cả librarian user_ids
     const query = `
       SELECT u.user_id 
@@ -334,7 +342,11 @@ class Notification {
           borrow_id,
           reader_name,
           book_title,
-          copy_id
+          author,
+          copy_id,
+          borrow_date,
+          due_date,
+          days_overdue
         );
         notifications.push(notif);
       } catch (error) {
@@ -415,4 +427,5 @@ class Notification {
 }
 
 module.exports = Notification;
+
 
