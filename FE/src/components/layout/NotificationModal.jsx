@@ -107,6 +107,8 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                 return { bg: 'bg-orange-50', border: 'border-orange-200', icon: 'bg-orange-500', text: 'text-orange-700' };
             default:
                 return { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-500', text: 'text-blue-700' };
+            case 'REQUEST_EXPIRED':
+                return { bg: 'bg-gray-100', border: 'border-gray-300', icon: 'bg-gray-600', text: 'text-gray-800' };  
         }
     };
 
@@ -290,6 +292,48 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                         <div className="px-1 space-y-2">
                             <div className="flex items-center"><span className="text-gray-800 font-inter text-sm font-bold w-28">Due Date:</span><span className="text-gray-600 font-inter text-sm">{formatDate(data.due_date)}</span></div>
                             <div className="flex items-center"><span className="text-gray-800 font-inter text-sm font-bold w-28">Days Overdue:</span><span className="text-gray-600 font-inter text-sm">{data.days_overdue}</span></div>
+                        </div>
+                    </div>
+                );
+                case 'REQUEST_EXPIRED':
+                return (
+                    <div className="space-y-5">
+                        {/* 1. Khung cảnh báo màu xám */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                {/* Icon đồng hồ cát hoặc dấu chéo */}
+                                <span className="text-lg">⏳</span>
+                                <h3 className="text-gray-800 font-inter text-[15px] font-bold">
+                                    Pickup Missed
+                                </h3>
+                            </div>
+                            <p className="text-gray-600 font-inter text-sm leading-relaxed ml-1">
+                                You did not pick up the book by the deadline. This request has been cancelled.
+                            </p>
+                        </div>
+
+                        {/* 2. Chi tiết */}
+                        <div className="px-1 space-y-2">
+                            <div className="flex items-start">
+                                <span className="w-28 text-gray-500 font-inter text-sm font-medium">Book:</span>
+                                <span className="flex-1 text-gray-900 font-inter text-sm font-semibold">
+                                    {data.book_title}
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-start">
+                                <span className="w-28 text-gray-500 font-inter text-sm font-medium">Expired On:</span>
+                                <span className="flex-1 text-gray-900 font-inter text-sm font-medium">
+                                    {formatDate(data.pickup_date)} 20:00
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* 3. Lời nhắn nhỏ */}
+                        <div className="pt-2 border-t border-gray-100">
+                            <p className="text-xs text-gray-500 italic">
+                                Please submit a new request if you still need this book.
+                            </p>
                         </div>
                     </div>
                 );

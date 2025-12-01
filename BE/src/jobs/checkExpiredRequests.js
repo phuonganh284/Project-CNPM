@@ -52,8 +52,23 @@ async function checkExpiredRequests() {
 
         // 2. Update the available stock for the book
         await BookTitle.updateAvailableStock(req.book_id, client);
+        
+        // 3. Format pickup_date for notification
+        const pickupDateFormatted = new Date(req.pickup_date)
+          .toLocaleDateString('en-GB')
+          .replace(/\//g, '-');
+        
+        // 4. Send notification to reader (inside the transaction)
+        await Notification.createRequestExpired(
+          req.user_id,
+          req.request_id,
+          req.title,
+          req.copy_id,
+          pickupDateFormatted,
+          client // Pass the client to use the transaction
+        );
 
-        // 3. Delete request from database
+        // 5. NOW delete the request from database
         const deleteQuery = `
           DELETE FROM borrow_requests 
           WHERE request_id = $1
@@ -66,26 +81,6 @@ async function checkExpiredRequests() {
         }
         
         await client.query('COMMIT');
-
-        // 4. Format pickup_date for notification
-        const pickupDateFormatted = new Date(req.pickup_date)
-          .toLocaleDateString('en-GB')
-          .replace(/\//g, '-');
-        
-        // 5. Send notification to reader (fire-and-forget)
-        (async () => {
-          try {
-            await Notification.createRequestExpired(
-              req.user_id,
-              req.request_id,
-              req.title,
-              req.copy_id,
-              pickupDateFormatted
-            );
-          } catch (notifError) {
-            console.error(`[CRON] Failed to send notification for request ${req.request_id}:`, notifError);
-          }
-        })();
         
         console.log(`[CRON] ✓ Processed expired request ${req.request_id} for "${req.title}" (${req.reader_name})`);
         successCount++;

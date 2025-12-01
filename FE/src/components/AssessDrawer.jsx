@@ -33,7 +33,7 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
     if (!isOpen || !returnRequest) return null;
 
     const calculateOverdue = () => {
-        const dueDate = new Date(returnRequest.due_date);
+        const dueDate = new Date(returnRequest.dueDate);
         const today = new Date();
         const daysLate = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
         const overdueFee = Math.round((daysLate * overdueRate * bookPriceCurrent) / 100);
@@ -129,7 +129,7 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                     <div>
                         <h2 className="font-inter text-xl font-semibold">Assess & Receive</h2>
                         <p className="font-inter text-sm opacity-90">
-                            Loan #{returnRequest.borrow_id} • {returnRequest.user.full_name}
+                            Loan #{returnRequest.borrow_id} • {returnRequest.user.fullName}
                         </p>
                         <p className="font-inter text-sm opacity-90">Book: {returnRequest.book.title}</p>
                     </div>

@@ -72,7 +72,8 @@ const Borrowing = {
                 br.status,
                 bc.book_id,
                 bc.availability,
-                bc.condition as copy_condition, -- Get the current condition of the copy
+                bc.condition as copy_condition,
+                bc.copy_price,
                 u.user_id
             FROM borrow_requests br
             JOIN book_copies bc ON br.copy_id = bc.copy_id
@@ -104,8 +105,8 @@ const Borrowing = {
 
         // 4. Create the borrowing record, now including the borrowed_condition
         const insertBorrowingQuery = `
-            INSERT INTO borrowing_records (reader_id, copy_id, request_id, borrow_date, due_date, status, borrowed_condition)
-            VALUES ($1, $2, $3, $4, $5, 'approved', $6)
+            INSERT INTO borrowing_records (reader_id, copy_id, request_id, borrow_date, due_date, status, borrowed_condition, borrowed_copy_price)
+            VALUES ($1, $2, $3, $4, $5, 'approved', $6, $7)
             RETURNING borrow_id;
         `;
         const borrowingResult = await client.query(insertBorrowingQuery, [
@@ -114,7 +115,8 @@ const Borrowing = {
             request_id, 
             borrowDate, 
             dueDate, 
-            request.copy_condition // Pass the condition here
+            request.copy_condition,
+            request.copy_price
         ]);
         const newBorrowId = borrowingResult.rows[0].borrow_id;
 
@@ -749,6 +751,7 @@ const Borrowing = {
       const requestCheck = await client.query(`
         SELECT 
           rr.*,
+          br.due_date,
           br.borrowed_copy_price,
           bc.condition as current_copy_condition,
           bc.copy_id,
@@ -774,8 +777,14 @@ const Borrowing = {
       if (request.status !== 'pending') {
         throw new Error(`Cannot assess return request with status: ${request.status}`);
       }
+      
+      // Calculate overdue fee
+      const dueDate = new Date(request.due_date);
+      const today = new Date();
+      const daysLate = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
+      const overdueRate = 1; // 1% of book's value per day
+      const overdueFee = Math.round((daysLate * overdueRate * request.borrowed_copy_price) / 100);
 
-      const overdueFee = 0; // Overdue fee calculation can be added here if needed
       const damageFee = request.borrowed_copy_price * damage_percentage / 100;
       const total_fee = overdueFee + damageFee;
 
