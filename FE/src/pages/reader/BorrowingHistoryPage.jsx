@@ -48,8 +48,7 @@ const BorrowingHistoryPage = () => {
           : record.status === 'overdue'
       );
 
-  const totalLateFees = history.reduce((sum, record) => sum + (parseFloat(record.late_fee) || 0), 0);
-  const totalDamageFees = history.reduce((sum, record) => sum + (parseFloat(record.damage_fee) || 0), 0);
+  const totalCharges = history.reduce((sum, record) => sum + (parseFloat(record.totalCharge) || 0), 0);
 
   if (loading) {
     return <div className="p-6 text-center text-gray-500">Loading borrowing history...</div>;
@@ -87,7 +86,7 @@ const BorrowingHistoryPage = () => {
             </div>
             <div className="bg-white rounded-lg shadow-sm p-4">
               <p className="text-sm text-gray-600 mb-1">Total Charges</p>
-              <p className="text-2xl font-bold text-red-600">${(totalLateFees + totalDamageFees).toFixed(2)}</p>
+              <p className="text-2xl font-bold text-red-600">{totalCharges.toLocaleString()}đ</p>
             </div>
           </div>
 
@@ -142,7 +141,7 @@ const BorrowingHistoryPage = () => {
             <div className="divide-y divide-gray-200">
               {filteredHistory.length > 0 ? (
                 filteredHistory.map((record) => {
-                  const totalCharge = (parseFloat(record.late_fee) || 0) + (parseFloat(record.damage_fee) || 0);
+                  const totalCharge = parseFloat(record.totalCharge) || 0;
                   const coverUrl = record.book?.coverImageUrl || null;
 
                   return (
@@ -188,7 +187,7 @@ const BorrowingHistoryPage = () => {
                         </span>
                       </div>
                       <div className="col-span-1">
-                        <span className="text-red-600 font-semibold text-sm">${totalCharge.toFixed(2)}</span>
+                        <span className="text-red-600 font-semibold text-sm">{totalCharge.toLocaleString()}đ</span>
                       </div>
                     </div>
                   );

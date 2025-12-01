@@ -138,7 +138,7 @@ const ReturnRequestPage = () => {
                   <div className="w-[120px] flex-shrink-0">
                     {req.fine > 0 ? (
                       <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
-                        Charge: ${req.fine}
+                        Charge: {req.fine.toLocaleString()}đ
                       </span>
                     ) : (
                       <span className="text-xs text-gray-500">No charge</span>

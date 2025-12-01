@@ -31,9 +31,10 @@ const ApprovedRequestPage = () => {
 
   const handleConfirmDelivery = async (requestId) => {
     try {
-      const borrowing = await borrowingService.confirmPickup(requestId);
+      const response = await borrowingService.confirmPickup(requestId);
+      const borrowingData = response.data;
 
-      setMessage(`Confirmed delivery for "${borrowing.title}" to user ${borrowing.readerName}. The book is now officially borrowed.`);
+      setMessage(`Confirmed delivery for "${borrowingData.title}" to user ${borrowingData.username}. The book is now officially borrowed.`);
       fetchApprovedRequests(); // Refresh the list
 
       setTimeout(() => {
@@ -51,7 +52,7 @@ const ApprovedRequestPage = () => {
   return (
     <div className="p-4 sm:p-6 min-h-screen font-sans">
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">Approved Delivery Requests</h2>
       </div>
 

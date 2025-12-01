@@ -63,28 +63,6 @@ class BorrowRequest {
             
             await client.query('COMMIT');
 
-            // Fire-and-forget notification
-            (async () => {
-                try {
-                    const fullRequest = await this.findById(newRequest.request_id);
-                    
-                    const pickupDateFormatted = new Date(fullRequest.pickup_date)
-                        .toLocaleDateString('en-GB')
-                        .replace(/\//g, '-');
-                    
-                    await Notification.notifyLibrariansNewRequest(
-                        fullRequest.request_id,
-                        fullRequest.reader_name,
-                        fullRequest.reader_email,
-                        fullRequest.title,
-                        fullRequest.copy_id,
-                        pickupDateFormatted
-                    );
-                } catch (notifError) {
-                    console.error('Failed to notify librarians:', notifError);
-                }
-            })();
-            
             return newRequest;
         } catch (error) {
             await client.query('ROLLBACK');
@@ -360,6 +338,7 @@ class BorrowRequest {
                 request.user_id,
                 request_id,
                 request.title,
+                request.author,
                 request.copy_id,
                 new Date(request.pickup_date).toLocaleDateString('en-CA')
             );
@@ -394,7 +373,8 @@ class BorrowRequest {
                     br.copy_id,
                     bc.book_id,
                     r.user_id,
-                    bt.title
+                    bt.title,
+                    bt.author
                 FROM borrow_requests br
                 JOIN book_copies bc ON br.copy_id = bc.copy_id
                 JOIN book_titles bt ON bc.book_id = bt.book_id
@@ -417,6 +397,17 @@ class BorrowRequest {
             await CopyModel.setBorrowedStatus(existing.copy_id, false, client);
             await BookTitle.updateAvailableStock(existing.book_id, client);
 
+            // Create notification before committing
+            await Notification.createRequestRejected(
+                existing.user_id,
+                request_id,
+                existing.title,
+                existing.author,
+                existing.copy_id,
+                rejection_reason,
+                client // Pass the transaction client
+            );
+
             // Now delete the request
             const deleteQuery = `DELETE FROM borrow_requests WHERE request_id = $1 RETURNING *`;
             const result = await client.query(deleteQuery, [request_id]);
@@ -425,16 +416,6 @@ class BorrowRequest {
                 // This should not happen due to the FOR UPDATE lock
                 throw new Error('Failed to reject request - may have been modified');
             }
-
-            // Create notification before committing
-            await Notification.createRequestRejected(
-                existing.user_id,
-                request_id,
-                existing.title,
-                existing.copy_id,
-                rejection_reason,
-                client // Pass the transaction client
-            );
 
             await client.query('COMMIT');
             

@@ -1,265 +1,175 @@
--- ===============================================
--- ENTITES AND RELATIONSHIPS
--- ===============================================
--- USER -------------------------------------------------------------------------------------
-CREATE TABLE users (
-    user_id SERIAL PRIMARY KEY, -- PK
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    status VARCHAR(20) CHECK (status IN ('active', 'banned', 'borrowing', 'overdue')) DEFAULT 'active',
-    profile_picture TEXT,
-    borrow_count INT DEFAULT 0 CHECK (borrow_count >= 0),
-    is_verified BOOLEAN DEFAULT FALSE,
-    verification_token VARCHAR(255),
-    verification_expires TIMESTAMP,
-    reset_token VARCHAR(255),
-    reset_token_expires TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.book_copies (
+  copy_id integer NOT NULL DEFAULT nextval('book_copies_copy_id_seq'::regclass),
+  book_id integer NOT NULL,
+  condition integer CHECK (condition >= 0 AND condition <= 100),
+  status character varying DEFAULT 'normal'::character varying,
+  copy_price numeric CHECK (copy_price >= 0::numeric),
+  availability boolean DEFAULT true,
+  borrowed boolean NOT NULL DEFAULT false CHECK (borrowed = ANY (ARRAY[true, false])),
+  CONSTRAINT book_copies_pkey PRIMARY KEY (copy_id),
+  CONSTRAINT book_copies_book_id_fkey FOREIGN KEY (book_id) REFERENCES public.book_titles(book_id)
 );
-
--- Reader
-CREATE TABLE readers (
-    reader_id SERIAL PRIMARY KEY, -- PK
-    user_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE -- FK
+CREATE TABLE public.book_titles (
+  book_id integer NOT NULL DEFAULT nextval('book_titles_book_id_seq'::regclass),
+  isbn text NOT NULL UNIQUE,
+  cover text,
+  title text NOT NULL,
+  author text DEFAULT 'To be updated.'::text,
+  language text DEFAULT '''To be updated.''::text'::text,
+  publisher text DEFAULT '''To be updated.''::text'::text,
+  publish_year integer CHECK (publish_year >= 0),
+  description text,
+  price numeric NOT NULL CHECK (price >= 0::numeric),
+  total_stock integer DEFAULT 0 CHECK (total_stock >= 0),
+  availability_status character varying DEFAULT 'available'::character varying CHECK (availability_status::text = ANY (ARRAY['out-of-stock'::character varying, 'available'::character varying, 'borrowed'::character varying]::text[])),
+  available_stock integer NOT NULL DEFAULT 0 CHECK (available_stock >= 0),
+  category_id integer,
+  borrow_count integer DEFAULT 0 CHECK (borrow_count >= 0),
+  is_deleted boolean NOT NULL DEFAULT false CHECK (is_deleted = ANY (ARRAY[true, false])),
+  CONSTRAINT book_titles_pkey PRIMARY KEY (book_id),
+  CONSTRAINT book_titles_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(category_id)
 );
-
--- Librarian
-CREATE TABLE librarians (
-    librarian_id SERIAL PRIMARY KEY, -- PK
-    user_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE -- FK
+CREATE TABLE public.borrow_history (
+  history_id integer NOT NULL DEFAULT nextval('borrow_history_history_id_seq'::regclass),
+  reader_id integer,
+  borrow_id integer,
+  status character varying CHECK (status::text = ANY (ARRAY['on-time'::character varying, 'overdue'::character varying]::text[])),
+  late_fee numeric DEFAULT 0,
+  damage_fee numeric DEFAULT 0,
+  total_fee numeric DEFAULT 0,
+  librarian_assessed_condition character varying,
+  reader_returned_condition integer,
+  assessment_notes text,
+  return_id integer,
+  copy_id integer,
+  borrow_date timestamp without time zone,
+  due_date timestamp without time zone,
+  return_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  borrowed_copy_price numeric,
+  CONSTRAINT borrow_history_pkey PRIMARY KEY (history_id),
+  CONSTRAINT borrow_history_reader_id_fkey FOREIGN KEY (reader_id) REFERENCES public.readers(reader_id)
 );
-
-
--- BOOK -------------------------------------------------------------------------------------
--- Category
-CREATE TABLE categories (
-    category_id SERIAL PRIMARY KEY, -- PK
-    category_name VARCHAR(100) UNIQUE NOT NULL,
-    amount INT DEFAULT 0 CHECK (amount >= 0)
+CREATE TABLE public.borrow_requests (
+  request_id integer NOT NULL DEFAULT nextval('borrow_requests_request_id_seq'::regclass),
+  reader_id integer,
+  copy_id integer,
+  request_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  pickup_date timestamp without time zone,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying]::text[])),
+  CONSTRAINT borrow_requests_pkey PRIMARY KEY (request_id),
+  CONSTRAINT borrow_requests_reader_id_fkey FOREIGN KEY (reader_id) REFERENCES public.readers(reader_id),
+  CONSTRAINT borrow_requests_copy_id_fkey FOREIGN KEY (copy_id) REFERENCES public.book_copies(copy_id)
 );
-
--- Book Title
-CREATE TABLE book_titles (
-    book_id SERIAL PRIMARY KEY, -- PK
-    isbn VARCHAR(20) UNIQUE,
-    cover TEXT,
-    title VARCHAR(255) NOT NULL,
-    author VARCHAR(255),
-    language VARCHAR(100),
-    publisher VARCHAR(255),
-    publish_year INT CHECK (publish_year >= 0),
-    description TEXT,
-    price NUMERIC(10,2) CHECK (price >= 0),
-    total_stock INT DEFAULT 0 CHECK (total_stock >= 0),
-    availability_status VARCHAR(20) CHECK (availability_status IN ('out-of-stock', 'available', 'borrowed')) DEFAULT 'available',
-    available_stock INT DEFAULT 0 CHECK (available_stock >= 0),
-    category_id INT REFERENCES categories(category_id) ON DELETE SET NULL -- FK
+CREATE TABLE public.borrowing_records (
+  borrow_id integer NOT NULL DEFAULT nextval('borrowing_records_borrow_id_seq'::regclass),
+  reader_id integer,
+  copy_id integer,
+  request_id integer,
+  borrow_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  due_date timestamp without time zone,
+  borrowed_copy_price numeric,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'returned'::character varying, 'overdue'::character varying, 'lost'::character varying]::text[])),
+  renew_count integer DEFAULT 0 CHECK (renew_count >= 0),
+  borrowed_condition integer CHECK (borrowed_condition >= 0 AND borrowed_condition <= 100),
+  CONSTRAINT borrowing_records_pkey PRIMARY KEY (borrow_id),
+  CONSTRAINT borrowing_records_reader_id_fkey FOREIGN KEY (reader_id) REFERENCES public.readers(reader_id),
+  CONSTRAINT borrowing_records_copy_id_fkey FOREIGN KEY (copy_id) REFERENCES public.book_copies(copy_id),
+  CONSTRAINT borrowing_records_request_id_fkey FOREIGN KEY (request_id) REFERENCES public.borrow_requests(request_id)
 );
-
--- Book Copy
-CREATE TABLE book_copies (
-    copy_id SERIAL PRIMARY KEY,
-    book_id INT NOT NULL REFERENCES book_titles(book_id) ON DELETE CASCADE, -- FK
-    condition INT CHECK (condition BETWEEN 0 AND 100),
-    status VARCHAR(50) DEFAULT 'normal',
-    copy_price NUMERIC(10,2) CHECK (copy_price >= 0),
-    availability BOOLEAN DEFAULT TRUE
-    borrowed BOOLEAN DEFAULT FALSE
+CREATE TABLE public.categories (
+  category_id integer NOT NULL DEFAULT nextval('categories_category_id_seq'::regclass),
+  category_name character varying NOT NULL UNIQUE,
+  amount integer DEFAULT 0 CHECK (amount >= 0),
+  CONSTRAINT categories_pkey PRIMARY KEY (category_id)
 );
-
-
--- BORROWING ---------------------------------------------------------------------------------
--- Borrow Request
-CREATE TABLE borrow_requests (
-    request_id SERIAL PRIMARY KEY, -- PK
-    reader_id INT REFERENCES readers(reader_id), -- FK
-    copy_id INT REFERENCES book_copies(copy_id), -- FK
-    request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    pickup_date TIMESTAMP,   
-    status VARCHAR(20) CHECK (status IN ('pending', 'approved')) DEFAULT 'pending'
+CREATE TABLE public.librarians (
+  librarian_id integer NOT NULL DEFAULT nextval('librarians_librarian_id_seq'::regclass),
+  user_id integer NOT NULL UNIQUE,
+  CONSTRAINT librarians_pkey PRIMARY KEY (librarian_id),
+  CONSTRAINT librarians_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
-
--- Borrowing Record
-CREATE TABLE borrowing_records (
-    borrow_id SERIAL PRIMARY KEY, -- PK
-    reader_id INT REFERENCES readers(reader_id), -- FK
-    copy_id INT REFERENCES book_copies(copy_id), -- FK
-    request_id INT REFERENCES borrow_requests(request_id) ON DELETE SET NULL, -- FK
-    borrow_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    due_date TIMESTAMP,
-    borrowed_copy_price NUMERIC(10,2), -- Snapshot of copy_price when borrowed
-    status VARCHAR(20) CHECK (status IN ('pending', 'approved', 'returned', 'overdue', 'lost')) DEFAULT 'pending',
-    renew_count INT DEFAULT 0 CHECK (renew_count >= 0),
-    UNIQUE (reader_id, copy_id)
+CREATE TABLE public.notification_types (
+  type_id integer NOT NULL DEFAULT nextval('notification_types_type_id_seq'::regclass),
+  recipient_role character varying NOT NULL CHECK (recipient_role::text = ANY (ARRAY['reader'::character varying, 'librarian'::character varying]::text[])),
+  type_name character varying NOT NULL UNIQUE,
+  CONSTRAINT notification_types_pkey PRIMARY KEY (type_id)
 );
-
--- Return Request
-CREATE TABLE return_requests (
-    return_id SERIAL PRIMARY KEY, -- PK
-    reader_id INT REFERENCES readers(reader_id), -- FK
-    borrow_id INT REFERENCES borrowing_records(borrow_id), -- FK
-    request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20) CHECK (status IN ('pending', 'approved')) DEFAULT 'pending'
+CREATE TABLE public.notifications (
+  notification_id integer NOT NULL DEFAULT nextval('notifications_notification_id_seq'::regclass),
+  user_id integer NOT NULL,
+  type_id integer NOT NULL,
+  content text NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  is_read boolean DEFAULT false,
+  borrow_request_id integer,
+  borrow_id integer,
+  return_request_id integer,
+  receipt_id integer,
+  is_viewed boolean DEFAULT false,
+  metadata jsonb,
+  CONSTRAINT notifications_pkey PRIMARY KEY (notification_id),
+  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id),
+  CONSTRAINT notifications_type_id_fkey FOREIGN KEY (type_id) REFERENCES public.notification_types(type_id),
+  CONSTRAINT notifications_borrow_request_id_fkey FOREIGN KEY (borrow_request_id) REFERENCES public.borrow_requests(request_id),
+  CONSTRAINT notifications_borrow_id_fkey FOREIGN KEY (borrow_id) REFERENCES public.borrowing_records(borrow_id),
+  CONSTRAINT notifications_return_request_id_fkey FOREIGN KEY (return_request_id) REFERENCES public.return_requests(return_id),
+  CONSTRAINT notifications_receipt_id_fkey FOREIGN KEY (receipt_id) REFERENCES public.receipts(receipt_id)
 );
-
--- Receipt
-CREATE TABLE receipts (
-    receipt_id SERIAL PRIMARY KEY, -- PK
-    reader_id INT REFERENCES readers(reader_id), -- FK
-    return_id INT UNIQUE REFERENCES return_requests(return_id), -- FK
-    overdue_rate NUMERIC(5,2),
-    overdue_days INT,
-    damage_rate NUMERIC(5,2),
-    total_fee NUMERIC(10,2)
+CREATE TABLE public.readers (
+  reader_id integer NOT NULL DEFAULT nextval('readers_reader_id_seq'::regclass),
+  user_id integer NOT NULL UNIQUE,
+  CONSTRAINT readers_pkey PRIMARY KEY (reader_id),
+  CONSTRAINT readers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id)
 );
-
--- Borrow History
-CREATE TABLE borrow_history (
-    history_id SERIAL PRIMARY KEY, -- PK
-    reader_id INT REFERENCES readers(reader_id), -- FK
-    borrow_id INT UNIQUE REFERENCES borrowing_records(borrow_id), -- FK
-    status VARCHAR(20) CHECK (status IN ('on-time', 'overdue'))
+CREATE TABLE public.receipts (
+  receipt_id integer NOT NULL DEFAULT nextval('receipts_receipt_id_seq'::regclass),
+  reader_id integer,
+  return_id integer UNIQUE,
+  overdue_rate numeric,
+  overdue_days integer,
+  damage_rate numeric,
+  total_fee numeric,
+  CONSTRAINT receipts_pkey PRIMARY KEY (receipt_id),
+  CONSTRAINT receipts_reader_id_fkey FOREIGN KEY (reader_id) REFERENCES public.readers(reader_id),
+  CONSTRAINT receipts_return_id_fkey FOREIGN KEY (return_id) REFERENCES public.return_requests(return_id)
 );
-
-
--- NOTIFICATION ---------------------------------------------------------------------------------
--- Notification Types
-CREATE TABLE notification_types (
-    type_id SERIAL PRIMARY KEY, -- PK
-    recipient_role VARCHAR(20) CHECK (recipient_role IN ('reader', 'librarian')) NOT NULL,
-    type_name VARCHAR(50) UNIQUE NOT NULL
+CREATE TABLE public.return_requests (
+  return_id integer NOT NULL DEFAULT nextval('return_requests_return_id_seq'::regclass),
+  reader_id integer,
+  borrow_id integer,
+  request_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'assessed'::character varying, 'completed'::character varying]::text[])),
+  returned_condition integer CHECK (returned_condition >= 0 AND returned_condition <= 100),
+  assessed_condition character varying CHECK (assessed_condition::text = ANY (ARRAY['OK'::character varying, 'MINOR'::character varying, 'MODERATE'::character varying, 'SEVERE'::character varying, 'LOST'::character varying]::text[])),
+  damage_percentage numeric CHECK (damage_percentage >= 0::numeric AND damage_percentage <= 100::numeric),
+  overdue_fee numeric DEFAULT 0 CHECK (overdue_fee >= 0::numeric),
+  damage_fee numeric DEFAULT 0 CHECK (damage_fee >= 0::numeric),
+  total_fee numeric DEFAULT 0 CHECK (total_fee >= 0::numeric),
+  damage_details jsonb,
+  assessment_notes text,
+  assessed_at timestamp without time zone,
+  completed_at timestamp without time zone,
+  CONSTRAINT return_requests_pkey PRIMARY KEY (return_id),
+  CONSTRAINT return_requests_reader_id_fkey FOREIGN KEY (reader_id) REFERENCES public.readers(reader_id),
+  CONSTRAINT return_requests_borrow_id_fkey FOREIGN KEY (borrow_id) REFERENCES public.borrowing_records(borrow_id)
 );
-
--- Notifications
-CREATE TABLE notifications (
-    notification_id SERIAL PRIMARY KEY, -- PK
-    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE, -- FK
-    type_id INT NOT NULL REFERENCES notification_types(type_id) ON DELETE CASCADE, -- FK
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_read BOOLEAN DEFAULT FALSE,
-    
-    borrow_request_id INT REFERENCES borrow_requests(request_id) ON DELETE SET NULL, -- FK
-    borrow_id INT REFERENCES borrowing_records(borrow_id) ON DELETE SET NULL, -- FK
-    return_request_id INT REFERENCES return_requests(return_id) ON DELETE SET NULL, -- FK
-    receipt_id INT REFERENCES receipts(receipt_id) ON DELETE SET NULL -- FK
+CREATE TABLE public.users (
+  user_id integer NOT NULL DEFAULT nextval('users_user_id_seq'::regclass),
+  username character varying NOT NULL UNIQUE,
+  email character varying NOT NULL UNIQUE,
+  password character varying NOT NULL,
+  name character varying NOT NULL,
+  status character varying DEFAULT 'active'::character varying CHECK (status::text = ANY (ARRAY['active'::character varying, 'banned'::character varying, 'borrowing'::character varying, 'overdue'::character varying]::text[])),
+  profile_picture text,
+  is_verified boolean DEFAULT false,
+  verification_token character varying,
+  verification_expires timestamp without time zone,
+  reset_token character varying,
+  reset_token_expires timestamp without time zone,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  borrowcount integer DEFAULT 0 CHECK (borrowcount >= 0),
+  CONSTRAINT users_pkey PRIMARY KEY (user_id)
 );
-
--- ===============================================
--- SEMANTIC CONSTRAINTS AND TRIGGERS
--- ===============================================
-
--- 2. Limit to 5 active borrows per reader
-CREATE OR REPLACE FUNCTION check_borrow_limit()
-RETURNS TRIGGER AS $$
-DECLARE
-    active_borrows INT;
-BEGIN
-    SELECT COUNT(*) INTO active_borrows
-    FROM borrowing_records
-    WHERE reader_id = NEW.reader_id AND status = 'approved';
-
-    IF active_borrows >= 5 THEN
-        RAISE EXCEPTION 'Borrow limit exceeded: maximum 5 active books per reader.';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_check_borrow_limit
-BEFORE INSERT ON borrowing_records
-FOR EACH ROW
-EXECUTE FUNCTION check_borrow_limit();
-
--- 3. Set borrowed_copy_price snapshot when creating borrowing record
-CREATE OR REPLACE FUNCTION set_borrowed_snapshot()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Automatically set borrowed_copy_price from current copy_price
-    SELECT copy_price
-    INTO NEW.borrowed_copy_price
-    FROM book_copies
-    WHERE copy_id = NEW.copy_id;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_set_borrowed_snapshot
-BEFORE INSERT ON borrowing_records
-FOR EACH ROW
-EXECUTE FUNCTION set_borrowed_snapshot();
-
--- 4. Pickup date validation
-CREATE OR REPLACE FUNCTION validate_pickup_date()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.pickup_date <= NEW.request_date THEN
-        RAISE EXCEPTION 'Pickup date must be later than request date.';
-    END IF;
-
-    IF EXTRACT(HOUR FROM NEW.pickup_date::timestamp) >= 20 THEN
-        RAISE EXCEPTION 'Pickup must be scheduled before 8:00 PM.';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_validate_pickup_date
-BEFORE INSERT ON borrow_requests
-FOR EACH ROW
-EXECUTE FUNCTION validate_pickup_date();
-
--- 5. Update Book Copy's condition and price when receipt is issued
-CREATE OR REPLACE FUNCTION apply_receipt_updates()
-RETURNS TRIGGER AS $$
-DECLARE
-    v_copy_id INT;
-    v_book_price NUMERIC(10,2);
-    v_old_condition INT;
-    v_old_copy_price NUMERIC(10,2);
-    v_borrowed_copy_price NUMERIC(10,2);
-    v_new_condition INT;
-    v_new_copy_price NUMERIC(10,2);
-BEGIN
-    -- Get values BEFORE updating (old values from book_copies and borrowed snapshot)
-    SELECT br.copy_id, bc.condition, bc.copy_price, bt.price, br.borrowed_copy_price
-    INTO v_copy_id, v_old_condition, v_old_copy_price, v_book_price, v_borrowed_copy_price
-    FROM borrowing_records br
-    JOIN book_copies bc ON br.copy_id = bc.copy_id
-    JOIN book_titles bt ON bc.book_id = bt.book_id
-    WHERE br.borrow_id = (
-        SELECT borrow_id FROM return_requests WHERE return_id = NEW.return_id
-    );
-    
-    -- Calculate new condition and copy_price
-    v_new_condition := GREATEST(v_old_condition - NEW.damage_rate, 0);
-    v_new_copy_price := v_book_price * (v_new_condition / 100.0);
-    
-    -- Calculate total fee using BORROWED price (snapshot when borrowed)
-    -- Overdue fee = borrowed_copy_price * overdue_rate%
-    -- Damage fee = borrowed_copy_price - new_copy_price
-    NEW.total_fee := COALESCE(v_borrowed_copy_price * (NEW.overdue_rate / 100.0), 0)
-                   + COALESCE(v_borrowed_copy_price - v_new_copy_price, 0);
-    
-    -- NOW update the book_copies table
-    UPDATE book_copies
-    SET condition = v_new_condition,
-        copy_price = v_new_copy_price
-    WHERE copy_id = v_copy_id;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_apply_receipt_updates ON receipts;
-
-CREATE TRIGGER trg_apply_receipt_updates
-BEFORE INSERT OR UPDATE ON receipts
-FOR EACH ROW
-EXECUTE FUNCTION apply_receipt_updates();
-

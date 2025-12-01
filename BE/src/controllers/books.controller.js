@@ -1,5 +1,5 @@
 const { pool } = require('../config/database');
-const BorrowRequest = require('../models/borrowRequest.model'); // Import BorrowRequest model
+const BorrowRequest = require('../models/borrowRequest.model');
 
 const getBooks = async (req, res) => {
     try {
@@ -8,34 +8,34 @@ const getBooks = async (req, res) => {
 
         let query;
         let queryParams = [];
-        let whereClause = '';
+        let whereClause = 'WHERE bt.available_stock > 0 ';
 
         let baseCondition = 'WHERE bt.is_deleted = FALSE ';
 
         if (search) {
             queryParams.push(`%${search}%`);
             const searchParamIndex = queryParams.length;
+            let searchCondition = '';
             switch (filter) {
                 case 'Title':
-                    whereClause = `WHERE bt.title ILIKE $${searchParamIndex} `;
+                    searchCondition = `bt.title ILIKE $${searchParamIndex} `;
                     break;
                 case 'Author':
-                    whereClause = `WHERE bt.author ILIKE $${searchParamIndex} `;
+                    searchCondition = `bt.author ILIKE $${searchParamIndex} `;
                     break;
                 case 'Publisher':
-                    whereClause = `WHERE bt.publisher ILIKE $${searchParamIndex} `;
+                    searchCondition = `bt.publisher ILIKE $${searchParamIndex} `;
                     break;
                 case 'Date':
-                    // For date, we assume the search term is a year.
-                    // We'll cast the column to TEXT to use LIKE.
-                    queryParams[searchParamIndex - 1] = `${search}%`; // No leading wildcard for year
-                    whereClause = `WHERE CAST(bt.publish_year AS TEXT) LIKE $${searchParamIndex} `;
+                    queryParams[searchParamIndex - 1] = `${search}%`;
+                    searchCondition = `CAST(bt.publish_year AS TEXT) LIKE $${searchParamIndex} `;
                     break;
                 case 'All':
                 default:
-                    whereClause = `WHERE (bt.title ILIKE $${searchParamIndex} OR bt.author ILIKE $${searchParamIndex}) `;
+                    searchCondition = `(bt.title ILIKE $${searchParamIndex} OR bt.author ILIKE $${searchParamIndex}) `;
                     break;
             }
+            whereClause += `AND ${searchCondition}`;
         }
 
         if (whereClause) {
@@ -47,26 +47,24 @@ const getBooks = async (req, res) => {
 
 
         if (userId) {
-            // First, get the user's preferred categories and authors from their borrow history
             const preferenceQuery = `
                 SELECT
                     c.category_name,
                     bt.author
                 FROM
-                    borrowing_records br
+                    borrow_history bh
                 JOIN
-                    book_copies bc ON br.copy_id = bc.copy_id
+                    book_copies bc ON bh.copy_id = bc.copy_id
                 JOIN
                     book_titles bt ON bc.book_id = bt.book_id
-                JOIN
+                LEFT JOIN
                     categories c ON bt.category_id = c.category_id
                 WHERE
-                    br.reader_id = (SELECT reader_id FROM readers WHERE user_id = $1)
+                    bh.reader_id = (SELECT reader_id FROM readers WHERE user_id = $1)
             `;
-            // In the preference query, the user id is always the first parameter.
             const { rows: preferenceRows } = await pool.query(preferenceQuery, [userId]);
 
-            const preferredCategories = [...new Set(preferenceRows.map(r => r.category_name))];
+            const preferredCategories = [...new Set(preferenceRows.filter(r => r.category_name).map(r => r.category_name))];
             const preferredAuthors = [...new Set(preferenceRows.map(r => r.author))];
 
             let orderByClause = 'ORDER BY ';
@@ -74,18 +72,17 @@ const getBooks = async (req, res) => {
                 orderByClause += 'CASE ';
                 if (preferredCategories.length > 0) {
                     const categoryParamIndex = queryParams.length + 1;
-                    orderByClause += `WHEN c.category_name = ANY($${categoryParamIndex}) THEN 1 `;
+                    orderByClause += `WHEN c.category_name ILIKE ANY($${categoryParamIndex}) THEN 1 `;
                     queryParams.push(preferredCategories);
                 }
                 if (preferredAuthors.length > 0) {
                     const authorParamIndex = queryParams.length + 1;
-                    orderByClause += `WHEN bt.author = ANY($${authorParamIndex}) THEN 2 `;
+                    orderByClause += `WHEN bt.author ILIKE ANY($${authorParamIndex}) THEN 2 `;
                     queryParams.push(preferredAuthors);
                 }
                 orderByClause += 'ELSE 3 END, ';
             }
             orderByClause += 'bt.book_id DESC';
-
 
             query = `
                 SELECT
@@ -138,7 +135,6 @@ const getBooks = async (req, res) => {
 
         const { rows } = await pool.query(query, queryParams);
 
-        // The API documentation shows that the category should be a nested object.
         const books = rows.map(book => ({
             book_id: book.book_id,
             title: book.title,
@@ -152,12 +148,12 @@ const getBooks = async (req, res) => {
                 category_name: book.category_name
             },
             total_stock: book.total_stock,
-            available_stock: parseInt(book.available_stock_for_borrow) // Use the newly calculated stock
+            available_stock: parseInt(book.available_stock_for_borrow)
         }));
 
         res.json({
             books: books,
-            pagination: { // Add mock pagination for now
+            pagination: {
                 page: 1,
                 limit: books.length,
                 total: books.length,
@@ -229,10 +225,8 @@ const getBookById = async (req, res) => {
                 const readerId = readerResult.rows[0].reader_id;
                 const bookId = id;
 
-                // 1. Get total active count for the user
                 userBorrowCount = await BorrowRequest.countTotalActiveRequestsAndBorrowings(readerId);
 
-                // 2. Check if user has an active borrow or request for this specific book title
                 const isBorrowing = await BorrowRequest.isCurrentlyBorrowingTitle(readerId, bookId);
                 const hasPending = await BorrowRequest.hasPendingRequestForBook(readerId, bookId);
                 const hasApproved = await BorrowRequest.hasApprovedRequestForBook(readerId, bookId);

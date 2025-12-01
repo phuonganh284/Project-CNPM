@@ -146,7 +146,7 @@ const DashboardPage = () => {
 
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">Late Fees Collected</p>
+            <p className="text-sm text-gray-600 mb-1">Total Fees Collected</p>
             <span className="text-2xl">💰</span>
           </div>
           <p className="text-3xl font-bold text-gray-800">${stats.totalRevenue || 0}</p>
@@ -201,7 +201,8 @@ const DashboardPage = () => {
                 <img
                   src={book.coverUrl}
                   alt={book.title}
-                  className="w-10 h-14 object-cover rounded shadow-sm"
+                  className="w-10 h-14 object-cover rounded shadow-sm cursor-pointer"
+                  onClick={() => navigate(`/book/${book.id}`)}
                   onError={(e) => {
                     e.target.src = 'https://via.placeholder.com/40x56?text=No+Cover';
                   }}

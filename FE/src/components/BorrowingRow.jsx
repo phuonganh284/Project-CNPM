@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const BorrowingRow = ({ borrow }) => {
+    const navigate = useNavigate();
 
     const getStatusClasses = (isOverdue) => {
         if (isOverdue) {
@@ -36,6 +38,12 @@ const BorrowingRow = ({ borrow }) => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    const handleCoverClick = () => {
+        if (borrow.bookId) {
+            navigate(`/book/${borrow.bookId}`);
+        }
+    };
+
     return (
         <div className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 mb-3 hover:shadow-md transition-shadow duration-200">
 
@@ -44,7 +52,8 @@ const BorrowingRow = ({ borrow }) => {
                 <img
                     src={borrow.cover || 'https://placehold.co/40x56/EEE/313131?text=No+Cover'}
                     alt={borrow.title || 'N/A'}
-                    className="w-10 h-14 object-cover rounded mr-3 flex-shrink-0 shadow-sm"
+                    className="w-10 h-14 object-cover rounded mr-3 flex-shrink-0 shadow-sm cursor-pointer"
+                    onClick={handleCoverClick}
                     onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/40x56/EEE/313131?text=No+Cover'; }}
                 />
                 <div>

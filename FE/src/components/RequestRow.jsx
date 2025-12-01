@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const RequestRow = ({ request, onConfirmDelivery }) => {
+    const navigate = useNavigate();
+
     const getConditionColor = (condition) => {
         if (condition >= 80) return 'text-green-600';
         if (condition >= 60) return 'text-blue-600';
@@ -21,6 +24,12 @@ const RequestRow = ({ request, onConfirmDelivery }) => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    const handleCoverClick = () => {
+        if (request.book?.id) {
+            navigate(`/book/${request.book.id}`);
+        }
+    };
+
     return (
         <div className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 mb-3 hover:shadow-md transition-shadow duration-200">
             
@@ -29,8 +38,8 @@ const RequestRow = ({ request, onConfirmDelivery }) => {
                 <img
                     src={request.book?.coverImageUrl || 'https://placehold.co/40x56/EEE/313131?text=No+Cover'}
                     alt={request.book?.title || 'N/A'}
-                    className="w-10 h-14 object-cover rounded mr-3 flex-shrink-0 shadow-sm"
- 
+                    className="w-10 h-14 object-cover rounded mr-3 flex-shrink-0 shadow-sm cursor-pointer"
+                    onClick={handleCoverClick}
                     onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/40x56/EEE/313131?text=No+Cover'; }}
                 />
                 <div>
