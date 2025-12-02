@@ -310,6 +310,14 @@ class DashboardController {
       pool.query(queries.totalRevenue)
     ]);
 
+    const revenueFromDB = results[9].rows[0].total;
+    const finalRevenue = parseFloat((parseFloat(revenueFromDB) / 25000).toFixed(2));
+
+    // --- REVENUE DEBUG LOG ---
+    console.log(`[DEBUG] Raw total_fee sum from DB: ${revenueFromDB}`);
+    console.log(`[DEBUG] Final calculated totalRevenue (USD): ${finalRevenue}`);
+    // -------------------------
+
     return {
       totalBooks: parseInt(results[0].rows[0].count),
       availableBooks: parseInt(results[1].rows[0].count),
@@ -320,7 +328,7 @@ class DashboardController {
       approvedRequests: parseInt(results[6].rows[0].count),
       returnRequests: parseInt(results[7].rows[0].count),
       overdueBooks: parseInt(results[8].rows[0].count),
-      totalRevenue: Math.round(parseFloat(results[9].rows[0].total) / 25000) // VND to USD
+      totalRevenue: parseFloat(results[9].rows[0].total) || 0
     };
   }
 
