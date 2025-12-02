@@ -99,7 +99,7 @@ class Notification {
     );
   }
 
-  static async createRequestExpired(user_id, request_id, book_title, copy_id, pickup_date) {
+  static async createRequestExpired(user_id, request_id, book_title, copy_id, pickup_date, client = pool) {
     const content = `Your approved request for "${book_title}" (Copy #${copy_id}) has expired. You did not pick up the book by ${pickup_date} 20:00. Please submit a new request if you still need it.`;
     
     const metadata = {
@@ -113,7 +113,8 @@ class Notification {
       user_id,
       this.TYPES.REQUEST_EXPIRED,
       content,
-      metadata
+      metadata,
+      client
     );
   }
 
