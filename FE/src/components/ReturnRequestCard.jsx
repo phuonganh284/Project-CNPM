@@ -34,7 +34,7 @@ const ReturnRequestCard = ({
                 rounded-2xl 
                 border border-gray-200
                 flex items-center
-                px-6 gap-6
+                px-5 gap-4
                 hover:shadow-md
                 transition-shadow
             "
@@ -53,7 +53,7 @@ const ReturnRequestCard = ({
             />
 
             {/* Book Info */}
-            <div className="w-[290px] flex-shrink-0" >
+            <div className="w-[190px] flex-shrink-0" >
                 <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate">
                     {bookTitle}
                 </h3>
@@ -63,14 +63,14 @@ const ReturnRequestCard = ({
             </div>
 
             {/* User */}
-            <div className="w-[100px] flex-shrink-0">
+            <div className="w-[100px] flex-shrink-0 ml-[5px]">
                 <p className="font-inter text-sm font-medium text-gray-800 truncate">
                     {userName}
                 </p>
             </div>
 
             {/* Right Content - Flexible */}
-            <div className="flex items-center gap-6 flex-shrink-0">
+            <div className="flex items-center gap-4 flex-shrink-0">
                 {rightContent}
             </div>
         </div>
