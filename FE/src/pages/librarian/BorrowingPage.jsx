@@ -32,7 +32,7 @@ const BorrowingPage = () => {
   return (
     <div className="p-4 sm:p-6 min-h-screen font-sans">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-5">
         <h2 className="text-2xl font-semibold text-gray-800">Current Borrowing</h2>
         <button
           onClick={fetchBorrowings}
@@ -48,9 +48,9 @@ const BorrowingPage = () => {
 
       {/* Column Headers */}
       <div className="hidden sm:flex items-center text-sm font-medium text-gray-600 bg-[#F3F3F7] py-3 px-6 mb-4 sticky top-0 z-10">
-        <div className="w-[30%]">Title</div>
+        <div className="w-[29.5%]">Title</div>
         <div className="w-[15%]">User</div>
-        <div className="w-[10%]">Copy ID</div>
+        <div className="w-[10.5%]">Copy ID</div>
         <div className="w-[15%]">Condition</div>
         <div className="w-[15%]">Return Date</div>
         <div className="w-[15%]">Status</div>

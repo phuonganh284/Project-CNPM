@@ -190,7 +190,7 @@ const BrowsePage = () => {
                                     <div className="col-span-2 flex justify-end">
                                         <button
                                             onClick={() => handlePreview(book.book_id)}
-                                            className="px-4 py-1.5 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                            className="px-4 py-1.5 border border-gray-300 text-gray-700 rounded hover:bg-gray-200 transition-colors cursor-pointer mr-3"
                                         >
                                             Preview
                                         </button>

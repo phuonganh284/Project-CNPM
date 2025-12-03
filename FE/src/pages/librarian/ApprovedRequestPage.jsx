@@ -53,7 +53,7 @@ const ApprovedRequestPage = () => {
     <div className="p-4 sm:p-6 min-h-screen font-sans">
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">Approved Delivery Requests</h2>
+        <h2 className="text-2xl font-semibold text-gray-800">Approved Delivery Requests</h2>
       </div>
 
       {message && (

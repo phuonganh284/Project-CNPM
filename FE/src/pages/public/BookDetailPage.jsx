@@ -146,7 +146,7 @@ const BookDetailPage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+        className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors cursor-pointer"
       >
         <svg
           className="w-5 h-5 mr-2"
@@ -177,7 +177,7 @@ const BookDetailPage = () => {
                 }}
               />
             </div>
-            
+
             <div className="w-full text-center">
               <div className="mb-4">
                 <span
@@ -215,75 +215,75 @@ const BookDetailPage = () => {
               )}
             </div>
           </div>
-          
+
           <div className="flex flex-col">
-              <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {book.title}
-                </h1>
-                <p className="text-lg text-gray-600">by {book.author}</p>
-              </div>
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {book.title}
+              </h1>
+              <p className="text-lg text-gray-600">by {book.author}</p>
+            </div>
 
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Overview
-                </h2>
-                <p className="text-gray-700 leading-relaxed mb-6">
-                  {book.description ||
-                    "Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit."}
-                </p>
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Overview
+              </h2>
+              <p className="text-gray-700 leading-relaxed mb-6">
+                {book.description ||
+                  "Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit. Exercitation veniam consequat sunt nostrud amet. Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit."}
+              </p>
 
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-1">Pages</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {book.pageCount || "240"}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-1">Language</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {book.language || "English"}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-1">Publisher</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {book.publisher || "Unknown"}
-                    </p>
-                  </div>
+              <div className="grid grid-cols-3 gap-6">
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-1">Pages</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {book.pageCount || "240"}
+                  </p>
                 </div>
-              </div>
-
-              <div className="border-t pt-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">ISBN</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {book.isbn || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Category</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {book.category?.category_name || "General"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Publication Year</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {book.publish_year || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Available Copies</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {book.available_stock || 0} / {book.total_stock || 0}
-                    </p>
-                  </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-1">Language</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {book.language || "English"}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-1">Publisher</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {book.publisher || "Unknown"}
+                  </p>
                 </div>
               </div>
             </div>
+
+            <div className="border-t pt-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">ISBN</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {book.isbn || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Category</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {book.category?.category_name || "General"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Publication Year</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {book.publish_year || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Available Copies</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {book.available_stock || 0} / {book.total_stock || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <BorrowRequestDialog

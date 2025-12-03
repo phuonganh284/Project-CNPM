@@ -79,7 +79,7 @@ const BorrowingRow = ({ borrow }) => {
                         {borrow.currentCondition || 'N/A'}%
                     </span>
                     <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-[60px]">
-                        <div 
+                        <div
                             className={`h-1.5 rounded-full ${getConditionBg(borrow.currentCondition)}`}
                             style={{ width: `${borrow.currentCondition || 0}%` }}
                         ></div>
