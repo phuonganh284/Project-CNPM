@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Card component specifically for Return Request page
@@ -7,6 +8,7 @@ import React from 'react';
  * Right: User, Status, Charge Total, Action buttons
  */
 const ReturnRequestCard = ({
+    bookId,
     bookCover,
     bookTitle,
     bookAuthor,
@@ -15,6 +17,15 @@ const ReturnRequestCard = ({
     rightContent, // Flexible section: status, charge, buttons, etc.
     onClick
 }) => {
+    const navigate = useNavigate();
+
+    const handleCoverClick = (e) => {
+        e.stopPropagation();
+        if (bookId) {
+            navigate(`/book/${bookId}`);
+        }
+    };
+
     return (
         <div
             className="
@@ -33,11 +44,12 @@ const ReturnRequestCard = ({
             <img
                 src={bookCover}
                 alt={bookTitle}
-                className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0"
-                onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://placehold.co/70x99/EEE/313131?text=No+Cover';
-                }}
+                className="w-[70px] h-[99px] object-cover rounded-lg shadow-sm flex-shrink-0 cursor-pointer"
+                onClick={handleCoverClick}
+                onError={(e) => { 
+                    e.target.onerror = null; 
+                    e.target.src = 'https://placehold.co/70x99/EEE/313131?text=No+Cover'; 
+                }} 
             />
 
             {/* Book Info */}

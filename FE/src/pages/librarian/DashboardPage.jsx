@@ -149,7 +149,7 @@ const DashboardPage = () => {
             <p className="text-sm text-gray-600 mb-1">Total Fees Collected</p>
             <span className="text-2xl">💰</span>
           </div>
-          <p className="text-3xl font-bold text-gray-800">${stats.totalRevenue || 0}</p>
+          <p className="text-3xl font-bold text-gray-800">{(stats.totalRevenue || 0).toLocaleString()} đ</p>
           <p className="text-xs text-gray-500 mt-2">This month</p>
         </div>
       </div>
