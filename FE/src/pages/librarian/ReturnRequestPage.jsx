@@ -105,11 +105,11 @@ const ReturnRequestPage = () => {
             requests.map(req => (
               <ReturnRequestCard
                 key={req.id}
-                bookCover={req.book.coverImageUrl}
-                bookTitle={req.book.title}
-                bookAuthor={req.book.author}
-                bookYear={req.book.publicationYear}
-                userName={req.user.fullName}
+                bookCover={req.book?.coverImageUrl}
+                bookTitle={req.book?.title}
+                bookAuthor={req.book?.author}
+                bookYear={req.book?.publicationYear}
+                userName={req.user?.fullName}
                 rightContent={
                   <>
                     {/* Copy ID */}
@@ -131,8 +131,7 @@ const ReturnRequestPage = () => {
                         </span>
                       )}
                       {req.status === 'assessed' && (
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${req.fine > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-                          }`}>
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${req.fine > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
                           ASSESSED
                         </span>
                       )}
@@ -142,7 +141,7 @@ const ReturnRequestPage = () => {
                     <div className="w-[120px] flex-shrink-0">
                       {req.fine > 0 ? (
                         <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
-                          Charge: {req.fine.toLocaleString()}đ
+                          Charge: {Number(req.fine).toLocaleString()}đ
                         </span>
                       ) : (
                         <span className="text-xs text-gray-500">No charge</span>
@@ -160,82 +159,7 @@ const ReturnRequestPage = () => {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleReceiveBook(req.id); }}
                         disabled={req.status !== 'assessed'}
-                        className={`
-      <div className="flex flex-col gap-4">
-        {requests.length === 0 && !error ? (
-          <p className="text-center text-gray-500 mt-8">No pending return requests.</p>
-        ) : (
-          requests.map(req => (
-            <ReturnRequestCard
-              key={req.id}
-              bookId={req.book.id}
-              bookCover={req.book.coverImageUrl}
-              bookTitle={req.book.title}
-              bookAuthor={req.book.author}
-              bookYear={req.book.publicationYear}
-              userName={req.user.fullName}
-              rightContent={
-                <>
-                  {/* Copy ID */}
-                  <div className="w-[100px] flex-shrink-0">
-                    <div className="font-medium text-gray-900">{req.copyId}</div>
-                  </div>
-                  {/* Condition */}
-                  <div className="w-[100px] flex-shrink-0">
-                    <div className={`font-medium ${getConditionColor(req.borrowedCondition)}`}>
-                      {req.borrowedCondition}%
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="w-[150px] flex-shrink-0">
-                    {req.status === 'pending' && (
-                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                        PENDING
-                      </span>
-                    )}
-                    {req.status === 'assessed' && (
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        req.fine > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-                      }`}>
-                        ASSESSED
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Charge Total */}
-                  <div className="w-[120px] flex-shrink-0">
-                    {req.status === 'pending' ? (
-                      <span className="text-xs text-gray-500 italic">Pending Assessment</span>
-                    ) : req.fine > 0 ? (
-                      <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
-                        Charge: {req.fine.toLocaleString()}đ
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-500">No charge</span>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="w-[200px] flex gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleAssess(req); }}
-                      className="px-4 py-2 rounded-lg font-inter text-sm font-medium transition-all whitespace-nowrap bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"
-                    >
-                      Assess
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleReceiveBook(req.id); }}
-                      disabled={req.status !== 'assessed'}
-                      className={`
-                        px-4 py-2 rounded-lg font-inter text-sm font-medium
-                        transition-all whitespace-nowrap
-                        ${req.status === 'assessed'
-                            ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 cursor-pointer'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                          }
-                      `}
-                      >
+                        className={`px-4 py-2 rounded-lg font-inter text-sm font-medium transition-all whitespace-nowrap ${req.status === 'assessed' ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 cursor-pointer' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
                         Receive Book
                       </button>
                     </div>
@@ -243,7 +167,8 @@ const ReturnRequestPage = () => {
                 }
                 onClick={() => console.log('View detail:', req.id)}
               />
-            )))}
+            ))
+          )}
         </div>
       </div>
 

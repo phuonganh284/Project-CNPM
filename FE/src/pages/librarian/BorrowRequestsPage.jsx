@@ -29,7 +29,7 @@ const ApproveModal = ({ isOpen, onClose, request, onConfirm }) => {
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
       <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full mx-4">
         <h2 className="text-xl font-semibold mb-4 text-gray-800">Approve Borrow Request</h2>
-        
+
         <div className="mb-6">
           <p className="text-gray-600 mb-2">
             Are you sure you want to approve this request?
@@ -39,7 +39,7 @@ const ApproveModal = ({ isOpen, onClose, request, onConfirm }) => {
             <p className="text-sm text-gray-600">{request.book?.author}, {request.book?.publicationYear}</p>
             <p className="text-sm text-gray-600 mt-2">Requested by: <span className="font-medium">{request.user?.username}</span></p>
             <p className="text-sm text-gray-600">Pickup: {new Date(request.pickupDate).toLocaleDateString()}</p>
-            
+
             {/* Copy Info */}
             <div className="mt-3 pt-3 border-t border-gray-200">
               <p className="text-xs text-gray-500 mb-2">Copy to be delivered:</p>
@@ -51,11 +51,10 @@ const ApproveModal = ({ isOpen, onClose, request, onConfirm }) => {
               </div>
               <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
                 <div
-                  className={`h-1.5 rounded-full ${
-                    condition >= 80 ? 'bg-green-500' :
+                  className={`h-1.5 rounded-full ${condition >= 80 ? 'bg-green-500' :
                     condition >= 60 ? 'bg-blue-500' :
-                    condition >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
+                      condition >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}
                   style={{ width: `${condition}%` }}
                 ></div>
               </div>
@@ -111,7 +110,7 @@ const RejectModal = ({ isOpen, onClose, request, onConfirm }) => {
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
       <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full mx-4">
         <h2 className="text-xl font-semibold mb-4 text-gray-800">Reject Borrow Request</h2>
-        
+
         <div className="mb-4">
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
             <p className="font-semibold text-gray-800">{request.book?.title}</p>
@@ -131,11 +130,10 @@ const RejectModal = ({ isOpen, onClose, request, onConfirm }) => {
               }}
               rows={4}
               placeholder="Please provide a reason for rejecting this request..."
-              className={`mt-2 w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 ${
-                error 
-                  ? 'border-red-500 focus:ring-red-200' 
-                  : 'border-gray-300 focus:ring-blue-200'
-              }`}
+              className={`mt-2 w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 ${error
+                ? 'border-red-500 focus:ring-red-200'
+                : 'border-gray-300 focus:ring-blue-200'
+                }`}
             />
             {error && (
               <p className="text-red-500 text-sm mt-1">{error}</p>
@@ -226,7 +224,7 @@ const BorrowRequestsPage = () => {
 
   return (
     <div className="p-6 bg-[#F3F3F7] min-h-screen">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800">
+      <h2 className="text-2xl font-semibold mb-9 text-gray-800">
         Borrow Requests
       </h2>
 
@@ -300,7 +298,7 @@ const BorrowRequestsPage = () => {
                 <div className="flex gap-2 flex-1">
                   <button
                     onClick={() => handleApprove(req)}
-                    className="px-4 py-2 border  rounded-lg hover:bg-blue-50 transition text-sm font-medium "style={{ color: '#3273AF' }}
+                    className="px-4 py-2 border  rounded-lg hover:bg-blue-50 transition text-sm font-medium " style={{ color: '#3273AF' }}
                   >
                     Approve
                   </button>

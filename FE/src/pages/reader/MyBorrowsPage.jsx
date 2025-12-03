@@ -48,9 +48,8 @@ const RenewCalendarModal = ({ book, onConfirm, onCancel }) => {
                     <button
                         onClick={handleConfirm}
                         disabled={!selectedDate}
-                        className={`px-4 py-2 text-sm text-white rounded transition-colors ${
-                            !selectedDate ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'
-                        }`}
+                        className={`px-4 py-2 text-sm text-white rounded transition-colors ${!selectedDate ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'
+                            }`}
                     >
                         Confirm Renew
                     </button>
@@ -61,7 +60,7 @@ const RenewCalendarModal = ({ book, onConfirm, onCancel }) => {
 };
 
 const ReturnConfirmModal = ({ book, onConfirm, onCancel }) => (
-    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onCancel}>
+    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onCancel}>
         <div className="bg-white p-8 rounded-lg shadow-2xl max-w-sm w-full text-center" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-xl font-bold mb-4 text-gray-900">Return Request Confirmation</h3>
             <p className="text-gray-600 mb-8">
@@ -72,13 +71,13 @@ const ReturnConfirmModal = ({ book, onConfirm, onCancel }) => (
             <div className="flex flex-col space-y-3">
                 <button
                     onClick={() => onConfirm(book)}
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer"
                 >
                     Confirm
                 </button>
                 <button
                     onClick={onCancel}
-                    className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                    className="w-full px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors cursor-pointer"
                 >
                     Cancel
                 </button>
@@ -208,7 +207,7 @@ const MyBorrowsPage = () => {
                         <p className="text-gray-600 mb-6">{successMessage}</p>
                         <button
                             onClick={() => setSuccessMessage('')}
-                            className="px-6 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
+                            className="px-6 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer"
                         >
                             OK
                         </button>
