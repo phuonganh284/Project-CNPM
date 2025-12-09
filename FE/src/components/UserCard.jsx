@@ -57,7 +57,7 @@ const UserCard = ({
                 />
 
                 {/* username ----------------------- */}
-                <div className="flex-1 min-w-0 max-w-[250px] mr-10">
+                <div className="flex-1 min-w-0 max-w-[310px] mr-10">
                     <h3 className="font-inter text-base font-semibold text-gray-800 mb-1 truncate">
                         {username}
                     </h3>
@@ -65,12 +65,12 @@ const UserCard = ({
                 </div>
 
                 {/* user id --------------------------*/}
-                <div className="w-[150px] flex-shrink-0 mr-26">
+                <div className="w-[105px] flex-shrink-0 mr-26">
                     <p className="font-inter text-sm text-gray-600 truncate">{userId}</p>
                 </div>
 
                 {/* status ---------------------------*/}
-                <div className="w-[150px] flex-shrink-0 mr-36">
+                <div className="w-[125px] flex-shrink-0 mr-36">
                     {status === "active" && (
                         <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                             {displayStatus}

@@ -202,7 +202,7 @@ const BookCatalogPage = () => {
 
       {loading && <div className="p-6">Loading...</div>}
       {error && <div className="p-6 text-red-500">{error}</div>}
-
+      {successMessage && <div className="mt-4 text-green-600">{successMessage}</div>}
       {!loading && !error && activeTab === "books" && (
         <div>
           <div className="sticky top-0 z-10 bg-[#F3F3F7] py-3 mb-4">
@@ -250,7 +250,7 @@ const BookCatalogPage = () => {
         onCancel={() => setIsImportOpen(false)}
       />
 
-      {successMessage && <div className="mt-4 text-green-600">{successMessage}</div>}
+
       {importProgress.total > 0 && (
         <div className="mt-4 text-sm text-gray-700">
           Import progress: {importProgress.done}/{importProgress.total}

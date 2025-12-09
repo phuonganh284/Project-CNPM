@@ -1,7 +1,7 @@
 const { pool } = require('../config/database');
 
 class Notification {
-  
+
   static TYPES = {
     // Reader notifications
     REQUEST_APPROVED: 'REQUEST_APPROVED',           // Borrow request được duyệt
@@ -10,7 +10,7 @@ class Notification {
     BORROW_DUE_SOON: 'BORROW_DUE_SOON',            // Sách sắp đến hạn trả (3 days before)
     BORROW_OVERDUE: 'BORROW_OVERDUE',              // Sách quá hạn
     PENALTY_ISSUED: 'PENALTY_ISSUED',              // Có bill phí (assessment notification)
-    
+
     // Librarian notifications
     NEW_BORROW_REQUEST: 'NEW_BORROW_REQUEST',      // Có borrow request mới
     NEW_RETURN_REQUEST: 'NEW_RETURN_REQUEST',      // Có return request mới
@@ -24,7 +24,7 @@ class Notification {
     // Get type_id from type_name
     const typeQuery = 'SELECT type_id FROM notification_types WHERE type_name = $1';
     const typeResult = await client.query(typeQuery, [type_name]);
-    
+
     if (typeResult.rows.length === 0) {
       throw new Error(`Invalid notification type: ${type_name}`);
     }
@@ -62,7 +62,7 @@ class Notification {
 
   static async createRequestApproved(user_id, request_id, book_title, author, copy_id, pickup_date) {
     const content = `Your borrow request for "${book_title}" has been approved! Please pick up the book by ${pickup_date} before 20:00, or it will expire.`;
-    
+
     const metadata = {
       borrow_request_id: request_id,
       book_title,
@@ -81,7 +81,7 @@ class Notification {
 
   static async createRequestRejected(user_id, request_id, book_title, author, copy_id, rejection_reason, client = pool) {
     const content = `Your borrow request for "${book_title}" (Copy #${copy_id}) has been rejected. Reason: ${rejection_reason}`;
-    
+
     const metadata = {
       borrow_request_id: request_id,
       book_title,
@@ -101,7 +101,7 @@ class Notification {
 
   static async createRequestExpired(user_id, request_id, book_title, copy_id, pickup_date, client = pool) {
     const content = `Your approved request for "${book_title}" (Copy #${copy_id}) has expired. You did not pick up the book by ${pickup_date} 20:00. Please submit a new request if you still need it.`;
-    
+
     const metadata = {
       borrow_request_id: request_id,
       book_title,
@@ -120,7 +120,7 @@ class Notification {
 
   static async createNewBorrowRequest(librarian_user_id, request_id, username, email, book_title, copy_id, pickup_date) {
     const content = `New borrow request from ${username} for "${book_title}".`;
-    
+
     const metadata = {
       borrow_request_id: request_id,
       username,
@@ -146,7 +146,7 @@ class Notification {
       WHERE u.status = 'active'
     `;
     const result = await pool.query(query);
-    
+
     const notifications = [];
     for (const row of result.rows) {
       try {
@@ -164,7 +164,7 @@ class Notification {
         console.error(`Failed to notify librarian ${row.user_id}:`, error);
       }
     }
-    
+
     return notifications;
   }
 
@@ -218,7 +218,7 @@ class Notification {
     `;
 
     const result = await pool.query(query, [notification_id, user_id]);
-    
+
     if (result.rows.length === 0) {
       throw new Error('Notification not found or does not belong to this user');
     }
@@ -239,7 +239,7 @@ class Notification {
     `;
 
     const result = await pool.query(query, [notification_id, user_id]);
-    
+
     if (result.rows.length === 0) {
       throw new Error('Notification not found or does not belong to this user');
     }
@@ -290,7 +290,7 @@ class Notification {
     `;
 
     const result = await pool.query(query, [notification_id, user_id]);
-    
+
     if (result.rows.length === 0) {
       throw new Error('Notification not found or does not belong to this user');
     }
@@ -302,7 +302,7 @@ class Notification {
 
   static async createNewReturnRequest(librarian_user_id, return_id, borrow_id, reader_name, book_title, author, copy_id, borrow_date, due_date, days_overdue) {
     const content = `New return request from ${reader_name} for "${book_title}" (Copy #${copy_id}). Please assess the book condition.`;
-    
+
     const metadata = {
       return_request_id: return_id,
       borrow_id,
@@ -332,7 +332,7 @@ class Notification {
       WHERE u.status = 'active'
     `;
     const result = await pool.query(query);
-    
+
     // Tạo notification cho từng librarian
     const notifications = [];
     for (const row of result.rows) {
@@ -354,23 +354,23 @@ class Notification {
         console.error(`Failed to notify librarian ${row.user_id}:`, error);
       }
     }
-    
+
     return notifications;
   }
 
   static async createAssessmentNotification(user_id, return_id, book_title, copy_id, assessed_condition, total_fee, overdue_fee, damage_fee) {
     let content;
-    
+
     if (total_fee === 0) {
       content = `Your returned book "${book_title}" (Copy #${copy_id}) has been assessed: ${assessed_condition}. No fees required. Thank you!`;
     } else {
       const feeBreakdown = [];
       if (overdue_fee > 0) feeBreakdown.push(`Overdue fee: ${overdue_fee.toLocaleString()} đ`);
       if (damage_fee > 0) feeBreakdown.push(`Damage fee: ${damage_fee.toLocaleString()} đ`);
-      
+
       content = `Your returned book "${book_title}" (Copy #${copy_id}) has been assessed: ${assessed_condition}. Total fee: ${total_fee.toLocaleString()} đ (${feeBreakdown.join(', ')}). Please complete payment to finalize return.`;
     }
-    
+
     const metadata = {
       return_request_id: return_id,
       book_title,
@@ -391,7 +391,7 @@ class Notification {
 
   static async createDueSoonNotification(user_id, borrow_id, book_title, copy_id, due_date, days_remaining) {
     const content = `Reminder: "${book_title}" (Copy #${copy_id}) is due in ${days_remaining} day${days_remaining > 1 ? 's' : ''} (${due_date}). Please return or renew before the due date to avoid late fees.`;
-    
+
     const metadata = {
       borrow_id,
       book_title,
@@ -410,7 +410,7 @@ class Notification {
 
   static async createOverdueNotification(user_id, borrow_id, book_title, copy_id, days_overdue) {
     const content = `OVERDUE: "${book_title}" (Copy #${copy_id}) is ${days_overdue} day${days_overdue > 1 ? 's' : ''} overdue. Please return immediately to minimize late fees.`;
-    
+
     const metadata = {
       borrow_id,
       book_title,

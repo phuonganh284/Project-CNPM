@@ -70,9 +70,9 @@ const UsersPage = () => {
       <div className="sticky top-0 z-10 bg-[#F3F3F7] py-3 mb-4">
         <div className="flex items-center px-4 gap-4 text-gray-600 font-inter text-sm font-medium ">
           <div className="w-[70px] flex-shrink-0 mr-2"></div>
-          <div className="flex-1 min-w-0 max-w-[250px] mr-5">Username</div>
-          <div className="w-[150px] flex-shrink-0 mr-24">User ID</div>
-          <div className="w-[130px] flex-shrink-0 mr-36">Status</div>
+          <div className="flex-1 min-w-0 max-w-[300px] mr-5">Username</div>
+          <div className="w-[115px] flex-shrink-0 mr-24">User ID</div>
+          <div className="w-[115px] flex-shrink-0 mr-36">Status</div>
           <div className="w-[100px] flex-shrink-0">Action</div>
         </div>
       </div>

@@ -1,5 +1,45 @@
 const BookModel = require('../models/bookModel');
 const CategoryModel = require('../models/categoryModel');
+const supabase = require('../services/supabaseServerClient');
+
+// Upload cover (server-side) - expects multipart/form-data with file field 'file'
+async function uploadCover(req, res) {
+    try {
+        if (!supabase) {
+            return res.status(500).json({ success: false, error: 'Supabase server client is not configured.' });
+        }
+
+        const file = req.file;
+        if (!file) {
+            return res.status(400).json({ success: false, error: 'No file provided.' });
+        }
+
+        const filename = `${Date.now()}-${file.originalname}`;
+        const { data, error } = await supabase.storage
+            .from('book-covers')
+            .upload(filename, file.buffer, { contentType: file.mimetype, upsert: true });
+
+        if (error) {
+            console.error('Supabase server upload error:', error);
+            return res.status(500).json({ success: false, error: error.message || String(error) });
+        }
+
+        const { data: publicData, error: publicError } = supabase.storage
+            .from('book-covers')
+            .getPublicUrl(data.path);
+
+        if (publicError) {
+            console.error('Supabase getPublicUrl error:', publicError);
+            return res.status(500).json({ success: false, error: publicError.message || String(publicError) });
+        }
+
+        return res.json({ success: true, data: { publicUrl: publicData.publicUrl, path: data.path } });
+    } catch (err) {
+        console.error('uploadCover error:', err);
+        res.status(500).json({ success: false, error: err.message || String(err) });
+    }
+}
+
 // 1. create book (title and copies)
 async function createBook(req, res) {
     try {
@@ -146,5 +186,7 @@ module.exports = {
     getBookById,
     deleteBook,
     updateBook,
-    getBookCopies
+    getBookCopies,
+    uploadCover
 };
+
