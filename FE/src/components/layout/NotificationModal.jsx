@@ -40,32 +40,32 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
     if (!isOpen || !notification) return null;
 
     // --- 1. CHUẨN HÓA DỮ LIỆU ---
-    const type = notification.type || notification.typeName || notification.type_name || "SYSTEM_ALERT"; 
+    const type = notification.type || notification.typeName || notification.type_name || "SYSTEM_ALERT";
     const rawPayload = notification.payload || notification.metadata || {};
-    
+
     // Map dữ liệu (Thêm borrowed_date vào đây)
     const data = {
         book_title: rawPayload.bookTitle || rawPayload.book_title || "Unknown Book",
         author: rawPayload.author || "Unknown Author",
-        
+
         pickup_date: rawPayload.pickupDate || rawPayload.pickup_date,
         due_date: rawPayload.dueDate || rawPayload.due_date,
         // Thêm dòng này để lấy ngày mượn
-        borrowed_date: rawPayload.borrowedDate || rawPayload.borrowed_date || rawPayload.borrow_date, 
-        
+        borrowed_date: rawPayload.borrowedDate || rawPayload.borrowed_date || rawPayload.borrow_date,
+
         copy_id: rawPayload.copyId || rawPayload.copy_id || "?",
         borrow_request_id: rawPayload.borrowRequestId || rawPayload.borrow_request_id,
-        
+
         rejection_reason: rawPayload.rejectionReason || rawPayload.rejection_reason,
         assessed_condition: rawPayload.assessedCondition || rawPayload.assessed_condition || "N/A",
-        
+
         damage_fee: Number(rawPayload.damageFee || rawPayload.damage_fee) || 0,
         overdue_fee: Number(rawPayload.overdueFee || rawPayload.overdue_fee) || 0,
         total_fee: Number(rawPayload.totalFee || rawPayload.total_fee) || 0,
-        
+
         days_remaining: rawPayload.daysRemaining || rawPayload.days_remaining || 0,
         days_overdue: rawPayload.daysOverdue || rawPayload.days_overdue || 0,
-        
+
         username: rawPayload.username || "User",
         user_email: rawPayload.email || rawPayload.user_email || "No email",
         reader_name: rawPayload.readerName || rawPayload.reader_name || "Reader"
@@ -73,7 +73,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
 
     const content = notification.content || "";
     const time_ago = notification.timeAgo || notification.time_ago || "Just now";
-    
+
     // Xử lý tiêu đề đặc biệt
     let title = formatTitle(type);
     if (String(type).toUpperCase() === 'PENALTY_ISSUED' && data.total_fee === 0) {
@@ -83,18 +83,18 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
     // --- 2. XỬ LÝ MÀU SẮC ---
     const getTypeStyles = (currentType) => {
         const safeType = String(currentType).toUpperCase();
-        
+
         switch (safeType) {
             case 'NEW_BORROW_REQUEST':
                 return { bg: 'bg-[#FFF5F5]', border: 'border-red-100', icon: 'bg-[#F87171]', text: 'text-[#9B2C2C]' };
-            
+
             case 'NEW_RETURN_REQUEST': // Màu xanh dương mặc định cho Return Request (giống ảnh)
                 return { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-500', text: 'text-blue-700' };
 
             case 'BORROW_OVERDUE':
             case 'OVERDUE':
                 return { bg: 'bg-red-50', border: 'border-red-200', icon: 'bg-red-500', text: 'text-red-700' };
-            
+
             case 'PENALTY_ISSUED':
                 if (data.total_fee === 0) return { bg: 'bg-green-50', border: 'border-green-200', icon: 'bg-green-500', text: 'text-green-700' };
                 return { bg: 'bg-red-50', border: 'border-red-200', icon: 'bg-red-500', text: 'text-red-700' };
@@ -108,18 +108,18 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
             default:
                 return { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-500', text: 'text-blue-700' };
             case 'REQUEST_EXPIRED':
-                return { bg: 'bg-gray-100', border: 'border-gray-300', icon: 'bg-gray-600', text: 'text-gray-800' };  
+                return { bg: 'bg-gray-100', border: 'border-gray-300', icon: 'bg-gray-600', text: 'text-gray-800' };
         }
     };
 
     const styles = getTypeStyles(type);
-    const safeType = String(type).toUpperCase(); 
+    const safeType = String(type).toUpperCase();
 
     // --- 3. RENDER CONTENT ---
     const renderContent = () => {
         // ... (Giữ nguyên các icon helper cũ nếu cần) ...
         const DetailItem = ({ icon, label, value }) => (
-             <div className="flex items-start text-sm py-1">
+            <div className="flex items-start text-sm py-1">
                 <div className="flex-shrink-0 w-5 h-5 mr-3 text-gray-400 mt-0.5">{icon}</div>
                 <div className="flex-1"><span className="font-semibold text-gray-800">{label}:</span><span className="ml-2 text-gray-600">{value}</span></div>
             </div>
@@ -137,7 +137,10 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                 return (
                     <div className="space-y-6">
                         <div className="space-y-3 px-1">
-                            <div className="flex justify-between items-start"><span className="text-gray-500 font-inter text-sm">User:</span><span className="text-gray-900 font-inter text-sm font-semibold text-right">{data.username}</span></div>
+                            <div className="flex justify-between items-start">
+                                <span className="text-gray-500 font-inter text-sm">User:</span>
+                                <span className="text-gray-900 font-inter text-sm font-semibold text-right">{data.username}</span>
+                            </div>
                             <div className="flex justify-between items-start"><span className="text-gray-500 font-inter text-sm">Email:</span><span className="text-gray-900 font-inter text-sm text-right">{data.user_email}</span></div>
                             <div className="flex justify-between items-start"><span className="text-gray-500 font-inter text-sm">Book:</span><span className="text-gray-900 font-inter text-sm font-semibold text-right max-w-[60%]">{data.book_title}</span></div>
                             <div className="flex justify-between items-start"><span className="text-gray-500 font-inter text-sm">Pickup Date:</span><span className="text-gray-900 font-inter text-sm font-semibold text-right">{formatDate(data.pickup_date)}</span></div>
@@ -151,7 +154,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                 );
 
             case 'NEW_RETURN_REQUEST':
-                 return (
+                return (
                     <div className="space-y-6">
                         {/* List thông tin layout 2 bên */}
                         <div className="space-y-3 px-1">
@@ -162,7 +165,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                                     {data.reader_name || data.username}
                                 </span>
                             </div>
-                            
+
                             <div className="flex justify-between items-start">
                                 <span className="text-gray-500 font-inter text-sm">Book:</span>
                                 <span className="text-gray-900 font-inter text-sm font-semibold text-right max-w-[60%]">
@@ -210,7 +213,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                     <div className="space-y-5">
                         <div className="bg-[#ECFDF5] border border-[#10B981] rounded-xl p-4 shadow-sm">
                             <div className="flex gap-3">
-                                <div className="mt-0.5"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.666 5L7.49935 14.1667L3.33268 10" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                                <div className="mt-0.5"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.666 5L7.49935 14.1667L3.33268 10" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
                                 <div><p className="text-[#059669] font-inter text-[15px] font-bold mb-1">Your request has been approved!</p><p className="text-[#065F46] font-inter text-sm leading-relaxed">Please pick up the book by <span className="font-bold">{formatDate(data.pickup_date)}</span> before 20:00.</p></div>
                             </div>
                         </div>
@@ -222,7 +225,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                     </div>
                 );
             case 'REQUEST_REJECTED':
-                 return (
+                return (
                     <div className="space-y-5">
                         <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                             <h3 className="text-[#C05621] font-inter text-[15px] font-bold mb-1">Request Rejected</h3>
@@ -240,7 +243,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                         <div className="space-y-5">
                             <div className="bg-[#ECFDF5] border border-[#10B981] rounded-xl p-4 shadow-sm">
                                 <div className="flex gap-3">
-                                    <div className="mt-0.5"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.666 5L7.49935 14.1667L3.33268 10" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                                    <div className="mt-0.5"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.666 5L7.49935 14.1667L3.33268 10" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
                                     <div><p className="text-[#059669] font-inter text-[15px] font-bold mb-1">Return Successful</p><p className="text-[#065F46] font-inter text-sm leading-relaxed">Book returned in <span className="font-bold">{data.assessed_condition}</span> condition. No fees applied.</p></div>
                                 </div>
                             </div>
@@ -295,7 +298,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                         </div>
                     </div>
                 );
-                case 'REQUEST_EXPIRED':
+            case 'REQUEST_EXPIRED':
                 return (
                     <div className="space-y-5">
                         {/* 1. Khung cảnh báo màu xám */}
@@ -320,7 +323,7 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                                     {data.book_title}
                                 </span>
                             </div>
-                            
+
                             <div className="flex items-start">
                                 <span className="w-28 text-gray-500 font-inter text-sm font-medium">Expired On:</span>
                                 <span className="flex-1 text-gray-900 font-inter text-sm font-medium">
@@ -365,21 +368,21 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                         </svg>
                     </button>
                 </div>
-                
+
                 {/* Content */}
                 <div className="px-6 py-6 overflow-y-auto flex-1">
                     {renderContent()}
                 </div>
-                
+
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
                     <button onClick={onClose} className="px-5 py-2.5 rounded-full border border-gray-300 text-gray-700 font-inter text-sm font-medium hover:bg-gray-50 transition-colors">
                         Close
                     </button>
-                    
+
                     {/* Nút Action màu xanh (Dùng chung cho cả Borrow và Return request) */}
                     {hasActionButton && (
-                        <button 
+                        <button
                             onClick={() => {
                                 onClose();
                                 const path = safeType === 'NEW_BORROW_REQUEST' ? '/borrow-requests' : '/return-requests';

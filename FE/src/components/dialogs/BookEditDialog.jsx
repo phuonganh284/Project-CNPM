@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
+import supabase from '../../services/supabaseClient';
 
 const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
-    if (!isOpen) return null;
-
     const [editedBook, setEditedBook] = useState(book);
     const [preview, setPreview] = useState(book?.cover || "");
     const [errorMessage, setErrorMessage] = useState("");
     const [errors, setErrors] = useState({});
     const [categories, setCategories] = useState([]);
     const [creatingCategory, setCreatingCategory] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (!book) return;
@@ -85,6 +85,8 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
         };
     }, [isOpen]);
 
+    if (!isOpen) return null;
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setEditedBook((prev) => ({ ...prev, [name]: value }));
@@ -128,7 +130,7 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     };
 
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const newErrors = {};
         if (!editedBook.title || String(editedBook.title).trim() === "") {
             newErrors.title = 'Title is required.';
@@ -177,8 +179,67 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
         }
 
         setErrorMessage("");
-        const updatedBook = { ...editedBook, cover: preview, book_id: book.book_id };
-        onSave(updatedBook);
+
+        setIsUploading(true);
+        try {
+            let coverUrl = preview;
+
+            const file = editedBook?.coverFile;
+            if (file instanceof File) {
+                // Prefer server-mediated upload to avoid client RLS issues.
+                try {
+                    const fd = new FormData();
+                    fd.append('file', file, file.name);
+                    const res = await api.post('/books-admin/upload-cover', fd, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+                    if (res?.data?.success && res.data.data?.publicUrl) {
+                        coverUrl = res.data.data.publicUrl;
+                    } else if (res?.data?.data?.publicUrl === '') {
+                        // fallback to supabase client if server returns empty publicUrl
+                        console.warn('Server upload returned empty publicUrl, falling back to client upload.');
+                        const filename = `${book?.book_id || 'tmp'}-${Date.now()}-${file.name}`;
+                        const { data: uploadData, error: uploadError } = await supabase.storage
+                            .from('book-covers')
+                            .upload(filename, file, { cacheControl: '3600', upsert: true });
+                        if (uploadError) throw uploadError;
+                        const { data: publicData, error: publicError } = supabase.storage
+                            .from('book-covers')
+                            .getPublicUrl(uploadData.path);
+                        if (publicError) throw publicError;
+                        coverUrl = publicData?.publicUrl || coverUrl;
+                    }
+                } catch (err) {
+                    console.error('Server upload error, falling back to client:', err);
+                    // try client-side upload as fallback
+                    const filename = `${book?.book_id || 'tmp'}-${Date.now()}-${file.name}`;
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('book-covers')
+                        .upload(filename, file, { cacheControl: '3600', upsert: true });
+                    if (uploadError) {
+                        console.error('Supabase upload error (fallback):', uploadError);
+                        throw uploadError;
+                    }
+                    const { data: publicData, error: publicError } = supabase.storage
+                        .from('book-covers')
+                        .getPublicUrl(uploadData.path);
+                    if (publicError) {
+                        console.error('Supabase getPublicUrl error (fallback):', publicError);
+                        throw publicError;
+                    }
+                    coverUrl = publicData?.publicUrl || coverUrl;
+                }
+            }
+
+            const updatedBook = { ...editedBook, cover: coverUrl, book_id: book.book_id };
+            if (updatedBook.coverFile) delete updatedBook.coverFile;
+
+            onSave(updatedBook);
+        } catch (err) {
+            // upload failed; error logged above
+        } finally {
+            setIsUploading(false);
+        }
     };
 
 
@@ -410,9 +471,10 @@ const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
                     <button
                         type="button"
                         onClick={handleSave}
-                        className="px-12 py-2 rounded-lg font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"
+                        disabled={isUploading}
+                        className={`px-12 py-2 rounded-lg font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] ${isUploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                        Save
+                        {isUploading ? 'Saving...' : 'Save'}
                     </button>
                     <button
                         type="button"

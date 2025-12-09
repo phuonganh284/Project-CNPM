@@ -1,56 +1,91 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
+import supabase from '../../services/supabaseClient';
 
-const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
-    if (!isOpen) return null;
-
+const BookEditDialog = ({ isOpen, book, onSave, onCancel }) => {
     const [editedBook, setEditedBook] = useState(book);
     const [preview, setPreview] = useState(book?.cover || "");
     const [errorMessage, setErrorMessage] = useState("");
     const [errors, setErrors] = useState({});
     const [categories, setCategories] = useState([]);
     const [creatingCategory, setCreatingCategory] = useState(false);
-
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
-        setEditedBook(book);
+        if (!book) return;
+
+        const normalized = {
+            ...book,
+            language: book.language || "",
+            category_id: book?.category?.id || null,
+            category_name: book?.category?.name || "",
+
+        };
+
+        setEditedBook(normalized);
         setPreview(book?.cover || "");
         setErrors({});
         setCreatingCategory(false);
     }, [book]);
 
     useEffect(() => {
-        // load categories for dropdown whenever dialog is opened
-        let mounted = true;
         if (!isOpen) return;
+        let mounted = true;
+
         api.get("/categories")
             .then((res) => {
-                // Normalize backend response which may be { success, data } or raw array
+                // Normalize response: backend may return { success, data } or raw array
                 const data = Array.isArray(res.data)
                     ? res.data
                     : Array.isArray(res.data?.data)
                         ? res.data.data
                         : [];
-                if (mounted) setCategories(data);
+                if (mounted) {
+                    setCategories(data);
+
+                    if (book?.category_id && !editedBook?.category_id) {
+                        const cat = data.find((c) => c.category_id === book.category_id);
+                        if (cat) {
+                            setEditedBook((prev) => ({
+                                ...prev,
+                                category_id: cat.category_id,
+                                category_name: cat.category_name,
+                            }));
+                        }
+                    } else if (book?.category_name && !book.category_id) {
+                        const cat = data.find(
+                            (c) => c.category_name?.toLowerCase() === book.category_name?.toLowerCase()
+                        );
+                        if (cat) {
+                            setEditedBook((prev) => ({
+                                ...prev,
+                                category_id: cat.category_id,
+                                category_name: cat.category_name,
+                            }));
+                        }
+                    }
+                }
             })
             .catch((err) => {
                 console.error("Failed to load categories:", err);
             });
-        return () => { mounted = false };
+
+        return () => { mounted = false; };
     }, [isOpen]);
 
     useEffect(() => {
         return () => {
-            if (preview && typeof preview === 'string' && preview.startsWith && preview.startsWith("blob:")) {
+            if (preview && preview.startsWith("blob:")) {
                 try {
                     URL.revokeObjectURL(preview);
                 } catch (e) {
-
+                    console.warn("Failed to revoke blob:", e);
                 }
             }
         };
+    }, [isOpen]);
 
-    }, [preview]);
+    if (!isOpen) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -82,20 +117,20 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
         });
     };
 
-    const handleCoverUrlChange = (e) => {
-        const { value } = e.target;
-        setPreview(value || "");
-        setEditedBook((prev) => ({ ...prev, cover: value || undefined }));
-        setErrors((prev) => {
-            if (!prev || !prev.cover) return prev;
-            const next = { ...prev };
-            delete next.cover;
-            return next;
-        });
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (preview?.startsWith("blob:")) {
+                URL.revokeObjectURL(preview);
+            }
+            const imageURL = URL.createObjectURL(file);
+            setPreview(imageURL);
+            setEditedBook((prev) => ({ ...prev, coverFile: file }));
+        }
     };
 
-    const handleSave = () => {
-        // Per-field validation
+
+    const handleSave = async () => {
         const newErrors = {};
         if (!editedBook.title || String(editedBook.title).trim() === "") {
             newErrors.title = 'Title is required.';
@@ -106,7 +141,7 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
         if (!editedBook.isbn || String(editedBook.isbn).trim() === "") {
             newErrors.isbn = 'ISBN is required.';
         }
-        // Category required for new books (book.book_id falsy)
+        // Category required for new books
         if (!book?.book_id) {
             if ((!editedBook.category_id || editedBook.category_id === null) && (!editedBook.category_name || String(editedBook.category_name).trim() === "")) {
                 newErrors.category_name = 'Category is required.';
@@ -144,8 +179,67 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
         }
 
         setErrorMessage("");
-        const updatedBook = { ...editedBook, cover: preview, book_id: book.book_id };
-        onSave(updatedBook);
+
+        setIsUploading(true);
+        try {
+            let coverUrl = preview;
+
+            const file = editedBook?.coverFile;
+            if (file instanceof File) {
+                // Prefer server-mediated upload to avoid client RLS issues.
+                try {
+                    const fd = new FormData();
+                    fd.append('file', file, file.name);
+                    const res = await api.post('/books-admin/upload-cover', fd, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+                    if (res?.data?.success && res.data.data?.publicUrl) {
+                        coverUrl = res.data.data.publicUrl;
+                    } else if (res?.data?.data?.publicUrl === '') {
+                        // fallback to supabase client if server returns empty publicUrl
+                        console.warn('Server upload returned empty publicUrl, falling back to client upload.');
+                        const filename = `${book?.book_id || 'tmp'}-${Date.now()}-${file.name}`;
+                        const { data: uploadData, error: uploadError } = await supabase.storage
+                            .from('book-covers')
+                            .upload(filename, file, { cacheControl: '3600', upsert: true });
+                        if (uploadError) throw uploadError;
+                        const { data: publicData, error: publicError } = supabase.storage
+                            .from('book-covers')
+                            .getPublicUrl(uploadData.path);
+                        if (publicError) throw publicError;
+                        coverUrl = publicData?.publicUrl || coverUrl;
+                    }
+                } catch (err) {
+                    console.error('Server upload error, falling back to client:', err);
+                    // try client-side upload as fallback
+                    const filename = `${book?.book_id || 'tmp'}-${Date.now()}-${file.name}`;
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('book-covers')
+                        .upload(filename, file, { cacheControl: '3600', upsert: true });
+                    if (uploadError) {
+                        console.error('Supabase upload error (fallback):', uploadError);
+                        throw uploadError;
+                    }
+                    const { data: publicData, error: publicError } = supabase.storage
+                        .from('book-covers')
+                        .getPublicUrl(uploadData.path);
+                    if (publicError) {
+                        console.error('Supabase getPublicUrl error (fallback):', publicError);
+                        throw publicError;
+                    }
+                    coverUrl = publicData?.publicUrl || coverUrl;
+                }
+            }
+
+            const updatedBook = { ...editedBook, cover: coverUrl, book_id: book.book_id };
+            if (updatedBook.coverFile) delete updatedBook.coverFile;
+
+            onSave(updatedBook);
+        } catch (err) {
+            // upload failed; error logged above
+        } finally {
+            setIsUploading(false);
+        }
     };
 
 
@@ -285,13 +379,16 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
                         <label className="text-sm text-gray-700">Category</label>
                         <select
                             name="category_id"
-                            value={editedBook.category_id ?? ""}
+                            value={editedBook.category_id ? String(editedBook.category_id) : ""}
                             onChange={handleCategoryChange}
                             className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
                         >
                             <option value="">Select category</option>
                             {categories.map((c) => (
-                                <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
+                                <option key={c.category_id} value={String(c.category_id)}>
+                                    {c.category_name}
+                                </option>
+
                             ))}
 
                         </select>
@@ -326,18 +423,6 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
                             <option value="Chinese">Chinese</option>
                         </select>
                     </div>
-
-                    <div>
-                        <label className="text-sm text-gray-700">Book Cover URL</label>
-                        <input
-                            type="text"
-                            name="cover"
-                            value={editedBook.cover || preview || ""}
-                            onChange={handleCoverUrlChange}
-                            className="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm"
-                            placeholder="Enter image URL"
-                        />
-                    </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -353,6 +438,30 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
                             placeholder="Enter book description"
                         />
                     </div>
+
+                    <div className="flex flex-col mb-1 items-center gap-2">
+                        <label className="text-sm text-gray-700">Book Cover</label>
+                        <img
+                            src={preview || "/placeholder.svg"}
+                            alt="Error loading"
+                            className="w-32 h-40 object-cover rounded-lg border border-gray-300"
+                        />
+                        <label
+                            htmlFor="coverUpload"
+                            className="text-sm text-[#4A90E2] cursor-pointer hover:underline"
+                        >
+                            Upload picture
+                        </label>
+                        <input
+                            id="coverUpload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                        />
+
+                    </div>
+
                 </div>
 
                 {/* Buttons */}
@@ -360,9 +469,10 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
                     <button
                         type="button"
                         onClick={handleSave}
-                        className="px-12 py-2 rounded-lg font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"
+                        disabled={isUploading}
+                        className={`px-12 py-2 rounded-lg font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] ${isUploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                        Save
+                        {isUploading ? 'Saving...' : 'Save'}
                     </button>
                     <button
                         type="button"
@@ -377,4 +487,4 @@ const BookAddDialog = ({ isOpen, book, onSave, onCancel }) => {
     );
 };
 
-export default BookAddDialog;
+export default BookEditDialog;
