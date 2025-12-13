@@ -7,7 +7,8 @@ import {
   getBooksAdmin,
   createBookAdmin,
   updateBookAdmin,
-  deleteBookAdmin
+  deleteBookAdmin,
+  getBookCopiesAdmin
 } from '../../services/bookAdminService';
 
 const BookCatalogPage = () => {
@@ -45,7 +46,18 @@ const BookCatalogPage = () => {
       const data = await getBooksAdmin();
       if (!Array.isArray(data)) throw new Error("Invalid response from server");
       const normalized = data.map(b => ({ ...b, book_id: b.book_id || b.id }));
-      setBooks(normalized);
+
+      // Fetch copies for each book in parallel (attach as `copies` prop)
+      const copyPromises = normalized.map((b) =>
+        getBookCopiesAdmin(b.book_id).then((copies) => ({ ok: true, copies })).catch((err) => ({ ok: false, err }))
+      );
+      const copyResults = await Promise.all(copyPromises);
+      const withCopies = normalized.map((b, idx) => {
+        const res = copyResults[idx];
+        return { ...b, copies: res.ok ? res.copies : [] };
+      });
+
+      setBooks(withCopies);
     } catch (err) {
       console.error(err);
       setError("Failed to load books from server");

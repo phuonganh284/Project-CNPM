@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getBookById } from "../../services/bookService";
+import { updateBookAdmin } from "../../services/bookAdminService";
 import borrowRequestService from "../../services/borrowRequestService";
 import { Button } from "../../components/button";
+import { getBookCopiesAdmin } from "../../services/bookAdminService";
 import { useAuth } from "../../context/AuthContext";
 import BorrowRequestDialog from "../../components/dialogs/BorrowRequestDialog";
 import BorrowConfirmationModal from "../../components/dialogs/BorrowConfirmationModal";
@@ -26,7 +28,46 @@ const BookDetailPage = () => {
     try {
       setLoading(true);
       const data = await getBookById(id);
-      setBook(data.book);
+      // Support multiple response shapes from admin/public endpoints:
+      // - { book: { ... } }
+      // - { data: { ... } }
+      // - { ...bookObject }
+      const raw = data?.book ?? data?.data ?? data;
+
+      // Normalize copies and stock fields
+      let copies = raw?.copies ?? raw?.book_copies ?? raw?.copies_list ?? [];
+
+      // If the current user is a librarian, prefer admin copies (which include borrowed status)
+      try {
+        if (typeof user !== 'undefined' && user?.role === 'librarian') {
+          const adminCopies = await getBookCopiesAdmin(raw.book_id || raw.id || id);
+          if (Array.isArray(adminCopies) && adminCopies.length > 0) {
+            copies = adminCopies;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch admin copies, falling back to public copies:', e);
+      }
+      const available_stock = typeof raw?.available_stock !== 'undefined'
+        ? raw.available_stock
+        : typeof raw?.availableStock !== 'undefined'
+          ? raw.availableStock
+          : copies.filter(c => c && (c.availability === true || c.is_available === true || c.available === true)).length;
+      const total_stock = typeof raw?.total_stock !== 'undefined'
+        ? raw.total_stock
+        : typeof raw?.totalStock !== 'undefined'
+          ? raw.totalStock
+          : copies.length;
+
+      const normalized = {
+        ...raw,
+        copies,
+        available_stock,
+        total_stock,
+      };
+
+      console.log('Fetched book (normalized):', normalized);
+      setBook(normalized);
     } catch (err) {
       setError("Failed to fetch book details.");
     } finally {
@@ -40,6 +81,31 @@ const BookDetailPage = () => {
 
   // The backend now sends copies sorted by condition, so just take the first available one
   const bestCopy = book?.copies?.find(copy => copy.availability === true);
+
+  // Determine if any copy is currently borrowed.
+  const isBorrowed = (() => {
+    if (Array.isArray(book?.copies)) {
+      return book.copies.some((c) => {
+        if (!c) return false;
+        if (c.borrowed === true || c.isBorrowed === true || c.is_borrowed === true) return true;
+        const status = String(c.status || c.copy_status || c.state || '').toLowerCase();
+        if (status.includes('borrow') || status.includes('loan') || status.includes('checked')) return true;
+        if (typeof c.availability !== 'undefined' && c.availability === false) return true;
+        return false;
+      });
+    }
+    // Fallback: if copies not provided, infer from stock counts
+    if (typeof book?.available_stock === 'number' && typeof book?.total_stock === 'number') {
+      return book.available_stock < book.total_stock;
+    }
+    return false;
+  })();
+
+  // Log normalized book and borrowed state for debugging (useful in browser console)
+  useEffect(() => {
+    console.log('Normalized book object (BookDetailPage):', book);
+    console.log('Computed isBorrowed (BookDetailPage):', isBorrowed);
+  }, [book, isBorrowed]);
 
   const getConditionBadge = (condition) => {
     if (condition >= 80) {
@@ -129,12 +195,17 @@ const BookDetailPage = () => {
   };
 
   const handleEditClick = () => {
+    console.log('Edit clicked', { isBorrowed, bookId: book?.book_id || book?.id });
+    if (isBorrowed) return;
     setShowEditDialog(true);
   };
 
   const handleDeleteClick = () => {
+    console.log('Delete clicked', { isBorrowed, bookId: book?.book_id || book?.id });
+    if (isBorrowed) return;
     setShowConfirmDelete(true);
   };
+
 
   const handleConfirmDelete = () => {
     console.log("Book deleted:", book.title);
@@ -201,13 +272,17 @@ const BookDetailPage = () => {
                 <div className="flex flex-col gap-3 w-full max-w-[150px] mx-auto">
                   <button
                     onClick={handleEditClick}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-[#4A90E2] text-white hover:bg-[#3A7BC8] transition cursor-pointer"
+                    disabled={isBorrowed}
+                    title={isBorrowed ? "Cannot edit while a copy is borrowed" : undefined}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${isBorrowed ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"}`}
                   >
                     Edit
                   </button>
                   <button
                     onClick={handleDeleteClick}
-                    className="px-4 py-2 rounded-lg border border-gray-500 text-gray-700 text-sm font-medium hover:bg-gray-50 transition cursor-pointer"
+                    disabled={isBorrowed}
+                    title={isBorrowed ? "Cannot delete while a copy is borrowed" : undefined}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${isBorrowed ? "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed" : "border-gray-500 text-gray-700 hover:bg-gray-50 cursor-pointer"}`}
                   >
                     Delete
                   </button>
@@ -309,9 +384,18 @@ const BookDetailPage = () => {
         <BookEditDialog
           isOpen={showEditDialog}
           book={book}
-          onSave={(edited) => {
-            console.log("Book edited:", edited);
-            setShowEditDialog(false);
+          onSave={async (edited) => {
+            try {
+              console.log("Saving edited book to server:", edited);
+              // Prefer admin update endpoint when available
+              await updateBookAdmin(edited.book_id || edited.id || book.book_id || book.id, edited);
+              // Refresh the displayed book
+              await fetchBook();
+            } catch (err) {
+              console.error('Failed to save edited book:', err);
+            } finally {
+              setShowEditDialog(false);
+            }
           }}
           onCancel={() => setShowEditDialog(false)}
         />

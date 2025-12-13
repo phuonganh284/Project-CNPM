@@ -47,19 +47,19 @@ const BorrowRequestDialog = ({ isOpen, onClose, book, copy, onConfirm }) => {
   const conditionLabel = getConditionLabel(condition);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-[450px] p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
-            Borrow Request Details
-          </h2>
-          
-          {book && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">Requesting:</p>
-              <p className="font-semibold text-gray-800">{book.title}</p>
-              <p className="text-sm text-gray-500">{book.author}</p>
-            </div>
-          )}
+        <h2 className="text-xl font-bold text-gray-800 mb-6">
+          Borrow Request Details
+        </h2>
+
+        {book && (
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-600">Requesting:</p>
+            <p className="font-semibold text-gray-800">{book.title}</p>
+            <p className="text-sm text-gray-500">{book.author}</p>
+          </div>
+        )}
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -96,22 +96,20 @@ const BorrowRequestDialog = ({ isOpen, onClose, book, copy, onConfirm }) => {
                 <span className="font-mono font-semibold text-gray-900 text-base">
                   Copy {copy.copy_id}
                 </span>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  condition >= 80 ? 'bg-green-100 text-green-700' :
-                  condition >= 60 ? 'bg-blue-100 text-blue-700' :
-                  'bg-yellow-100 text-yellow-700'
-                }`}>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${condition >= 80 ? 'bg-green-100 text-green-700' :
+                    condition >= 60 ? 'bg-blue-100 text-blue-700' :
+                      'bg-yellow-100 text-yellow-700'
+                  }`}>
                   {conditionLabel}
                 </span>
               </div>
               <div className="text-xs text-gray-600 mb-1">Condition</div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full ${
-                    condition >= 80 ? 'bg-green-500' :
-                    condition >= 60 ? 'bg-blue-500' :
-                    'bg-yellow-500'
-                  }`}
+                <div
+                  className={`h-2 rounded-full ${condition >= 80 ? 'bg-green-500' :
+                      condition >= 60 ? 'bg-blue-500' :
+                        'bg-yellow-500'
+                    }`}
                   style={{ width: `${condition}%` }}
                 ></div>
               </div>

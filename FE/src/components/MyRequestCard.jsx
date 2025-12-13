@@ -9,8 +9,8 @@ export const RequestBookCard = ({
   status,
   copyId,        // ← Thêm prop
   condition,     // ← Thêm prop
-  onPreview = () => {},
-  onCancel = () => {},
+  onPreview = () => { },
+  onCancel = () => { },
 }) => {
   // Helper functions for condition display
   const getConditionColor = (condition) => {
@@ -41,7 +41,7 @@ export const RequestBookCard = ({
           <div className="font-semibold text-gray-900 text-base">{title}</div>
           {/* Tác giả và năm xuất bản */}
           <div className="text-gray-500 text-sm">{author}, {year}</div>
-          
+
           {/* Copy info - Luôn hiển thị vì mọi request đều có copy */}
           {copyId && condition !== undefined && (
             <div className="mt-2 pt-2 border-t border-gray-200">
@@ -53,7 +53,7 @@ export const RequestBookCard = ({
               </div>
               {/* Condition bar */}
               <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
+                <div
                   className={`h-1.5 rounded-full ${getConditionBg(condition)}`}
                   style={{ width: `${condition}%` }}
                 ></div>
@@ -63,40 +63,39 @@ export const RequestBookCard = ({
         </div>
       </div>
 
-    {/* Khối bên phải: thông tin yêu cầu và nút thao tác */}
-    <div className="flex-1 flex flex-col justify-between h-full">
-      <div>
-        {/* Ngày yêu cầu */}
-        <div className="text-gray-700 text-base font-medium mb-1">Requested on</div>
-        <div className="text-gray-800 text-sm">{requestedAt}</div>
-        {/* Trạng thái: sử dụng dấu chấm màu xanh lá cho Approved, cam cho Pending */}
-        <div className="flex items-center gap-2 mt-2 mb-4">
-          <span
-            className={`w-2 h-2 rounded-full inline-block ${
-              status === "approved" ? "bg-green-500" : "bg-orange-500"
-            }`}
-          ></span>
-          <span className="text-gray-700 text-sm">{status}</span>
+      {/* Khối bên phải: thông tin yêu cầu và nút thao tác */}
+      <div className="flex-1 flex flex-col justify-between h-full">
+        <div>
+          {/* Ngày yêu cầu */}
+          <div className="text-gray-700 text-base font-medium mb-1">Requested on</div>
+          <div className="text-gray-800 text-sm">{requestedAt}</div>
+          {/* Trạng thái: sử dụng dấu chấm màu xanh lá cho Approved, cam cho Pending */}
+          <div className="flex items-center gap-2 mt-2 mb-4">
+            <span
+              className={`w-2 h-2 rounded-full inline-block ${status === "approved" ? "bg-green-500" : "bg-orange-500"
+                }`}
+            ></span>
+            <span className="text-gray-700 text-sm">{status}</span>
+          </div>
+        </div>
+
+        {/* Nút Preview và Cancel request */}
+        <div className="mt-3 flex flex-col gap-2">
+          <button
+            onClick={onPreview}      // Xử lý khi nhấn Preview
+            className="border-2 font-semibold rounded-lg px-5 py-1 hover:bg-blue-50 transition cursor-pointer" style={{ color: '#3273AF' }}
+          >
+            Preview
+          </button>
+          <button
+            onClick={onCancel}       // Xử lý khi nhấn Cancel request
+            disabled={status !== 'pending'}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg px-5 py-1 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            Cancel request
+          </button>
         </div>
       </div>
-
-      {/* Nút Preview và Cancel request */}
-      <div className="mt-3 flex flex-col gap-2">
-        <button
-          onClick={onPreview}      // Xử lý khi nhấn Preview
-          className="border-2 font-semibold rounded-lg px-5 py-1 hover:bg-blue-50 transition " style={{ color: '#3273AF' }}
-        >
-          Preview
-        </button>
-        <button
-          onClick={onCancel}       // Xử lý khi nhấn Cancel request
-          disabled={status !== 'pending'}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg px-5 py-1 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          Cancel request
-        </button>
-      </div>
     </div>
-  </div>
   );
 };

@@ -5,8 +5,8 @@ const BorrowConfirmationModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-[400px] p-8 text-center">
+    <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg w-[400px] p-8 text-center">
         {/* Success Icon */}
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
@@ -33,7 +33,7 @@ const BorrowConfirmationModal = ({ isOpen, onClose }) => {
 
         {/* Message */}
         <p className="text-gray-600 mb-8">
-          Your borrow request has been submitted successfully! You will be notified once it's approved. 
+          Your borrow request has been submitted successfully! You will be notified once it's approved.
           Please check your notifications for the pickup schedule.
         </p>
 
