@@ -578,19 +578,7 @@ function AccountSettingsForm({ onShowEditMedia, onShowEditProfile, currentAvatar
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Profile Picture */}
-      <div className="flex flex-col gap-2">
-        <h3 className="text-base font-medium text-[#4C535F]">Your Profile Picture</h3>
-        <div className="flex items-center gap-4">
-          <img src={avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full shadow-md" />
-          <button
-            onClick={onShowEditMedia}
-            className="text-xs text-[#919191] underline hover:text-[#3273AF] transition-colors cursor-pointer"
-          >
-            Upload New photo
-          </button>
-        </div>
-      </div>
+
 
       {/* Form Fields - Read Only */}
       <div className="flex flex-col gap-8">

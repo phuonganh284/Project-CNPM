@@ -21,6 +21,7 @@ const BookCatalogCard = ({
     available_stock,
     category_name,
     status,
+    copies,
 
     onEdit,
     onDelete,
@@ -31,18 +32,24 @@ const BookCatalogCard = ({
     const [showEditDialog, setShowEditDialog] = useState(false);
     const navigate = useNavigate();
 
-    const isBorrowed = status === "Borrowed";
+    // Determine whether any copy is currently borrowed.
+    // Accept various shapes: `borrowed`, `isBorrowed`, `is_borrowed`, or `status === 'Borrowed'` on copy objects.
+    const isBorrowed = Array.isArray(copies)
+        ? copies.some((c) => c && (c.borrowed === true || c.isBorrowed === true || c.is_borrowed === true || String(c.status)?.toLowerCase() === 'borrowed'))
+        : status === "Borrowed";
+
+    // Compute effective status: if any copy is borrowed, mark the title as Borrowed.
+    const effectiveStatus = isBorrowed ? 'Borrowed' : status;
 
     const handleTitleClick = (e) => {
         e.stopPropagation();
         navigate(`/books/${book_id}/copies`);
-    }
-
+    };
 
     const handleCoverClick = (e) => {
         e.stopPropagation();
         navigate(`/book/${book_id}`);
-    }
+    };
 
     const handleDeleteClick = (e) => {
         e.stopPropagation();
@@ -55,6 +62,7 @@ const BookCatalogCard = ({
         if (isBorrowed) return;
         setShowEditDialog(true);
     };
+
     const bookData = {
         book_id,
         isbn,
@@ -69,21 +77,23 @@ const BookCatalogCard = ({
         total_stock,
         available_stock,
         category_name,
-        status
+        status,
     };
+
     return (
         <>
             <div
-                className="
-                h-[125px] mr-2
-                bg-white 
-                rounded-2xl 
-                border border-gray-200
-                flex items-center
-                px-6
-                hover:shadow-md
-                transition-shadow
-            "
+                className={
+                    `
+                    h-[125px] mr-2
+                    bg-white 
+                    rounded-2xl 
+                    border border-gray-200
+                    flex items-center
+                    px-6
+                    hover:shadow-md
+                    transition-shadow
+                `}
                 onClick={onClick}
             >
                 {/* Book Cover */}
@@ -114,7 +124,7 @@ const BookCatalogCard = ({
                 </div>
 
                 {/* Stock */}
-                <div className="w-[100px] flex-shrink-0 mr-6">
+                <div className="w-[100px] flex-shrink-0 mr-5">
                     <p className="font-inter text-base text-gray-800 mb-1 truncate">
                         {available_stock}
                     </p>
@@ -122,24 +132,21 @@ const BookCatalogCard = ({
 
                 {/* status */}
                 <div className="w-[130px] flex-shrink-0 mr-6">
-                    {status === 'Available' &&
-                        (
-                            <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                Available
-                            </span>
-                        )}
-                    {status === 'Borrowed' &&
-                        (
-                            <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
-                                Borrowed
-                            </span>
-                        )}
-                    {status === 'Out of Stock' &&
-                        (
-                            <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
-                                Out-of-Stock
-                            </span>
-                        )}
+                    {effectiveStatus === 'Available' && (
+                        <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            Available
+                        </span>
+                    )}
+                    {effectiveStatus === 'Borrowed' && (
+                        <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                            Borrowed
+                        </span>
+                    )}
+                    {effectiveStatus === 'Out of Stock' && (
+                        <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                            Out-of-Stock
+                        </span>
+                    )}
                 </div>
 
                 {/* Actions */}
@@ -148,7 +155,7 @@ const BookCatalogCard = ({
                         onClick={handleEditClick}
                         disabled={isBorrowed}
                         className={`px-6 py-2 rounded-lg font-inter text-sm font-medium 
-                            ${isBorrowed
+                                ${isBorrowed
                                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-[#4A90E2] text-white hover:bg-[#3A7BC8] cursor-pointer"}`}
                     >
@@ -158,11 +165,11 @@ const BookCatalogCard = ({
                         onClick={handleDeleteClick}
                         disabled={isBorrowed}
                         className={` px-6 py-2 rounded-lg border text-sm font-medium transition-all
-                            ${isBorrowed
+                                ${isBorrowed
                                 ? "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed"
                                 : "border-gray-500 text-gray-700 hover:bg-gray-50 cursor-pointer"
                             }
-                        `}
+                            `}
                     >
                         Delete
                     </button>
