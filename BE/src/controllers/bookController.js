@@ -1,5 +1,6 @@
 const BookModel = require('../models/bookModel');
 const CategoryModel = require('../models/categoryModel');
+const CopyModel = require('../models/copyModel');
 const supabase = require('../services/supabaseServerClient');
 
 // Upload cover (server-side) - expects multipart/form-data with file field 'file'
@@ -111,6 +112,25 @@ async function getBookById(req, res) {
     }
 }
 
+// Get best available copy for a book
+async function getBestAvailableCopy(req, res) {
+    try {
+        const bookId = parseInt(req.params.id);
+        if (isNaN(bookId)) {
+            return res.status(400).json({ success: false, error: 'Invalid book ID.' });
+        }
+
+        const copy = await CopyModel.findBestAvailableCopy(bookId);
+        if (!copy) {
+            return res.status(404).json({ success: false, error: 'No available copies found for this book.' });
+        }
+
+        res.json({ success: true, data: copy });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
 // 4. get copies of a specific book
 async function getBookCopies(req, res) {
     try {
@@ -184,6 +204,7 @@ module.exports = {
     createBook,
     getBooks,
     getBookById,
+    getBestAvailableCopy,
     deleteBook,
     updateBook,
     getBookCopies,

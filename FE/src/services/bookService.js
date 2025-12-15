@@ -21,3 +21,13 @@ export const getBookById = async (id) => {
     throw error;
   }
 };
+
+export const getBestAvailableCopy = async (bookId) => {
+  try {
+    const response = await api.get(`/books/${bookId}/best-available-copy`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching best available copy for book ${bookId}:`, error);
+    throw error;
+  }
+};

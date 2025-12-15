@@ -1,7 +1,7 @@
 // src/pages/public/BookDetailPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getBookById } from "../../services/bookService";
+import { getBookById, getBestAvailableCopy } from "../../services/bookService";
 import { updateBookAdmin } from "../../services/bookAdminService";
 import borrowRequestService from "../../services/borrowRequestService";
 import { Button } from "../../components/button";
@@ -20,6 +20,8 @@ const BookDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showBorrowDialog, setShowBorrowDialog] = useState(false);
+  const [copyForRequest, setCopyForRequest] = useState(null);
+  const [isFetchingCopy, setIsFetchingCopy] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -78,9 +80,6 @@ const BookDetailPage = () => {
   useEffect(() => {
     fetchBook();
   }, [id]);
-
-  // The backend now sends copies sorted by condition, so just take the first available one
-  const bestCopy = book?.copies?.find(copy => copy.availability === true);
 
   // Determine if any copy is currently borrowed.
   const isBorrowed = (() => {
@@ -169,12 +168,29 @@ const BookDetailPage = () => {
 
   const statusConfig = getStatusConfig();
 
-  const handleButtonClick = () => {
-    // Only open the borrow dialog if the book is available for the user to borrow
-    if (!statusConfig.buttonDisabled) {
-      setShowBorrowDialog(true);
+  const handleButtonClick = async () => {
+    if (statusConfig.buttonDisabled || isFetchingCopy) {
+      return;
     }
-    // If the button is disabled, do nothing. The reason is already displayed on the button itself.
+
+    setIsFetchingCopy(true);
+    setError(null);
+    try {
+      const response = await getBestAvailableCopy(book.book_id || book.id);
+      if (response.success && response.data) {
+        setCopyForRequest(response.data);
+        setShowBorrowDialog(true);
+      } else {
+        // Handle case where no copy is found on the backend
+        setError(response.error || "No available copies found at the moment. Please try again later.");
+        // Optionally, refetch book data to update stock display
+        fetchBook();
+      }
+    } catch (err) {
+      setError(err.message || "Failed to find an available copy.");
+    } finally {
+      setIsFetchingCopy(false);
+    }
   };
 
   const handleBorrowConfirm = async (requestData) => {
@@ -261,10 +277,10 @@ const BookDetailPage = () => {
               {user?.role === "reader" && (
                 <Button
                   onClick={handleButtonClick}
-                  disabled={statusConfig.buttonDisabled}
+                  disabled={statusConfig.buttonDisabled || isFetchingCopy}
                   className="w-full max-w-[200px]"
                 >
-                  {statusConfig.buttonText}
+                  {isFetchingCopy ? 'Finding a copy...' : statusConfig.buttonText}
                 </Button>
               )}
 
@@ -366,7 +382,7 @@ const BookDetailPage = () => {
           onClose={() => setShowBorrowDialog(false)}
           onConfirm={handleBorrowConfirm}
           book={book}
-          copy={bestCopy}
+          copy={copyForRequest}
         />
 
         <BorrowConfirmationModal
