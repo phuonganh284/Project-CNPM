@@ -6,6 +6,7 @@ const { optionalAuthenticateToken } = require('../middleware/auth');
 
 router.get('/', optionalAuthenticateToken, booksController.getBooks);
 router.get('/:id', optionalAuthenticateToken, booksController.getBookById);
+router.get('/:id/best-available-copy', bookController.getBestAvailableCopy);
 
 
 

@@ -43,10 +43,12 @@ class CopyModel {
                 bt.price as book_price
             FROM book_copies bc
             JOIN book_titles bt ON bc.book_id = bt.book_id
+            LEFT JOIN borrow_requests br ON bc.copy_id = br.copy_id AND br.status IN ('pending', 'approved')
             WHERE bc.book_id = $1
               AND bc.availability = TRUE
               AND bc.borrowed = FALSE
               AND bc.condition >= $2
+              AND br.request_id IS NULL
             ORDER BY bc.condition DESC, bc.copy_id ASC
             LIMIT 1
         `;
