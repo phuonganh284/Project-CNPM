@@ -42,37 +42,6 @@ export default function OpenMailToResetPass() {
                 Please open your gmail to complete resetting password
               </p>
               
-              {/* Demo email link */}
-              <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">📧 Demo email link:</p>
-                <a 
-                  href="/reset-password"
-                  className="text-blue-600 hover:text-blue-800 underline break-all"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate('/reset-password');
-                  }}
-                >
-                  http://localhost:5173/reset-password
-                </a>
-                <p className="text-xs text-gray-500 mt-1">
-                  (Trong thực tế, link này sẽ được gửi qua email)
-                </p>
-              </div>
-              
-              {/* Test button để redirect đến ResetPass server */}
-              <div className="mt-6">
-                <button 
-                  onClick={() => {
-                    console.log('Redirecting to ResetPass page...');
-                    navigate('/reset-password');
-                  }}
-                  className="bg-[#3273AF] text-white px-6 py-3 rounded-lg hover:bg-[#275b8c] transition-colors cursor-pointer"
-                >
-                  🔗 Click to Reset Password
-                </button>
-              </div>
-          
           {/* Link quay lại Login */}
           <p className="text-base text-[#4D4D4D] mt-8">
             Already a User?{" "}

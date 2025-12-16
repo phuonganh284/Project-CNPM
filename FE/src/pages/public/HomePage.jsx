@@ -14,6 +14,9 @@ const HomePage = () => {
     useEffect(() => {
         const fetchBooks = async () => {
             try {
+                // Fetch books with personalized sorting based on user's borrowing history
+                // Backend sorts books by preferred categories (most borrowed categories first)
+                // For guests, books are sorted by availability and popularity
                 const data = await getBooks();
                 setBooks(data.books);
                 setLoading(false);
@@ -57,30 +60,27 @@ const HomePage = () => {
 
     return (
         <div className="bg-[#F3F3F7] min-h-screen pb-10 -m-4">
-            {/* Hero Section với IntroBox và Available Now */}
-            <div className="flex flex-row gap-8 pt-4 px-4">
-                {/* IntroBox */}
-                <div className="flex-shrink-0 ml-6">
+            {/* Responsive Hero Section */}
+            <div className="flex flex-col lg:flex-row gap-8 pt-4 px-4 md:px-8 max-w-7xl mx-auto">
+                <div className="flex-shrink-0 w-full lg:w-auto">
                     <IntroBox />
                 </div>
-
-                {/* Available Now Carousel */}
-                <div className=" mt-4">
+                <div className="flex-grow mt-4 w-full">
                     <AvailableNow
                         books={availableBooks}
                     />
                 </div>
             </div>
 
-            {/* Good Morning Section */}
-            <div className="w-[300px] px-4 mt-12 ml-6">
+            {/* Greeting Section */}
+            <div className="px-4 md:px-8 max-w-7xl mx-auto mt-12">
                 <h1 className="text-gray-800 font-inter text-3xl font-bold mb-2">
                     {getGreeting()}
                 </h1>
             </div>
 
             {/* Recommended for You */}
-            <div className="px-4 mt-6 ml-6 w-[1190px]">
+            <div className="px-4 md:px-8 max-w-7xl mx-auto mt-6">
                 <div className="flex items-center justify-between mb-8 ">
                     <h2 className="text-gray-700 font-inter text-xl font-semibold">
                         Recommended for You
@@ -93,8 +93,8 @@ const HomePage = () => {
                     </button>
                 </div>
 
-                {/* Single Row - Exact number of books to fit, no scroll */}
-                <div className="flex gap-4 w-[1150px]">
+                {/* Responsive Book Card Grid - wraps on smaller screens */}
+                <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
                     {booksToShow.map(book => (
                         <BookCard
                             key={book.book_id}

@@ -47,42 +47,56 @@ const getBooks = async (req, res) => {
 
 
         if (userId) {
+            // Get reader's borrowing preferences from both history and current borrowings
             const preferenceQuery = `
                 SELECT
                     c.category_name,
-                    bt.author
-                FROM
-                    borrow_history bh
-                JOIN
-                    book_copies bc ON bh.copy_id = bc.copy_id
-                JOIN
-                    book_titles bt ON bc.book_id = bt.book_id
-                LEFT JOIN
-                    categories c ON bt.category_id = c.category_id
-                WHERE
-                    bh.reader_id = (SELECT reader_id FROM readers WHERE user_id = $1)
+                    c.category_id,
+                    COUNT(*) as borrow_count
+                FROM (
+                    -- Get categories from borrow history
+                    SELECT bh.copy_id
+                    FROM borrow_history bh
+                    WHERE bh.reader_id = (SELECT reader_id FROM readers WHERE user_id = $1)
+                    
+                    UNION ALL
+                    
+                    -- Get categories from current borrowing records
+                    SELECT br.copy_id
+                    FROM borrowing_records br
+                    WHERE br.reader_id = (SELECT reader_id FROM readers WHERE user_id = $1)
+                ) AS all_borrows
+                JOIN book_copies bc ON all_borrows.copy_id = bc.copy_id
+                JOIN book_titles bt ON bc.book_id = bt.book_id
+                LEFT JOIN categories c ON bt.category_id = c.category_id
+                WHERE c.category_name IS NOT NULL
+                GROUP BY c.category_id, c.category_name
+                ORDER BY borrow_count DESC
             `;
             const { rows: preferenceRows } = await pool.query(preferenceQuery, [userId]);
 
-            const preferredCategories = [...new Set(preferenceRows.filter(r => r.category_name).map(r => r.category_name))];
-            const preferredAuthors = [...new Set(preferenceRows.map(r => r.author))];
+            // Create a map of category names to their borrow count (for weighted sorting)
+            const categoryWeights = {};
+            preferenceRows.forEach(row => {
+                categoryWeights[row.category_name] = parseInt(row.borrow_count);
+            });
+
+            const preferredCategories = preferenceRows.map(r => r.category_name);
 
             let orderByClause = 'ORDER BY ';
-            if (preferredCategories.length > 0 || preferredAuthors.length > 0) {
+            if (preferredCategories.length > 0) {
+                // Build a CASE statement that assigns priority based on category match
+                // More borrowed categories get higher priority (lower number = higher priority)
                 orderByClause += 'CASE ';
-                if (preferredCategories.length > 0) {
+                preferredCategories.forEach((category, index) => {
                     const categoryParamIndex = queryParams.length + 1;
-                    orderByClause += `WHEN c.category_name ILIKE ANY($${categoryParamIndex}) THEN 1 `;
-                    queryParams.push(preferredCategories);
-                }
-                if (preferredAuthors.length > 0) {
-                    const authorParamIndex = queryParams.length + 1;
-                    orderByClause += `WHEN bt.author ILIKE ANY($${authorParamIndex}) THEN 2 `;
-                    queryParams.push(preferredAuthors);
-                }
-                orderByClause += 'ELSE 3 END, ';
+                    orderByClause += `WHEN c.category_name = $${categoryParamIndex} THEN ${index + 1} `;
+                    queryParams.push(category);
+                });
+                orderByClause += 'ELSE 999 END, ';
             }
-            orderByClause += 'bt.book_id DESC';
+            // Secondary sort by availability and then by book_id for consistency
+            orderByClause += 'bt.available_stock DESC, bt.book_id DESC';
 
             query = `
                 SELECT
@@ -108,6 +122,7 @@ const getBooks = async (req, res) => {
             `;
 
         } else {
+            // For non-authenticated users, sort by popularity (borrow_count) and availability
             query = `
                 SELECT
                     bt.book_id,
@@ -120,7 +135,8 @@ const getBooks = async (req, res) => {
                     c.category_id,
                     c.category_name,
                     bt.total_stock,
-                    bt.available_stock AS available_stock_for_borrow
+                    bt.available_stock AS available_stock_for_borrow,
+                    bt.borrow_count
                 FROM
                     book_titles bt
                 LEFT JOIN
@@ -129,6 +145,8 @@ const getBooks = async (req, res) => {
                 GROUP BY
                     bt.book_id, c.category_id
                 ORDER BY
+                    bt.available_stock DESC,
+                    bt.borrow_count DESC,
                     bt.book_id DESC
             `;
         }

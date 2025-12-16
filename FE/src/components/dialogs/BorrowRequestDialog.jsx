@@ -82,6 +82,7 @@ const BorrowRequestDialog = ({ isOpen, onClose, book, copy, onConfirm }) => {
             value={pickupDate}
             onChange={(e) => setPickupDate(e.target.value)}
             min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]} // Min date is tomorrow
+            max={new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0]} // Max date is 14 days from now
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
