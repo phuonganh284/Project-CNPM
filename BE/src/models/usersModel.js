@@ -11,7 +11,7 @@ const getAllUsers = async () => {
     // Include role information by left-joining readers and librarians tables
     // so callers can distinguish readers from librarians.
     const q = `
-        SELECT u.user_id, u.username, u.email, u.name, u.status, u.profile_picture,
+        SELECT u.user_id, u.username, u.email, u.name, u.status, u.profile_picture, u.phone, u.bio,
                CASE
                  WHEN r.user_id IS NOT NULL THEN 'reader'
                  WHEN l.user_id IS NOT NULL THEN 'librarian'
@@ -28,7 +28,7 @@ const getAllUsers = async () => {
 
 const getUserById = async (id) => {
     const q = `
-        SELECT u.user_id, u.username, u.email, u.name, u.status, u.profile_picture,
+        SELECT u.user_id, u.username, u.email, u.name, u.status, u.profile_picture, u.phone, u.bio,
                CASE
                  WHEN r.user_id IS NOT NULL THEN 'reader'
                  WHEN l.user_id IS NOT NULL THEN 'librarian'
@@ -48,7 +48,8 @@ const getUserById = async (id) => {
  * Returns updated row or null if not found.
  */
 const updateUser = async (id, fields) => {
-    const allowed = ['status', 'name', 'profile_picture'];
+    // Add 'phone' and 'bio' to allowed fields
+    const allowed = ['status', 'name', 'profile_picture', 'username', 'phone', 'bio']; // 'email' removed
     const set = [];
     const vals = [];
     let idx = 1;
@@ -63,7 +64,8 @@ const updateUser = async (id, fields) => {
     if (set.length === 0) return null; // nothing to update
 
     vals.push(id);
-    const q = `UPDATE users SET ${set.join(', ')} WHERE user_id = $${idx} RETURNING user_id, username, email, name, status, profile_picture`;
+    // Update RETURNING clause to include 'phone' and 'bio'
+    const q = `UPDATE users SET ${set.join(', ')} WHERE user_id = $${idx} RETURNING user_id, username, email, name, status, profile_picture, phone, bio`;
     const result = await pool.query(q, vals);
     return result.rows[0] || null;
 };

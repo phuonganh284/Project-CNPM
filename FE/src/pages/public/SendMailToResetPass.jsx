@@ -53,22 +53,15 @@ export default function ResetPassword() {
         const data = await response.json();
 
         if (response.ok) {
-          // Save email to localStorage for next step
           localStorage.setItem('resetEmail', email);
-          setSuccessMessage('Email reset mật khẩu đã được gửi. Vui lòng check email.');
-          console.log('Password reset email sent successfully');
+          setSuccessMessage(data.message); // Display message from API
           
-          // Navigate to next page after 2 seconds
           setTimeout(() => {
             navigate("/open-mail-to-reset-pass");
           }, 2000);
         } else {
-          // Always show success message for security (even if email doesn't exist)
-          localStorage.setItem('resetEmail', email);
-          setSuccessMessage('Email reset mật khẩu đã được gửi. Vui lòng check email.');
-          setTimeout(() => {
-            navigate("/open-mail-to-reset-pass");
-          }, 2000);
+          // This will catch 500 errors from the backend
+          setErrors({ email: data.message || 'An unexpected error occurred.' });
         }
       } catch (error) {
         console.error('Forgot password error:', error);
