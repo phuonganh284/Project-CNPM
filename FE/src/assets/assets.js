@@ -22,6 +22,7 @@ import dashboard from './icons/dashboard.svg'
 
 import book_img_1 from './book_img_1.png'
 import book_img_2 from './book_img_2.png'
+import qr_code from './BIDV-6211203288-qr_only.png'
 
 export const assets = {
     background,
@@ -47,6 +48,7 @@ export const assets = {
 
     book_img_1,
     book_img_2,
+    qr_code,
 }
 
 

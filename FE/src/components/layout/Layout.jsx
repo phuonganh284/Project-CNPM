@@ -22,29 +22,40 @@ const Layout = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="flex">
-            <Sidebar />
+        <div className="relative min-h-screen">
+            <Sidebar isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen} />
             <Background />
 
-            <div className="flex-1 ml-[278px] min-h-screen">
+            {/* Overlay for mobile when sidebar is open */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                ></div>
+            )}
 
-                <div className="fixed bg-transparent z-50">
+            <div className="flex-1 lg:ml-[278px] min-h-screen transition-all duration-300">
+
+                <header className="fixed top-0 left-0 lg:left-[278px] right-0 z-20 transition-all duration-300">
                     <TopMain
                         searchTerm={searchTerm}
                         setSearchTerm={setSearchTerm}
                         filter={filter}
                         setFilter={setFilter}
+                        toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
                     />
-                </div>
+                </header>
 
-                <div className="pt-[108px] md:px-[26px]">
+                <main className="pt-[100px] px-4 md:px-6 pb-4">
                     <div
                         className="
-                            bg-[#F3F3F7]
-                            h-[calc(100vh-120px)]
+                            bg-white
+                            h-[calc(100vh-116px)]
                             overflow-auto
+                            rounded-2xl
                             p-4
                         "
                     >
@@ -52,7 +63,7 @@ const Layout = () => {
                             <Outlet context={{ debouncedSearchTerm, filter }} />
                         </ErrorBoundary>
                     </div>
-                </div>
+                </main>
 
             </div>
         </div>

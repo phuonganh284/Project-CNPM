@@ -3,7 +3,7 @@ import { assets } from '../../assets/assets'
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from '../../context/AuthContext';
 
-const SideBar = () => {
+const SideBar = ({ isSidebarOpen, setSidebarOpen }) => {
     const { user } = useAuth();
     const userRole = user?.role || 'guest';
     const location = useLocation();
@@ -41,37 +41,37 @@ const SideBar = () => {
 
     return (
         <div
-            className="
-                fixed
-                left-6
-                top-6
-                w-[250px]
-                md:w-[280px]
-                h-[calc(100vh-38px)]
-                bg-white
-                rounded-2xl
-                rounded-r-none
-                flex
-                flex-col
-                items-start
-                p-6
-                shadow-md
-                z-10
-            "
+            className={`
+                fixed top-0 left-0 h-full bg-white shadow-lg
+                w-[280px] z-40 flex flex-col items-start p-6
+                transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                lg:translate-x-0 lg:left-6 lg:top-6 lg:h-[calc(100vh-38px)] lg:rounded-2xl lg:rounded-r-none
+            `}
         >
-            {/* Logo */}
-            <div className="mb-8 mt-[-20px] ml-9">
-                <NavLink to="/home" className="flex items-center">
-                    <img src="/logo.svg" alt="Library Logo" className="w-[160px] h-auto cursor-pointer" />
-                </NavLink>
+            {/* Logo and Close Button */}
+            <div className="w-full flex items-center justify-between mb-8 mt-[-20px]">
+                <div className="ml-9">
+                    <NavLink to="/home" className="flex items-center">
+                        <img src="/logo.svg" alt="Library Logo" className="w-[160px] h-auto cursor-pointer" />
+                    </NavLink>
+                </div>
+                <button 
+                    className="lg:hidden text-gray-500 hover:text-gray-800"
+                    onClick={() => setSidebarOpen(false)}
+                    aria-label="Close sidebar"
+                >
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             </div>
+
 
             {/* Nav links */}
             <nav className="mb-auto mt-4 ml-9">
                 <ul className="flex flex-col space-y-6">
                     {currentMenu.map((item, index) => (
                         <li key={index} className="group">
-                            <NavLink to={item.path}>
+                            <NavLink to={item.path} onClick={() => setSidebarOpen(false)}>
                                 {({ isActive }) => (
                                     <div className={`
                                         flex items-center space-x-3 cursor-pointer text-lg
@@ -88,7 +88,7 @@ const SideBar = () => {
                                                 w-5 h-5 transition-all duration-200
                                                 ${isActive
                                                     ? '[filter:brightness(0)_saturate(100%)_invert(27%)_sepia(6%)_saturate(268%)_hue-rotate(202deg)_brightness(95%)_contrast(92%)]'
-                                                    : '[filter:brightness(0)_saturate(100%)_invert(64%)_sepia(0%)_saturate(415%)_hue-rotate(202deg)_brightness(88%)_contrast(81%)] group-hover:[filter:brightness(0)_saturate(100%)_invert(27%)_sepia(6%)_saturate(268%)_hue-rotate(202deg)_brightness(95%)_contrast(92%)]'
+                                                    : '[filter:brightness(0)_saturate(100%)_invert(64%)_sepia(0%)_saturate(415%)_hue-rotate(202deg)_brightness(88%)_contrast(81%)] group-hover:[filter:brightness(0)_sate(100%)_invert(27%)_sepia(6%)_saturate(268%)_hue-rotate(202deg)_brightness(95%)_contrast(92%)]'
                                                 }
                                             `}
                                         />
@@ -107,6 +107,7 @@ const SideBar = () => {
                     <li>
                         <NavLink
                             to="/about"
+                            onClick={() => setSidebarOpen(false)}
                             className={({ isActive }) => `
                                 transition-colors cursor-pointer
                                 ${isActive ? 'text-[#4D4D4D]' : 'text-[#8A8A8A] hover:text-[#4D4D4D]'}
@@ -118,6 +119,7 @@ const SideBar = () => {
                     <li>
                         <NavLink
                             to="/support"
+                            onClick={() => setSidebarOpen(false)}
                             className={({ isActive }) => `
                                 transition-colors cursor-pointer
                                 ${isActive ? 'text-[#4D4D4D]' : 'text-[#8A8A8A] hover:text-[#4D4D4D]'}
@@ -129,6 +131,7 @@ const SideBar = () => {
                     <li>
                         <NavLink
                             to="/terms"
+                            onClick={() => setSidebarOpen(false)}
                             className={({ isActive }) => `
                                 transition-colors cursor-pointer
                                 ${isActive ? 'text-[#4D4D4D]' : 'text-[#8A8A8A] hover:text-[#4D4D4D]'}

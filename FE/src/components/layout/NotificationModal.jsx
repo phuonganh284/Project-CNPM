@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { assets } from '../../assets/assets';
 
 // Helper: Format tiêu đề
 const formatTitle = (typeName) => {
@@ -271,6 +272,14 @@ const NotificationModal = ({ notification, isOpen, onClose }) => {
                                 {data.damage_fee > 0 && (<div className="flex justify-between items-center text-sm"><span className="text-gray-600 font-inter">Damage fee</span><span className="font-medium text-gray-900 font-inter">{data.damage_fee.toLocaleString()} đ</span></div>)}
                             </div>
                             <div className="flex justify-between items-end"><span className="font-bold text-gray-900 font-inter text-base">Total:</span><span className="font-bold text-[#DC2626] font-inter text-xl">{data.total_fee.toLocaleString()} đ</span></div>
+                        </div>
+
+                        {/* QR Code Section */}
+                        <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+                            <p className="text-sm text-gray-600 font-inter mb-4">Scan the QR code below to complete the payment.</p>
+                            <div className="flex justify-center">
+                                <img src={assets.qr_code} alt="Payment QR Code" className="w-48 h-48 rounded-lg shadow-md" />
+                            </div>
                         </div>
                     </div>
                 );

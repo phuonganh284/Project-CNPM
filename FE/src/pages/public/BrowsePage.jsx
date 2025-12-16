@@ -29,6 +29,9 @@ const BrowsePage = () => {
                 const currentSearchTerm = urlSearchTerm !== null ? urlSearchTerm : debouncedSearchTerm;
                 const currentFilter = urlFilter !== null ? urlFilter : filter;
 
+                // Fetch books with personalized sorting based on user's borrowing history
+                // Backend sorts books by preferred categories (most borrowed categories first)
+                // For guests, books are sorted by availability and popularity
                 const data = await getBooks(currentSearchTerm, currentFilter);
                 setBooks(data.books);
                 setLoading(false);

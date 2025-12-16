@@ -6,7 +6,7 @@ import NotificationDropdown from './NotificationDropdown';
 import UserMenu from './UserMenu';
 import { useAuth } from '../../context/AuthContext';
 
-const TopMain = ({ searchTerm, setSearchTerm, filter, setFilter }) => {
+const TopMain = ({ searchTerm, setSearchTerm, filter, setFilter, toggleSidebar }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const userRole = user?.role || 'guest';
@@ -21,30 +21,27 @@ const TopMain = ({ searchTerm, setSearchTerm, filter, setFilter }) => {
     };
 
     return (
-        <div
-            className="
-                fixed
-                left-[304px]
-                top-6
-                w-[calc(100%-330px)]
-                h-[100px]
-                bg-[#F3F3F7]
-                flex
-                items-center
-                justify-between
-                px-4
-                gap-4
-                z-50
-            "
-        >
-            {/* Search Bar - Hiển thị cho tất cả role */}
-            <SearchBar 
-                searchTerm={searchTerm} 
-                setSearchTerm={setSearchTerm}
-                filter={filter}
-                setFilter={setFilter}
-                handleSearch={handleSearch} 
-            />
+        <div className="w-full h-[100px] bg-transparent flex items-center justify-between px-4 gap-4">
+            <div className="flex items-center gap-4">
+                {/* Hamburger Menu Button - visible only on small screens */}
+                <button
+                    onClick={toggleSidebar}
+                    className="text-gray-600 hover:text-gray-800 lg:hidden"
+                    aria-label="Open sidebar"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+
+                {/* Search Bar - Hiển thị cho tất cả role */}
+                <SearchBar
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    filter={filter}
+                    setFilter={setFilter}
+                    handleSearch={handleSearch}
+                />
+            </div>
+
 
             {/* Right Section: Guest có Sign In, Reader/Librarian có Notification + User Menu */}
             {isGuest ? (
@@ -57,9 +54,9 @@ const TopMain = ({ searchTerm, setSearchTerm, filter, setFilter }) => {
                         bg-white 
                         rounded-full
                         w-auto
-                        min-w-[120px] sm:min-w-[140px] md:min-w-[170px]
-                        px-4 sm:px-5 md:px-6
-                        h-[42px] sm:h-[46px] md:h-[50px]
+                        min-w-[120px]
+                        px-4
+                        h-[42px] sm:h-[46px]
                         shadow-sm 
                         hover:bg-gray-100 
                         transition-all
@@ -71,14 +68,14 @@ const TopMain = ({ searchTerm, setSearchTerm, filter, setFilter }) => {
                     <img
                         src={assets.user_icon}
                         alt="User"
-                        className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mr-2 sm:mr-3 md:mr-4"
+                        className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3"
                     />
-                    <span className="text-[#4D4D4D] font-inter text-sm sm:text-[15px] md:text-[16px] whitespace-nowrap">
+                    <span className="text-[#4D4D4D] font-inter text-sm sm:text-[15px] whitespace-nowrap">
                         Sign In
                     </span>
                 </button>
             ) : (
-                <div className="flex items-center gap-4 ml-6">
+                <div className="flex items-center gap-4">
                     <NotificationDropdown />
                     <UserMenu />
                 </div>
