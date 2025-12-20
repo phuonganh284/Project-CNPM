@@ -85,11 +85,11 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
 
     const handleSaveAssessment = () => {
         if (onSave) {
-            let payload;
+            let basePayload;
 
             if (damageLines.length === 0) {
                 // If no damage, send OK status
-                payload = {
+                basePayload = {
                     assessedCondition: 'OK',
                     damagePercentage: 0,
                     assessmentNotes: 'No damage reported.',
@@ -100,12 +100,18 @@ const AssessDrawer = ({ isOpen, onClose, returnRequest, onSave }) => {
                 const primaryDamageLine = damageLines[0];
                 const allNotes = damageLines.map(line => `${line.level}: ${line.note}`).join('; ');
 
-                payload = {
+                basePayload = {
                     assessedCondition: primaryDamageLine.level,
                     damagePercentage: primaryDamageLine.percentage,
                     assessmentNotes: allNotes,
                 };
             }
+
+            // Add the overdueRate to the payload
+            const payload = {
+                ...basePayload,
+                overdueRate: overdueRate,
+            };
 
             onSave(returnRequest.id, payload);
         }

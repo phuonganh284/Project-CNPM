@@ -39,7 +39,7 @@ const Layout = () => {
 
             <div className="flex-1 lg:ml-[278px] min-h-screen transition-all duration-300">
 
-                <header className="fixed top-0 left-0 lg:left-[278px] right-0 z-20 transition-all duration-300">
+                <header className="fixed top-0 left-0 lg:left-[278px] right-0 z-50 transition-all duration-300">
                     <TopMain
                         searchTerm={searchTerm}
                         setSearchTerm={setSearchTerm}

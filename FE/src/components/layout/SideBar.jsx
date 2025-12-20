@@ -43,7 +43,7 @@ const SideBar = ({ isSidebarOpen, setSidebarOpen }) => {
         <div
             className={`
                 fixed top-0 left-0 h-full bg-white shadow-lg
-                w-[280px] z-40 flex flex-col items-start p-6
+                w-[280px] z-30 flex flex-col items-start p-6
                 transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                 lg:translate-x-0 lg:left-6 lg:top-6 lg:h-[calc(100vh-38px)] lg:rounded-2xl lg:rounded-r-none
