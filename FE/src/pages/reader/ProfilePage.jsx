@@ -439,10 +439,20 @@ const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
   };
 
   const handleSave = async () => {
+    // Basic phone number validation (e.g., must be digits, between 10-15 chars long)
+    const phoneRegex = /^\d{10,15}$/;
+    if (formData.phone && !phoneRegex.test(formData.phone)) {
+        setApiError('Invalid phone number format. It should be 10-15 digits.');
+        return;
+    }
+
     setApiError(null);
     setSaving(true);
     try {
-      const res = await authService.updateProfile(formData);
+      // Don't allow email to be updated.
+      const { email, ...updateData } = formData;
+
+      const res = await authService.updateProfile(updateData);
       if (res.success) {
         const updated = res.data || {};
         onSave(updated);
@@ -496,9 +506,9 @@ const EditProfileModal = ({ isOpen, onClose, onSave, currentProfile }) => {
                 type="email"
                 name="email"
                 value={formData.email || ''}
-                onChange={handleChange}
-                className="w-full h-12 p-4 bg-[#FAFBFC] border border-[#E0E4EC] rounded-lg text-[#8D98AA] focus:outline-none focus:border-[#3273AF]"
-                placeholder="Enter email"
+                readOnly
+                className="w-full h-12 p-4 bg-gray-100 border border-[#E0E4EC] rounded-lg text-gray-500 cursor-not-allowed focus:outline-none"
+                placeholder="Email cannot be changed"
               />
             </div>
           </div>

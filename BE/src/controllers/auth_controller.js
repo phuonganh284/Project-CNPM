@@ -268,7 +268,7 @@ const loginLibrarian = async (req, res) => {
         if (!user.is_verified) {
             return res.status(403).json({
                 success: false,
-                message: 'Vui lòng xác nhận email trước khi đăng nhập'
+                message: 'Please verify your email before logging in'
             });
         }
 
@@ -559,7 +559,7 @@ const resendVerification = async (req, res) => {
     if (!email) {
         return res.status(400).json({
             success: false,
-            message: 'Email là bắt buộc'
+            message: 'Email is required'
         });
     }
 
@@ -639,7 +639,7 @@ const forgotPassword = async (req, res) => {
         if (result.rows.length === 0) {
             return res.json({
                 success: true,
-                message: 'An reset password email has been sent, please check your mailbox.'
+                message: 'If the email exists, a reset link will be sent.'
             });
         }
 
@@ -682,14 +682,14 @@ const resetPasswordWithToken = async (req, res) => {
     if (!new_password) {
         return res.status(400).json({
             success: false,
-            message: 'Mật khẩu mới là bắt buộc'
+            message: 'New password is required'
         });
     }
 
     if (!token && !code) {
         return res.status(400).json({
             success: false,
-            message: 'Token hoặc mã reset là bắt buộc'
+            message: 'Token or reset code is required'
         });
     }
 
@@ -697,7 +697,7 @@ const resetPasswordWithToken = async (req, res) => {
     if (new_password.length < 6) {
         return res.status(400).json({
             success: false,
-            message: 'Mật khẩu phải có ít nhất 6 ký tự'
+            message: 'Password must be at least 6 characters long'
         });
     }
 
@@ -726,7 +726,7 @@ const resetPasswordWithToken = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Token không hợp lệ'
+                message: 'Invalid token'
             });
         }
 
@@ -736,7 +736,7 @@ const resetPasswordWithToken = async (req, res) => {
         if (new Date() > new Date(user.reset_token_expires)) {
             return res.status(400).json({
                 success: false,
-                message: 'Token đã hết hạn. Vui lòng yêu cầu reset lại.'
+                message: 'Token has expired. Please request a new one.'
             });
         }
 
@@ -761,7 +761,7 @@ const resetPasswordWithToken = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Mật khẩu đã được reset thành công'
+            message: 'Password has been reset successfully'
         });
     } catch (error) {
         console.error('Reset password error:', error);
@@ -782,7 +782,7 @@ const changePasswordWithNotification = async (req, res) => {
     if (!actual_old_password || !new_password) {
         return res.status(400).json({
             success: false,
-            message: 'Mật khẩu cũ và mật khẩu mới là bắt buộc'
+            message: 'Old password and new password are required'
         });
     }
 
@@ -790,7 +790,7 @@ const changePasswordWithNotification = async (req, res) => {
     if (new_password.length < 6) {
         return res.status(400).json({
             success: false,
-            message: 'Mật khẩu mới phải có ít nhất 6 ký tự'
+            message: 'Password must be at least 6 characters long'
         });
     }
 
@@ -815,7 +815,7 @@ const changePasswordWithNotification = async (req, res) => {
         if (!isPasswordValid) {
             return res.status(400).json({
                 success: false,
-                message: 'Mật khẩu cũ không đúng'
+                message: 'Old password is incorrect'
             });
         }
 
@@ -838,7 +838,7 @@ const changePasswordWithNotification = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Đổi mật khẩu thành công'
+            message: 'Password changed successfully'
         });
     } catch (error) {
         console.error('Change password error:', error);
@@ -851,11 +851,22 @@ const changePasswordWithNotification = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const usersModel = require('../models/usersModel');
-        const { name, profile_picture } = req.body;
+        // email is intentionally not destructured to prevent updates
+        const { name, profile_picture, username, phone, bio } = req.body;
 
         const fields = {};
         if (name !== undefined) fields.name = name;
         if (profile_picture !== undefined) fields.profile_picture = profile_picture;
+        if (username !== undefined) fields.username = username;
+        if (phone !== undefined) {
+            // Backend validation for phone number
+            const phoneRegex = /^\d{10,15}$/;
+            if (!phoneRegex.test(phone)) {
+                return res.status(400).json({ success: false, message: 'Invalid phone number format. It should be 10-15 digits.' });
+            }
+            fields.phone = phone;
+        }
+        if (bio !== undefined) fields.bio = bio;
 
         if (Object.keys(fields).length === 0) {
             return res.status(400).json({ success: false, message: 'No valid fields to update' });
@@ -870,7 +881,13 @@ const updateProfile = async (req, res) => {
         res.json({ success: true, data: updated });
     } catch (error) {
         console.error('Update profile error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+
+        // Handle unique constraint violation for username
+        if (error.code === '23505' && error.constraint === 'users_username_key') {
+            return res.status(409).json({ success: false, message: 'Username is already taken.' });
+        }
+        
+        res.status(500).json({ success: false, message: 'Server error during profile update.' });
     }
 };
 
