@@ -1,36 +1,54 @@
-// This is a helper script to manually trigger scheduled jobs for testing.
 require('dotenv').config();
+
+// BE/test-jobs.js
+
+// This script allows you to manually trigger scheduled jobs for testing.
+// Usage: node test-jobs.js <jobName>
+//
+// <jobName> can be one of:
+// - expired: To run checkExpiredRequests
+// - dueSoon: To run checkDueSoonBorrowings
+// - overdue: To run checkOverdueBorrowings
+
+// Import the job functions
 const { checkExpiredRequests } = require('./src/jobs/checkExpiredRequests');
 const checkDueSoonBorrowings = require('./src/jobs/checkDueSoonBorrowings');
 const { checkOverdueBorrowings } = require('./src/jobs/checkOverdueBorrowings');
 
-const run = async () => {
-    const arg = process.argv[2];
+const jobName = process.argv[2]; // Get the job name from command line arguments
 
-    if (!arg) {
-        console.log('Please specify which job to run:');
-        console.log('  - To test expired approved requests: node test-jobs.js expire');
-        console.log('  - To test due soon borrowings:     node test-jobs.js due-soon');
-        console.log('  - To test overdue borrowings:      node test-jobs.js overdue');
-        return;
-    }
+async function runJob() {
+  if (!jobName) {
+    console.error('Please provide a job name to run.');
+    console.log('Usage: node test-jobs.js <jobName>');
+    console.log('Available jobs: expired, dueSoon, overdue');
+    return;
+  }
 
-    if (arg === 'expire') {
-        console.log('Manually running the job to check for expired requests...');
+  console.log(`[MANUAL RUN] Starting job: '${jobName}'...`);
+  try {
+    switch (jobName) {
+      case 'expired':
         await checkExpiredRequests();
-        console.log('Expired request check finished.');
-    } else if (arg === 'due-soon') {
-        console.log('Manually running the job to check for borrowings that are due soon...');
+        break;
+      case 'dueSoon':
         await checkDueSoonBorrowings();
-        console.log('Due soon check finished.');
-    } else if (arg === 'overdue') {
-        console.log('Manually running the job to check for overdue borrowings...');
+        break;
+      case 'overdue':
         await checkOverdueBorrowings();
-        console.log('Overdue borrowings check finished.');
-    } else {
-        console.log(`Unknown job: ${arg}`);
+        break;
+      default:
+        console.error(`Error: Job '${jobName}' not found.`);
+        console.log('Available jobs: expired, dueSoon, overdue');
+        break;
     }
+    console.log(`[MANUAL RUN] Job '${jobName}' finished.`);
+    // Force exit to prevent hanging connections, useful for scripting
     process.exit(0);
-};
+  } catch (error) {
+    console.error(`[MANUAL RUN] An error occurred during job '${jobName}':`, error);
+    process.exit(1);
+  }
+}
 
-run();
+runJob();

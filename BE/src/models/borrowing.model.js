@@ -255,7 +255,7 @@ const Borrowing = {
       JOIN book_titles bt ON bc.book_id = bt.book_id
       JOIN readers r ON br.reader_id = r.reader_id
       JOIN users u ON r.user_id = u.user_id
-      WHERE br.status = 'approved'
+      WHERE br.status IN ('approved', 'pending')
     `;
     
     const params = [];
@@ -712,18 +712,19 @@ const Borrowing = {
    * @throws {Error} If validation fails
    */
   async assessReturnCondition(return_id, assessmentData) {
-    const { assessed_condition, damage_percentage, assessment_notes } = assessmentData;
+    const { assessed_condition, damage_percentage, assessment_notes, overdue_rate } = assessmentData;
 
     if (!return_id) {
       throw new Error('return_id is required');
     }
-
     if (!assessed_condition) {
       throw new Error('assessed_condition is required');
     }
-
     if (damage_percentage === undefined || damage_percentage < 0 || damage_percentage > 100) {
       throw new Error('damage_percentage must be between 0 and 100');
+    }
+    if (overdue_rate === undefined || overdue_rate < 0 || overdue_rate > 5) {
+        throw new Error('overdue_rate must be between 0 and 5');
     }
 
     const validConditions = ['OK', 'MINOR', 'MODERATE', 'SEVERE', 'LOST'];
@@ -732,13 +733,8 @@ const Borrowing = {
     }
 
     const damageRanges = {
-      'OK': [0, 0],
-      'MINOR': [5, 10],
-      'MODERATE': [20, 40],
-      'SEVERE': [60, 80],
-      'LOST': [100, 100]
+      'OK': [0, 0], 'MINOR': [5, 10], 'MODERATE': [20, 40], 'SEVERE': [60, 80], 'LOST': [100, 100]
     };
-
     const range = damageRanges[assessed_condition];
     if (damage_percentage < range[0] || damage_percentage > range[1]) {
       throw new Error(`damage_percentage must be between ${range[0]}% and ${range[1]}% for ${assessed_condition}`);
@@ -778,12 +774,11 @@ const Borrowing = {
         throw new Error(`Cannot assess return request with status: ${request.status}`);
       }
       
-      // Calculate overdue fee
+      // Calculate overdue fee using the rate from the controller
       const dueDate = new Date(request.due_date);
       const today = new Date();
       const daysLate = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
-      const overdueRate = 1; // 1% of book's value per day
-      const overdueFee = Math.round((daysLate * overdueRate * request.borrowed_copy_price) / 100);
+      const overdueFee = Math.round((daysLate * overdue_rate * request.borrowed_copy_price) / 100);
 
       const damageFee = request.borrowed_copy_price * damage_percentage / 100;
       const total_fee = overdueFee + damageFee;
@@ -798,11 +793,9 @@ const Borrowing = {
       const newCondition = Math.max(0, request.current_copy_condition - damage_percentage);
       const newCopyPrice = request.book_title_price * newCondition / 100;
 
-      // Prepare the update query for the book copy
       let updateCopyQuery = `UPDATE book_copies SET condition = $1, copy_price = $2`;
       const queryParams = [newCondition, newCopyPrice];
 
-      // If the book is assessed as LOST, also update its status and availability
       if (assessed_condition === 'LOST') {
         updateCopyQuery += `, status = 'lost', availability = FALSE`;
       }
@@ -810,9 +803,7 @@ const Borrowing = {
       updateCopyQuery += ` WHERE copy_id = $3`;
       queryParams.push(request.copy_id);
 
-      // Execute the update query
       await client.query(updateCopyQuery, queryParams);
-
       await client.query('COMMIT');
 
       try {
@@ -989,4 +980,3 @@ const Borrowing = {
 };
 
 module.exports = Borrowing;
-

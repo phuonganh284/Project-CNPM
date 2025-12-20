@@ -229,66 +229,61 @@ const BorrowingController = {
   async assessReturnCondition(req, res) {
     try {
       const { returnId: id } = req.params; // return_id
-      const { assessedCondition, damagePercentage, assessmentNotes } = req.body;
-      // Expected body:
-      // {
-      //   assessedCondition: 'OK' | 'MINOR' | 'MODERATE' | 'SEVERE' | 'LOST',
-      //   damagePercentage: 25,  // Librarian enters specific % (for MODERATE: 20-40%)
-      //   assessmentNotes: 'Scratches on pages 10-15' (optional)
-      // }
+      const { assessedCondition, damagePercentage, assessmentNotes, overdueRate = 1 } = req.body;
+      
+      const _debug = {
+        message: "This is a debug response to check validation.",
+        receivedBody: req.body,
+        extractedOverdueRate: overdueRate,
+        isRateTooHigh: overdueRate > 5,
+        validationShouldBlock: (typeof overdueRate !== 'number' || overdueRate < 0 || overdueRate > 5),
+      };
 
+      // --- SERVER-SIDE VALIDATION ---
       if (!id) {
-        return res.status(400).json(
-          formatError(null, 'Return request ID is required', 400)
-        );
+        return res.status(400).json(formatError(null, 'Return request ID is required', 400));
+      }
+      if (!assessedCondition) {
+        return res.status(400).json(formatError(null, 'assessedCondition is required', 400));
       }
 
-      if (!assessedCondition) {
-        return res.status(400).json(
-          formatError(null, 'assessedCondition is required', 400)
-        );
-      }
+      // Temporarily bypass the validation block for debugging, but log if it would have triggered
+      // if (typeof overdueRate !== 'number' || overdueRate < 0 || overdueRate > 5) {
+      //   return res.status(400).json(formatError(null, 'Overdue rate must be a number between 0 and 5.', 400));
+      // }
 
       // Validate damagePercentage based on assessedCondition
       const damageRanges = {
-        'OK': [0, 0],
-        'MINOR': [5, 10],
-        'MODERATE': [20, 40],
-        'SEVERE': [60, 80],
-        'LOST': [100, 100]
+        'OK': [0, 0], 'MINOR': [5, 10], 'MODERATE': [20, 40], 'SEVERE': [60, 80], 'LOST': [100, 100]
       };
-
       const range = damageRanges[assessedCondition];
       if (!range) {
-        return res.status(400).json(
-          formatError(null, 'Invalid assessedCondition', 400)
-        );
+        return res.status(400).json(formatError(null, 'Invalid assessedCondition', 400));
       }
-
       if (damagePercentage === undefined || damagePercentage < range[0] || damagePercentage > range[1]) {
-        return res.status(400).json(
-          formatError(null, `damagePercentage must be between ${range[0]}% and ${range[1]}% for ${assessedCondition}`, 400)
-        );
+        return res.status(400).json(formatError(null, `damagePercentage must be between ${range[0]}% and ${range[1]}% for ${assessedCondition}`, 400));
       }
 
+      // --- Call Model ---
       const updatedRequest = await Borrowing.assessReturnCondition(parseInt(id), {
         assessed_condition: assessedCondition,
         damage_percentage: damagePercentage,
-        assessment_notes: assessmentNotes
+        assessment_notes: assessmentNotes,
+        overdue_rate: overdueRate,
       });
 
-      return res.status(200).json(
-        formatResponse(updatedRequest, 'Return condition assessed successfully')
-      );
+      const responsePayload = formatResponse(updatedRequest, 'Return condition assessed successfully');
+      responsePayload._debug = _debug; // Add debug info to the final response
+
+      return res.status(200).json(responsePayload);
+
     } catch (error) {
       console.error('Error assessing return condition:', error);
 
       if (error.message.includes('not found')) {
         return res.status(404).json(formatError(error, error.message, 404));
       }
-      if (error.message.includes('must be') ||
-        error.message.includes('is required') ||
-        error.message.includes('Cannot assess')) {
+      if (error.message.includes('must be') || error.message.includes('is required') || error.message.includes('Cannot assess')) {
         return res.status(400).json(formatError(error, error.message, 400));
       }
 
