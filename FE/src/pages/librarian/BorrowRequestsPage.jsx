@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import borrowRequestService from "../../services/borrowRequestService";
 
 // Approve Modal Component
@@ -163,6 +164,7 @@ const RejectModal = ({ isOpen, onClose, request, onConfirm }) => {
 };
 
 const BorrowRequestsPage = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -267,7 +269,8 @@ const BorrowRequestsPage = () => {
                   <img
                     src={req.book.coverImageUrl}
                     alt={req.book.title}
-                    className="w-16 h-20 object-cover rounded shadow-sm"
+                    className="w-16 h-20 object-cover rounded shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => navigate(`/book/${req.book.id}`)}
                   />
                   <div>
                     <div className="font-semibold text-gray-900">{req.book.title}</div>

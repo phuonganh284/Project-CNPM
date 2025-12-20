@@ -1,7 +1,9 @@
 // src/components/BorrowCard.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const BorrowCard = ({ borrow, onRenewClick, onReturnClick }) => {
+    const navigate = useNavigate();
     const isRenewDisabled = borrow.renewed || borrow.isOverdue || borrow.isPendingReturn;
     const isReturnDisabled = borrow.isPendingReturn;
 
@@ -72,7 +74,8 @@ const BorrowCard = ({ borrow, onRenewClick, onReturnClick }) => {
                     <img
                         src={borrow.cover}
                         alt={borrow.title}
-                        className="w-20 h-28 object-cover rounded mb-2"
+                        className="w-20 h-28 object-cover rounded mb-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => navigate(`/book/${borrow.bookId}`)}
                         onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = 'https://placehold.co/80x112/EEE/313131?text=No+Cover';

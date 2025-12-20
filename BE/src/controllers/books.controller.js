@@ -3,7 +3,7 @@ const BorrowRequest = require('../models/borrowRequest.model');
 
 const getBooks = async (req, res) => {
     try {
-        const userId = req.user ? req.user.user_id : null;
+        const userId = req.user ? (req.user.id || req.user.user_id) : null;
         const { search, filter = 'All' } = req.query;
 
         let query;
@@ -72,31 +72,28 @@ const getBooks = async (req, res) => {
                 WHERE c.category_name IS NOT NULL
                 GROUP BY c.category_id, c.category_name
                 ORDER BY borrow_count DESC
+                LIMIT 3
             `;
             const { rows: preferenceRows } = await pool.query(preferenceQuery, [userId]);
-
-            // Create a map of category names to their borrow count (for weighted sorting)
-            const categoryWeights = {};
-            preferenceRows.forEach(row => {
-                categoryWeights[row.category_name] = parseInt(row.borrow_count);
-            });
 
             const preferredCategories = preferenceRows.map(r => r.category_name);
 
             let orderByClause = 'ORDER BY ';
+            let categoryFilter = '';
+            
             if (preferredCategories.length > 0) {
-                // Build a CASE statement that assigns priority based on category match
-                // More borrowed categories get higher priority (lower number = higher priority)
-                orderByClause += 'CASE ';
-                preferredCategories.forEach((category, index) => {
-                    const categoryParamIndex = queryParams.length + 1;
-                    orderByClause += `WHEN c.category_name = $${categoryParamIndex} THEN ${index + 1} `;
-                    queryParams.push(category);
-                });
-                orderByClause += 'ELSE 999 END, ';
+                // Add WHERE clause to filter ONLY books from preferred categories (top 1 only)
+                const topCategory = preferredCategories[0];
+                const categoryParamIndex = queryParams.length + 1;
+                categoryFilter = ` AND c.category_name = $${categoryParamIndex}`;
+                queryParams.push(topCategory);
+                
+                // Sort by availability and book_id
+                orderByClause = 'ORDER BY bt.available_stock DESC, bt.book_id DESC';
+            } else {
+                // If no borrowing history, sort by availability and popularity
+                orderByClause = 'ORDER BY bt.available_stock DESC, bt.borrow_count DESC, bt.book_id DESC';
             }
-            // Secondary sort by availability and then by book_id for consistency
-            orderByClause += 'bt.available_stock DESC, bt.book_id DESC';
 
             query = `
                 SELECT
@@ -113,9 +110,9 @@ const getBooks = async (req, res) => {
                     bt.available_stock AS available_stock_for_borrow
                 FROM
                     book_titles bt
-                LEFT JOIN
+                INNER JOIN
                     categories c ON bt.category_id = c.category_id
-                ${whereClause}
+                ${whereClause}${categoryFilter}
                 GROUP BY
                     bt.book_id, c.category_id
                 ${orderByClause}

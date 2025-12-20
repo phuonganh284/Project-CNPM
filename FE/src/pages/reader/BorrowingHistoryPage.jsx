@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import borrowingService from '../../services/borrowingService';
 
 // Helper function for safe date formatting
@@ -15,6 +16,7 @@ const formatDate = (dateString) => {
 };
 
 const BorrowingHistoryPage = () => {
+  const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -154,7 +156,8 @@ const BorrowingHistoryPage = () => {
                           <img
                             src={coverUrl}
                             alt={record.book?.title || 'Book cover'}
-                            className="w-10 h-14 object-cover rounded shadow-sm flex-shrink-0"
+                            className="w-10 h-14 object-cover rounded shadow-sm flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => navigate(`/book/${record.book?.id}`)}
                             onError={(e) => { e.currentTarget.style.display = 'none'; const parent = e.currentTarget.parentElement; if(parent) { const div = document.createElement('div'); div.className = 'w-10 h-14 bg-gray-200 rounded shadow-sm flex-shrink-0 flex items-center justify-center text-xs text-gray-500'; div.innerText = 'Error'; parent.insertBefore(div, e.currentTarget); } }}
                           />
                         ) : (
