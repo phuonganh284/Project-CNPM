@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 
@@ -7,13 +7,19 @@ const VerifyEmailPage = () => {
     const [error, setError] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
+    const hasVerified = useRef(false);
 
     useEffect(() => {
+        // Prevent multiple calls
+        if (hasVerified.current) return;
+        
         const token = new URLSearchParams(location.search).get('token');
         
         console.log('Token from URL:', token);
 
         if (token) {
+            hasVerified.current = true;
+            
             const verify = async () => {
                 console.log('Calling verifyEmail with token:', token);
                 const response = await authService.verifyEmail(token);
